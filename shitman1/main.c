@@ -42,13 +42,13 @@ static inline unsigned int bitmask2width(uint32_t x) {
     return c;
 }
 
-#if defined(USING_SDL2)
-union palcnvmap {
+typedef union palcnvmap {
     uint16_t        map16[256];
     uint32_t        map32[256];
-};
+} palcnvmap;
 
-union palcnvmap     sdl_palmap;
+#if defined(USING_SDL2)
+palcnvmap           sdl_palmap;
 SDL_Surface*        sdl_screen = NULL;
 SDL_Surface*        sdl_screen_host = NULL;
 SDL_Window*         sdl_screen_window = NULL;
@@ -66,7 +66,7 @@ void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,un
     sdl_screen->format->palette->colors[entry].b = b;
     sdl_screen->format->palette->colors[entry].a = 255;
 
-    if (sdl_screen_host->format->BytesPerPixel == 4/*no plans for 24bpp here*/) {
+    if (sdl_screen_host->format->BytesPerPixel == 4/*32bpp*/) {
         sdl_palmap.map32[entry] =
             ((uint32_t)(r >> sdl_rshiftp) << (uint32_t)sdl_rshift) |
             ((uint32_t)(g >> sdl_gshiftp) << (uint32_t)sdl_gshift) |
@@ -84,6 +84,14 @@ void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,un
         /* I doubt SDL2 fully supports 8bpp 256-color paletted */
         fprintf(stderr,"Game set palette entry unsupported format\n");
     }
+#endif
+}
+
+void Game_FinishPaletteUpdates(void) {
+#if defined(USING_SDL2)
+#else
+/* this will be a no-op under MS-DOS since our palette writing code will change hardware directly. */
+/* If this code ever works with Windows GDI directly, this is where the RealizePalette code will go. */
 #endif
 }
 
