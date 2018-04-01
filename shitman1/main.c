@@ -9,6 +9,11 @@
 # include <SDL2/SDL.h>
 #endif
 
+typedef union palcnvmap {
+    uint16_t        map16[256];
+    uint32_t        map32[256];
+} palcnvmap;
+
 static inline unsigned int clamp0(int x) {
     return (x > 0) ? x : 0;
 }
@@ -42,23 +47,18 @@ static inline unsigned int bitmask2width(uint32_t x) {
     return c;
 }
 
-typedef union palcnvmap {
-    uint16_t        map16[256];
-    uint32_t        map32[256];
-} palcnvmap;
-
 #if defined(USING_SDL2)
-palcnvmap           sdl_palmap;
-SDL_Surface*        sdl_screen = NULL;
-SDL_Surface*        sdl_screen_host = NULL;
-SDL_Window*         sdl_screen_window = NULL;
-unsigned char       sdl_rshift,sdl_rshiftp;
-unsigned char       sdl_gshift,sdl_gshiftp;
-unsigned char       sdl_bshift,sdl_bshiftp;
+static palcnvmap            sdl_palmap;
+static SDL_Surface*         sdl_screen = NULL;
+static SDL_Surface*         sdl_screen_host = NULL;
+static SDL_Window*          sdl_screen_window = NULL;
+static unsigned char        sdl_rshift,sdl_rshiftp;
+static unsigned char        sdl_gshift,sdl_gshiftp;
+static unsigned char        sdl_bshift,sdl_bshiftp;
 #endif
 
 /* NTS: No guarantee that the change is immediately visible, especially with SDL */
-void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,unsigned char b) {
+static void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,unsigned char b) {
 #if defined(USING_SDL2)
     sdl_screen->format->palette->colors[entry].r = r;
     sdl_screen->format->palette->colors[entry].g = g;
@@ -86,7 +86,7 @@ void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,un
 #endif
 }
 
-void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int h) {
+static void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int h) {
 #if defined(USING_SDL2)
     SDL_Rect dst;
 
@@ -162,11 +162,11 @@ void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int
 #endif
 }
 
-void Game_UpdateScreen_All(void) {
+static void Game_UpdateScreen_All(void) {
     Game_UpdateScreen(0,0,sdl_screen->w,sdl_screen->h);
 }
 
-void Game_FinishPaletteUpdates(void) {
+static void Game_FinishPaletteUpdates(void) {
 #if defined(USING_SDL2)
     /* This code converts from an 8bpp screen so palette animation requires redrawing the whole screen */
     Game_UpdateScreen_All();
