@@ -168,7 +168,7 @@ void Game_UpdateScreen_All(void) {
     Game_UpdateScreen(0,0,sdl_screen->w,sdl_screen->h);
 }
 
-int Game_VideoInit(void) {
+int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
 #if defined(USING_SDL2)
     if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
         fprintf(stderr,"SDL_Init failed, %s\n",SDL_GetError());
@@ -179,8 +179,8 @@ int Game_VideoInit(void) {
             "Shitman"/*title*/,
             SDL_WINDOWPOS_UNDEFINED/*x*/,
             SDL_WINDOWPOS_UNDEFINED/*y*/,
-            640/*w*/,
-            480/*h*/,
+            (screen_w*2)/*w*/,
+            (screen_h*2)/*h*/,
             0/*flags*/);
         if (sdl_screen_window == NULL)
             return -1;
@@ -193,8 +193,8 @@ int Game_VideoInit(void) {
     if (sdl_screen == NULL) {
         sdl_screen = SDL_CreateRGBSurface(
             0/*flags*/,
-            320/*w*/,
-            240/*h*/,
+            screen_w/*w*/,
+            screen_h/*h*/,
             8/*depth*/,
             0,0,0,0/*RGBA mask*/);
         if (sdl_screen == NULL)
@@ -271,7 +271,7 @@ void Game_VideoShutdown(void) {
 }
 
 int main(int argc,char **argv) {
-    if (Game_VideoInit() < 0) {
+    if (Game_VideoInit(320,240) < 0) {
         fprintf(stderr,"Video init failed\n");
         Game_VideoShutdown();
         return 1;
