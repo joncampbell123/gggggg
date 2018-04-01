@@ -7,7 +7,7 @@ SHITMAN=$(bindir)/shitman
 
 SHITMAN_OBJ=$(objdir)/main.o
 
-SHITMAN_CFLAGS=$(SDL2_CFLAGS) -I$(topdir) -std=gnu99
+SHITMAN_CFLAGS=$(SDL2_CFLAGS) -I$(topdir) -std=gnu99 -DLINUX=1
 
 bindir=$(topdir)/bin-linux
 
