@@ -52,7 +52,6 @@ palcnvmap           sdl_palmap;
 SDL_Surface*        sdl_screen = NULL;
 SDL_Surface*        sdl_screen_host = NULL;
 SDL_Window*         sdl_screen_window = NULL;
-SDL_Renderer*       sdl_screen_renderer = NULL;
 unsigned char       sdl_rshift,sdl_rshiftp;
 unsigned char       sdl_gshift,sdl_gshiftp;
 unsigned char       sdl_bshift,sdl_bshiftp;
@@ -186,14 +185,6 @@ int Game_VideoInit(void) {
         if (sdl_screen_window == NULL)
             return -1;
     }
-    if (sdl_screen_renderer == NULL) {
-        sdl_screen_renderer = SDL_CreateRenderer(
-            sdl_screen_window/*window*/,
-            -1/*rendering driver*/,
-            0/*flags*/);
-        if (sdl_screen_renderer == NULL)
-            return -1;
-    }
     if (sdl_screen_host == NULL) {
         sdl_screen_host = SDL_GetWindowSurface(sdl_screen_window);
         if (sdl_screen_host == NULL)
@@ -256,10 +247,6 @@ int Game_VideoInit(void) {
         }
     }
 
-    SDL_SetRenderDrawColor(sdl_screen_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // black
-    SDL_RenderClear(sdl_screen_renderer);
-    SDL_RenderPresent(sdl_screen_renderer);
-
     Game_UpdateScreen_All();
 
     SDL_Delay(2000);
@@ -274,10 +261,6 @@ void Game_VideoShutdown(void) {
     if (sdl_screen != NULL) {
         SDL_FreeSurface(sdl_screen);
         sdl_screen = NULL;
-    }
-    if (sdl_screen_renderer != NULL) {
-        SDL_DestroyRenderer(sdl_screen_renderer);
-        sdl_screen_renderer = NULL;
     }
     if (sdl_screen_window != NULL) {
         SDL_DestroyWindow(sdl_screen_window);
