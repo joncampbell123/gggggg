@@ -54,6 +54,14 @@ int Game_VideoInit(void) {
             0,0,0,0/*RGBA mask*/);
         if (sdl_screen == NULL)
             return -1;
+        if (sdl_screen->format == NULL)
+            return -1;
+        if (sdl_screen->format->palette == NULL)
+            return -1;
+        if (sdl_screen->format->palette->ncolors < 256)
+            return -1;
+        if (sdl_screen->format->palette->colors == NULL)
+            return -1;
     }
 
     SDL_SetRenderDrawColor(sdl_screen_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // black
