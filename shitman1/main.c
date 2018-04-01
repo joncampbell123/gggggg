@@ -39,6 +39,10 @@ int Game_VideoInit(void) {
         if (sdl_screen_renderer == NULL)
             return -1;
     }
+
+    SDL_SetRenderDrawColor(sdl_screen_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // black
+    SDL_RenderClear(sdl_screen_renderer);
+    SDL_RenderPresent(sdl_screen_renderer);
 #endif
 
     return 0;
