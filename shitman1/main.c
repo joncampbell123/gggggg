@@ -86,14 +86,6 @@ void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,un
 #endif
 }
 
-void Game_FinishPaletteUpdates(void) {
-#if defined(USING_SDL2)
-#else
-/* this will be a no-op under MS-DOS since our palette writing code will change hardware directly. */
-/* If this code ever works with Windows GDI directly, this is where the RealizePalette code will go. */
-#endif
-}
-
 void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int h) {
 #if defined(USING_SDL2)
     SDL_Rect dst;
@@ -169,6 +161,29 @@ void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int
 
 void Game_UpdateScreen_All(void) {
     Game_UpdateScreen(0,0,sdl_screen->w,sdl_screen->h);
+}
+
+void Game_FinishPaletteUpdates(void) {
+#if defined(USING_SDL2)
+    /* This code converts from an 8bpp screen so palette animation requires redrawing the whole screen */
+    Game_UpdateScreen_All();
+#else
+/* this will be a no-op under MS-DOS since our palette writing code will change hardware directly. */
+/* If this code ever works with Windows GDI directly, this is where the RealizePalette code will go. */
+#endif
+}
+
+void Game_SetPalette(unsigned char first,unsigned int number,const unsigned char *palette) {
+    if ((first+number) > 256)
+        return;
+
+    while (number-- > 0) {
+        Game_SetPaletteEntry(first,palette[0],palette[1],palette[2]);
+        palette += 3;
+        first++;
+    }
+
+    Game_FinishPaletteUpdates();
 }
 
 int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
@@ -249,10 +264,17 @@ int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
         fprintf(stderr,"  Blue:   shift pre=%u post=%u\n",sdl_bshiftp,sdl_bshift);
 
         {
+            unsigned char *tpal = malloc(256*3);
             unsigned int i;
 
-            for (i=0;i < 256;i++)
-                Game_SetPaletteEntry(i,i,i,i);
+            for (i=0;i < 256;i++) {
+                tpal[i*3 + 0] = i;
+                tpal[i*3 + 1] = i;
+                tpal[i*3 + 2] = i;
+            }
+
+            Game_SetPalette(0/*first*/,256/*number*/,tpal);
+            free(tpal);
         }
 
         {
