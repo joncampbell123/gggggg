@@ -241,6 +241,10 @@ void Game_BitBlt(unsigned int x,unsigned int y,unsigned int w,unsigned int h,con
         if (SDL_MUSTLOCK(sdl_screen))
             SDL_LockSurface(sdl_screen);
 
+#if 0/*DEBUG to check update rect*/
+        memset(sdl_screen->pixels,0,sdl_screen->pitch*sdl_screen->h);
+#endif
+
         srow = blt->bmp;
         drow = ((unsigned char*)sdl_screen->pixels) + (y * sdl_screen->pitch) + x;
         for (dy=0;dy < h;dy++) {
