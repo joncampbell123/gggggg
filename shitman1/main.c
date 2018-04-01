@@ -72,7 +72,7 @@ void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,un
             ((uint32_t)(b >> sdl_bshiftp) << (uint32_t)sdl_bshift) |
             (uint32_t)sdl_screen_host->format->Amask;
     }
-    else if (sdl_screen_host->format->BytesPerPixel == 2/*8/16bpp*/) {
+    else if (sdl_screen_host->format->BytesPerPixel == 2/*16bpp*/) {
         sdl_palmap.map16[entry] =
             ((uint16_t)(r >> sdl_rshiftp) << (uint16_t)sdl_rshift) |
             ((uint16_t)(g >> sdl_gshiftp) << (uint16_t)sdl_gshift) |
@@ -189,6 +189,22 @@ int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
         sdl_screen_host = SDL_GetWindowSurface(sdl_screen_window);
         if (sdl_screen_host == NULL)
             return -1;
+
+        /* This game (through SDL2) only supports displays using 16bpp or 32bpp RGB(A) formats.
+         * 24bpp is very uncommon these days, and nobody runs modern systems in 256-color anymore.
+         * Perhaps in future game design I might make an alternate Windows build that uses
+         * Windows GDI directly to support Windows 98 or lower (down to Windows 3.1), but not right now. */
+        if (sdl_screen_host->format->BytesPerPixel == 4/*32bpp*/) {
+            /* OK */
+        }
+        else if (sdl_screen_host->format->BytesPerPixel == 2/*16bpp*/) {
+            /* OK */
+        }
+        else {
+            fprintf(stderr,"SDL2 error: Bytes/pixel %u rejected\n",
+                sdl_screen_host->format->BytesPerPixel);
+            return -1;
+        }
     }
     if (sdl_screen == NULL) {
         sdl_screen = SDL_CreateRGBSurface(
