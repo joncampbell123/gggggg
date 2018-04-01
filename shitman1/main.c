@@ -10,7 +10,8 @@
 #endif
 
 #if defined(USING_SDL2)
-SDL_Window*         sdl_screen = NULL;
+SDL_Surface*        sdl_screen = NULL;
+SDL_Window*         sdl_screen_window = NULL;
 SDL_Renderer*       sdl_screen_renderer = NULL;
 #endif
 
@@ -20,20 +21,24 @@ int Game_VideoInit(void) {
         fprintf(stderr,"SDL_Init failed, %s\n",SDL_GetError());
         return -1;
     }
-    if (sdl_screen == NULL) {
-        sdl_screen = SDL_CreateWindow(
+    if (sdl_screen_window == NULL) {
+        sdl_screen_window = SDL_CreateWindow(
             "Shitman"/*title*/,
             SDL_WINDOWPOS_UNDEFINED/*x*/,
             SDL_WINDOWPOS_UNDEFINED/*y*/,
             640/*w*/,
             480/*h*/,
             0/*flags*/);
+        if (sdl_screen_window == NULL)
+            return -1;
+
+        sdl_screen = SDL_GetWindowSurface(sdl_screen_window);
         if (sdl_screen == NULL)
             return -1;
     }
     if (sdl_screen_renderer == NULL) {
         sdl_screen_renderer = SDL_CreateRenderer(
-            sdl_screen/*window*/,
+            sdl_screen_window/*window*/,
             -1/*rendering driver*/,
             0/*flags*/);
         if (sdl_screen_renderer == NULL)
@@ -50,13 +55,14 @@ int Game_VideoInit(void) {
 
 void Game_VideoShutdown(void) {
 #if defined(USING_SDL2)
+    sdl_screen = NULL;
     if (sdl_screen_renderer != NULL) {
         SDL_DestroyRenderer(sdl_screen_renderer);
         sdl_screen_renderer = NULL;
     }
-    if (sdl_screen != NULL) {
-        SDL_DestroyWindow(sdl_screen);
-        sdl_screen = NULL;
+    if (sdl_screen_window != NULL) {
+        SDL_DestroyWindow(sdl_screen_window);
+        sdl_screen_window = NULL;
     }
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 #endif
