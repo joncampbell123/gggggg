@@ -176,6 +176,41 @@ static void Game_FinishPaletteUpdates(void) {
 #endif
 }
 
+typedef struct GAMEBLT {
+    unsigned int        src_h;
+    unsigned int        stride;
+#if TARGET_MSDOS == 16
+    unsigned char far*  bmp;
+#else
+    unsigned char*      bmp;
+#endif
+} GAMEBLT;
+
+void Game_ClearScreen(void) {
+#if defined(USING_SDL2)
+    unsigned char *row;
+
+    if (SDL_MUSTLOCK(sdl_screen))
+        SDL_LockSurface(sdl_screen);
+
+    memset(sdl_screen->pixels,0,sdl_screen->pitch*sdl_screen->h);
+
+    if (SDL_MUSTLOCK(sdl_screen))
+        SDL_UnlockSurface(sdl_screen);
+
+    Game_UpdateScreen_All();
+#endif
+}
+
+void Game_BitBlt(unsigned int x,unsigned int y,unsigned int w,unsigned int h,const GAMEBLT * const blt) {
+    if (blt->bmp == NULL)
+        return;
+    if (w > blt->stride || h > blt->src_h || x >= blt->stride || y >= blt->src_h)
+        return;
+    if ((x+w) > blt->stride || (y+h) > blt->src_h)
+        return;
+}
+
 void Game_SetPalette(unsigned char first,unsigned int number,const unsigned char *palette) {
     if ((first+number) > 256)
         return;
@@ -265,41 +300,9 @@ int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
         fprintf(stderr,"  Red:    shift pre=%u post=%u\n",sdl_rshiftp,sdl_rshift);
         fprintf(stderr,"  Green:  shift pre=%u post=%u\n",sdl_gshiftp,sdl_gshift);
         fprintf(stderr,"  Blue:   shift pre=%u post=%u\n",sdl_bshiftp,sdl_bshift);
-
-        {
-            unsigned char *tpal = malloc(256*3);
-            unsigned int i;
-
-            for (i=0;i < 256;i++) {
-                tpal[i*3 + 0] = i;
-                tpal[i*3 + 1] = i;
-                tpal[i*3 + 2] = i;
-            }
-
-            Game_SetPalette(0/*first*/,256/*number*/,tpal);
-            free(tpal);
-        }
-
-        {
-            unsigned char *row;
-            unsigned int x,y;
-
-            if (SDL_MUSTLOCK(sdl_screen))
-                SDL_LockSurface(sdl_screen);
-
-            for (y=0;y < sdl_screen->h;y++) {
-                row = (unsigned char*)(sdl_screen->pixels) + (y * sdl_screen->pitch);
-                for (x=0;x < sdl_screen->w;x++) {
-                    row[x] = (x == 0 || y == 0 || x == (sdl_screen->w - 1) || y == (sdl_screen->h - 1)) ? 0 : x ^ y;
-                }
-            }
-
-            if (SDL_MUSTLOCK(sdl_screen))
-                SDL_UnlockSurface(sdl_screen);
-        }
     }
 
-    Game_UpdateScreen_All();
+    Game_ClearScreen();
 
     SDL_Delay(2000);
 #endif
