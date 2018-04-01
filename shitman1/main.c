@@ -1,4 +1,5 @@
 
+#include <time.h>
 #include <stdio.h>
 
 #if defined(LINUX)
@@ -123,8 +124,8 @@ static void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsig
 
         if (sdl_screen_host->format->BytesPerPixel == 4) {
             for (dy=0;dy < (h*2);dy++) {
-                srow = ((unsigned char*)sdl_screen->pixels) + ((dy>>1U) * sdl_screen->pitch);
-                drow = ((unsigned char*)sdl_screen_host->pixels) + (dy * sdl_screen_host->pitch);
+                srow = ((unsigned char*)sdl_screen->pixels) + (((dy>>1U) + y) * sdl_screen->pitch) + x;
+                drow = ((unsigned char*)sdl_screen_host->pixels) + ((dy + (y<<1U)) * sdl_screen_host->pitch) + (x<<(1U+2U));
 
                 for (dx=0;dx < w;dx++)
                     ((uint32_t*)drow)[dx*2U + 0U] =
@@ -134,8 +135,8 @@ static void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsig
         }
         else if (sdl_screen_host->format->BytesPerPixel == 2) {
             for (dy=0;dy < (h*2);dy++) {
-                srow = ((unsigned char*)sdl_screen->pixels) + ((dy>>1U) * sdl_screen->pitch);
-                drow = ((unsigned char*)sdl_screen_host->pixels) + (dy * sdl_screen_host->pitch);
+                srow = ((unsigned char*)sdl_screen->pixels) + (((dy>>1U) + y) * sdl_screen->pitch) + x;
+                drow = ((unsigned char*)sdl_screen_host->pixels) + ((dy + (y<<1U)) * sdl_screen_host->pitch) + (x<<(1U+1U));
 
                 for (dx=0;dx < w;dx++)
                     ((uint16_t*)drow)[dx*2U + 0U] =
@@ -179,6 +180,8 @@ static void Game_FinishPaletteUpdates(void) {
 typedef struct GAMEBLT {
     unsigned int        src_h;
     unsigned int        stride;
+
+    /* NTS: If you need to render from the middle of your bitmap just adjust bmp */
 #if TARGET_MSDOS == 16
     unsigned char far*  bmp;
 #else
@@ -202,13 +205,56 @@ void Game_ClearScreen(void) {
 #endif
 }
 
+/* this checks the x,y,w,h values against the screen, does NOT clip but instead rejects.
+ * the game engine is supposed to compose to the memory buffer (with clipping) and then call this function */
 void Game_BitBlt(unsigned int x,unsigned int y,unsigned int w,unsigned int h,const GAMEBLT * const blt) {
+    unsigned int maxx,maxy;
+
     if (blt->bmp == NULL)
         return;
-    if (w > blt->stride || h > blt->src_h || x >= blt->stride || y >= blt->src_h)
-        return;
-    if ((x+w) > blt->stride || (y+h) > blt->src_h)
-        return;
+
+#if defined(USING_SDL2)
+    maxx = sdl_screen->pitch;
+    maxy = sdl_screen->h;
+#else
+#error TODO
+#endif
+
+    if ((x+w) > maxx) w = maxx - x;
+    if ((y+h) > maxy) h = maxy - y;
+    if ((x|y|w|h) & (~0x7FFFU)) return; // negative coords, anything >= 32768
+    if (w == 0 || h == 0) return;
+
+#if 1/*DEBUG*/
+    if (x >= maxx || y >= maxy) abort();
+    if ((x+w) > maxx || (y+h) > maxy) abort();
+#endif
+
+#if TARGET_MSDOS == 16
+#error TODO
+#else
+    {
+        unsigned char *srow;
+        unsigned char *drow;
+        unsigned int dy;
+
+        if (SDL_MUSTLOCK(sdl_screen))
+            SDL_LockSurface(sdl_screen);
+
+        srow = blt->bmp;
+        drow = ((unsigned char*)sdl_screen->pixels) + (y * sdl_screen->pitch) + x;
+        for (dy=0;dy < h;dy++) {
+            memcpy(drow,srow,w);
+            drow += sdl_screen->pitch;
+            srow += blt->stride;
+        }
+
+        if (SDL_MUSTLOCK(sdl_screen))
+            SDL_UnlockSurface(sdl_screen);
+    }
+#endif
+
+    Game_UpdateScreen(x,y,w,h);
 }
 
 void Game_SetPalette(unsigned char first,unsigned int number,const unsigned char *palette) {
@@ -303,8 +349,6 @@ int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
     }
 
     Game_ClearScreen();
-
-    SDL_Delay(2000);
 #endif
 
     return 0;
@@ -330,6 +374,48 @@ int main(int argc,char **argv) {
         fprintf(stderr,"Video init failed\n");
         Game_VideoShutdown();
         return 1;
+    }
+
+    {
+        unsigned char pal[768];
+        unsigned int i;
+
+        for (i=0;i < 256;i++) {
+            pal[i*3 + 0] =
+            pal[i*3 + 1] =
+            pal[i*3 + 2] = i;
+        }
+
+        Game_SetPalette(0,256,pal);
+    }
+
+    {
+        unsigned char *bmp;
+        GAMEBLT blt;
+        int x,y,c;
+
+        bmp = malloc(64*64);
+        blt.src_h = 64;
+        blt.stride = 64;
+        blt.bmp = bmp;
+
+        for (y=0;y < 64;y++) {
+            for (x=0;x < 64;x++) {
+                bmp[((unsigned int)y * 64U) + (unsigned int)x] = (x ^ y) + (((x^y)&1)*64);
+            }
+        }
+
+        srand(time(NULL));
+        for (c=0;c < 1000;c++) {
+            x = ((unsigned int)rand() % 640) - 320;
+            y = ((unsigned int)rand() % 480) - 240;
+            Game_BitBlt(x,y,64,64,&blt);
+            SDL_Delay(1);
+        }
+
+        SDL_Delay(1000);
+
+        free(bmp);
     }
 
     Game_VideoShutdown();
