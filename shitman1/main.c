@@ -419,7 +419,6 @@ int main(int argc,char **argv) {
             x = ((unsigned int)rand() % Game_ScreenWidth);
             y = ((unsigned int)rand() % Game_ScreenHeight);
             Game_BitBlt(x,y,64,64,&blt);
-            Game_Delay(1);
         }
 
         Game_Delay(1000);
