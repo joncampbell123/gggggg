@@ -48,6 +48,8 @@ static inline unsigned int bitmask2width(uint32_t x) {
     return c;
 }
 
+unsigned int                Game_ScreenWidth,Game_ScreenHeight;
+
 #if defined(USING_SDL2)
 static palcnvmap            sdl_palmap;
 static SDL_Surface*         sdl_screen = NULL;
@@ -208,26 +210,17 @@ void Game_ClearScreen(void) {
 /* this checks the x,y,w,h values against the screen, does NOT clip but instead rejects.
  * the game engine is supposed to compose to the memory buffer (with clipping) and then call this function */
 void Game_BitBlt(unsigned int x,unsigned int y,unsigned int w,unsigned int h,const GAMEBLT * const blt) {
-    unsigned int maxx,maxy;
-
     if (blt->bmp == NULL)
         return;
 
-#if defined(USING_SDL2)
-    maxx = sdl_screen->pitch;
-    maxy = sdl_screen->h;
-#else
-#error TODO
-#endif
-
-    if ((x+w) > maxx) w = maxx - x;
-    if ((y+h) > maxy) h = maxy - y;
+    if ((x+w) > Game_ScreenWidth) w = Game_ScreenWidth - x;
+    if ((y+h) > Game_ScreenHeight) h = Game_ScreenHeight - y;
     if ((x|y|w|h) & (~0x7FFFU)) return; // negative coords, anything >= 32768
     if (w == 0 || h == 0) return;
 
 #if 1/*DEBUG*/
-    if (x >= maxx || y >= maxy) abort();
-    if ((x+w) > maxx || (y+h) > maxy) abort();
+    if (x >= Game_ScreenWidth || y >= Game_ScreenHeight) abort();
+    if ((x+w) > Game_ScreenWidth || (y+h) > Game_ScreenHeight) abort();
 #endif
 
 #if TARGET_MSDOS == 16
@@ -352,6 +345,9 @@ int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
         fprintf(stderr,"  Blue:   shift pre=%u post=%u\n",sdl_bshiftp,sdl_bshift);
     }
 
+    Game_ScreenWidth = screen_w;
+    Game_ScreenHeight = screen_h;
+
     Game_ClearScreen();
 #endif
 
@@ -371,6 +367,9 @@ void Game_VideoShutdown(void) {
     }
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 #endif
+
+    Game_ScreenWidth = 0;
+    Game_ScreenHeight = 0;
 }
 
 int main(int argc,char **argv) {
