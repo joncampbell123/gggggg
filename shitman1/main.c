@@ -156,6 +156,9 @@ void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int
     /* Let SDL know */
     if (SDL_UpdateWindowSurfaceRects(sdl_screen_window,&dst,1) != 0)
         fprintf(stderr,"updatewindow err\n");
+#else
+    /* This will be a no-op under MS-DOS since blitting will be done directly to the screen */
+    /* Windows GDI builds will SetDIBitsToDevice here */
 #endif
 }
 
@@ -168,8 +171,8 @@ void Game_FinishPaletteUpdates(void) {
     /* This code converts from an 8bpp screen so palette animation requires redrawing the whole screen */
     Game_UpdateScreen_All();
 #else
-/* this will be a no-op under MS-DOS since our palette writing code will change hardware directly. */
-/* If this code ever works with Windows GDI directly, this is where the RealizePalette code will go. */
+    /* this will be a no-op under MS-DOS since our palette writing code will change hardware directly. */
+    /* Windows GDI builds will SetDIBitsToDevice here or call RealizePalette if 256-color mode. */
 #endif
 }
 
