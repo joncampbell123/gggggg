@@ -11,6 +11,7 @@
 
 #if defined(USING_SDL2)
 SDL_Surface*        sdl_screen = NULL;
+SDL_Surface*        sdl_screen_host = NULL;
 SDL_Window*         sdl_screen_window = NULL;
 SDL_Renderer*       sdl_screen_renderer = NULL;
 #endif
@@ -32,8 +33,8 @@ int Game_VideoInit(void) {
         if (sdl_screen_window == NULL)
             return -1;
 
-        sdl_screen = SDL_GetWindowSurface(sdl_screen_window);
-        if (sdl_screen == NULL)
+        sdl_screen_host = SDL_GetWindowSurface(sdl_screen_window);
+        if (sdl_screen_host == NULL)
             return -1;
     }
     if (sdl_screen_renderer == NULL) {
@@ -42,6 +43,16 @@ int Game_VideoInit(void) {
             -1/*rendering driver*/,
             0/*flags*/);
         if (sdl_screen_renderer == NULL)
+            return -1;
+    }
+    if (sdl_screen == NULL) {
+        sdl_screen = SDL_CreateRGBSurface(
+            0/*flags*/,
+            320/*w*/,
+            240/*h*/,
+            8/*depth*/,
+            0,0,0,0/*RGBA mask*/);
+        if (sdl_screen == NULL)
             return -1;
     }
 
@@ -55,7 +66,11 @@ int Game_VideoInit(void) {
 
 void Game_VideoShutdown(void) {
 #if defined(USING_SDL2)
-    sdl_screen = NULL;
+    sdl_screen_host = NULL;
+    if (sdl_screen != NULL) {
+        SDL_FreeSurface(sdl_screen);
+        sdl_screen = NULL;
+    }
     if (sdl_screen_renderer != NULL) {
         SDL_DestroyRenderer(sdl_screen_renderer);
         sdl_screen_renderer = NULL;
@@ -70,6 +85,7 @@ void Game_VideoShutdown(void) {
 
 int main(int argc,char **argv) {
     if (Game_VideoInit() < 0) {
+        fprintf(stderr,"Video init failed\n");
         Game_VideoShutdown();
         return 1;
     }
