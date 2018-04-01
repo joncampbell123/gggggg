@@ -9,12 +9,152 @@
 # include <SDL2/SDL.h>
 #endif
 
+static inline unsigned int clamp0(int x) {
+    return (x > 0) ? x : 0;
+}
+
+static inline unsigned int bitmask2shift(uint32_t x) {
+    unsigned int c=0;
+
+    if (x != 0) {
+        while ((x&1) == 0) {
+            c++;
+            x>>=1;
+        }
+    }
+
+    return c;
+}
+
+static inline unsigned int bitmask2width(uint32_t x) {
+    unsigned int c=0;
+
+    if (x != 0) {
+        while ((x&1) == 0) {
+            x>>=1;
+        }
+        while ((x&1) == 1) {
+            c++;
+            x>>=1;
+        }
+    }
+
+    return c;
+}
+
 #if defined(USING_SDL2)
+union palcnvmap {
+    uint16_t        map16[256];
+    uint32_t        map32[256];
+};
+
+union palcnvmap     sdl_palmap;
 SDL_Surface*        sdl_screen = NULL;
 SDL_Surface*        sdl_screen_host = NULL;
 SDL_Window*         sdl_screen_window = NULL;
 SDL_Renderer*       sdl_screen_renderer = NULL;
+unsigned char       sdl_rshift,sdl_rshiftp;
+unsigned char       sdl_gshift,sdl_gshiftp;
+unsigned char       sdl_bshift,sdl_bshiftp;
 #endif
+
+/* NTS: No guarantee that the change is immediately visible, especially with SDL */
+void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,unsigned char b) {
+#if defined(USING_SDL2)
+    sdl_screen->format->palette->colors[entry].r = r;
+    sdl_screen->format->palette->colors[entry].g = g;
+    sdl_screen->format->palette->colors[entry].b = b;
+    sdl_screen->format->palette->colors[entry].a = 255;
+
+    if (sdl_screen_host->format->BytesPerPixel == 4/*no plans for 24bpp here*/) {
+        sdl_palmap.map32[entry] =
+            ((uint32_t)(r >> sdl_rshiftp) << (uint32_t)sdl_rshift) |
+            ((uint32_t)(g >> sdl_gshiftp) << (uint32_t)sdl_gshift) |
+            ((uint32_t)(b >> sdl_bshiftp) << (uint32_t)sdl_bshift) |
+            (uint32_t)sdl_screen_host->format->Amask;
+    }
+    else if (sdl_screen_host->format->BytesPerPixel == 2/*8/16bpp*/) {
+        sdl_palmap.map16[entry] =
+            ((uint16_t)(r >> sdl_rshiftp) << (uint16_t)sdl_rshift) |
+            ((uint16_t)(g >> sdl_gshiftp) << (uint16_t)sdl_gshift) |
+            ((uint16_t)(b >> sdl_bshiftp) << (uint16_t)sdl_bshift) |
+            (uint16_t)sdl_screen_host->format->Amask;
+    }
+    else {
+        /* I doubt SDL2 fully supports 8bpp 256-color paletted */
+        fprintf(stderr,"Game set palette entry unsupported format\n");
+    }
+#endif
+}
+
+void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int h) {
+#if defined(USING_SDL2)
+    SDL_Rect src,dst;
+
+    /* Well, SDL2 doesn't seem to offer a "blit and convert 8bpp to host screen"
+     * so we'll just do it ourselves */
+
+    src.x = x;
+    src.y = y;
+    src.w = w;
+    src.h = h;
+    dst.x = src.x * 2;
+    dst.y = src.y * 2;
+    dst.w = src.w * 2;
+    dst.h = src.h * 2;
+
+    if ((x+w) > sdl_screen->w || (y+h) > sdl_screen->h) {
+        fprintf(stderr,"updatescreen invalid rect x=%u,y=%u,w=%u,h=%u\n",x,y,w,h);
+        return;
+    }
+
+    {
+        unsigned char *srow;
+        unsigned char *drow;
+        unsigned int dx,dy;
+
+        if (SDL_MUSTLOCK(sdl_screen))
+            SDL_LockSurface(sdl_screen);
+        if (SDL_MUSTLOCK(sdl_screen_host))
+            SDL_LockSurface(sdl_screen_host);
+
+        if (sdl_screen_host->format->BytesPerPixel == 4) {
+            for (dy=0;dy < h;dy++) {
+                srow = ((unsigned char*)sdl_screen->pixels) + (dy * sdl_screen->pitch);
+                drow = ((unsigned char*)sdl_screen_host->pixels) + (dy * sdl_screen_host->pitch);
+
+                for (dx=0;dx < w;dx++)
+                    ((uint32_t*)drow)[dx] = sdl_palmap.map32[srow[dx]];
+            }
+        }
+        else if (sdl_screen_host->format->BytesPerPixel == 2) {
+            for (dy=0;dy < h;dy++) {
+                srow = ((unsigned char*)sdl_screen->pixels) + (dy * sdl_screen->pitch);
+                drow = ((unsigned char*)sdl_screen_host->pixels) + (dy * sdl_screen_host->pitch);
+
+                for (dx=0;dx < w;dx++)
+                    ((uint16_t*)drow)[dx] = sdl_palmap.map16[srow[dx]];
+            }
+        }
+        else {
+            fprintf(stderr,"GameUpdate not supported format\n");
+        }
+
+        if (SDL_MUSTLOCK(sdl_screen))
+            SDL_UnlockSurface(sdl_screen);
+        if (SDL_MUSTLOCK(sdl_screen_host))
+            SDL_UnlockSurface(sdl_screen_host);
+    }
+
+    /* Let SDL know */
+    if (SDL_UpdateWindowSurfaceRects(sdl_screen_window,&dst,1) != 0)
+        fprintf(stderr,"updatewindow err\n");
+#endif
+}
+
+void Game_UpdateScreen_All(void) {
+    Game_UpdateScreen(0,0,sdl_screen->w,sdl_screen->h);
+}
 
 int Game_VideoInit(void) {
 #if defined(USING_SDL2)
@@ -32,10 +172,6 @@ int Game_VideoInit(void) {
             0/*flags*/);
         if (sdl_screen_window == NULL)
             return -1;
-
-        sdl_screen_host = SDL_GetWindowSurface(sdl_screen_window);
-        if (sdl_screen_host == NULL)
-            return -1;
     }
     if (sdl_screen_renderer == NULL) {
         sdl_screen_renderer = SDL_CreateRenderer(
@@ -43,6 +179,11 @@ int Game_VideoInit(void) {
             -1/*rendering driver*/,
             0/*flags*/);
         if (sdl_screen_renderer == NULL)
+            return -1;
+    }
+    if (sdl_screen_host == NULL) {
+        sdl_screen_host = SDL_GetWindowSurface(sdl_screen_window);
+        if (sdl_screen_host == NULL)
             return -1;
     }
     if (sdl_screen == NULL) {
@@ -62,11 +203,53 @@ int Game_VideoInit(void) {
             return -1;
         if (sdl_screen->format->palette->colors == NULL)
             return -1;
+
+        sdl_rshift = bitmask2shift(sdl_screen_host->format->Rmask);
+        sdl_gshift = bitmask2shift(sdl_screen_host->format->Gmask);
+        sdl_bshift = bitmask2shift(sdl_screen_host->format->Bmask);
+
+        sdl_rshiftp = clamp0(8 - bitmask2width(sdl_screen_host->format->Rmask));
+        sdl_gshiftp = clamp0(8 - bitmask2width(sdl_screen_host->format->Gmask));
+        sdl_bshiftp = clamp0(8 - bitmask2width(sdl_screen_host->format->Bmask));
+
+        fprintf(stderr,"Screen format:\n");
+        fprintf(stderr,"  Red:    shift pre=%u post=%u\n",sdl_rshiftp,sdl_rshift);
+        fprintf(stderr,"  Green:  shift pre=%u post=%u\n",sdl_gshiftp,sdl_gshift);
+        fprintf(stderr,"  Blue:   shift pre=%u post=%u\n",sdl_bshiftp,sdl_bshift);
+
+        {
+            unsigned int i;
+
+            for (i=0;i < 256;i++)
+                Game_SetPaletteEntry(i,i,i,i);
+        }
+
+        {
+            unsigned char *row;
+            unsigned int x,y;
+
+            if (SDL_MUSTLOCK(sdl_screen))
+                SDL_LockSurface(sdl_screen);
+
+            for (y=0;y < sdl_screen->h;y++) {
+                row = (unsigned char*)(sdl_screen->pixels) + (y * sdl_screen->pitch);
+                for (x=0;x < sdl_screen->w;x++) {
+                    row[x] = x ^ y;
+                }
+            }
+
+            if (SDL_MUSTLOCK(sdl_screen))
+                SDL_UnlockSurface(sdl_screen);
+        }
     }
 
     SDL_SetRenderDrawColor(sdl_screen_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // black
     SDL_RenderClear(sdl_screen_renderer);
     SDL_RenderPresent(sdl_screen_renderer);
+
+    Game_UpdateScreen_All();
+
+    SDL_Delay(2000);
 #endif
 
     return 0;
