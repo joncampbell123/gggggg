@@ -205,6 +205,14 @@ int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
                 sdl_screen_host->format->BytesPerPixel);
             return -1;
         }
+
+        if (SDL_PIXELTYPE(sdl_screen_host->format->format) == SDL_PIXELTYPE_PACKED16 ||
+            SDL_PIXELTYPE(sdl_screen_host->format->format) == SDL_PIXELTYPE_PACKED32) {
+        }
+        else {
+            fprintf(stderr,"SDL2 error: Pixel type format rejected (must be packed)\n");
+            return -1;
+        }
     }
     if (sdl_screen == NULL) {
         sdl_screen = SDL_CreateRGBSurface(
