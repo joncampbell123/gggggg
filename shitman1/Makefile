@@ -9,9 +9,9 @@ SHITMAN_OBJ=$(objdir)/main.o
 
 SHITMAN_CFLAGS=$(SDL2_CFLAGS) -I$(topdir) -std=gnu99
 
-bindir=$(topdir)/bin/linux
+bindir=$(topdir)/bin-linux
 
-objdir=$(topdir)/obj/linux
+objdir=$(topdir)/obj-linux
 
 all: $(bindir) $(objdir) $(SHITMAN)
 
@@ -33,5 +33,4 @@ clean:
 distclean: clean
 	rm -f $(SHITMAN) $(SHITMAN_OBJ)
 	rm -Rf $(bindir) $(objdir)
-	rmdir bin obj
 
