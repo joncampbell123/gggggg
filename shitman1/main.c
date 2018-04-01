@@ -89,22 +89,23 @@ void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,un
 
 void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int h) {
 #if defined(USING_SDL2)
-    SDL_Rect src,dst;
+    SDL_Rect dst;
 
     /* Well, SDL2 doesn't seem to offer a "blit and convert 8bpp to host screen"
      * so we'll just do it ourselves */
 
-    src.x = x;
-    src.y = y;
-    src.w = w;
-    src.h = h;
-    dst.x = src.x * 2;
-    dst.y = src.y * 2;
-    dst.w = src.w * 2;
-    dst.h = src.h * 2;
+    dst.x = x * 2;
+    dst.y = y * 2;
+    dst.w = w * 2;
+    dst.h = h * 2;
 
     if ((x+w) > sdl_screen->w || (y+h) > sdl_screen->h) {
         fprintf(stderr,"updatescreen invalid rect x=%u,y=%u,w=%u,h=%u\n",x,y,w,h);
+        return;
+    }
+
+    if (((x+w)*2) > sdl_screen_host->w || ((y+h)*2) > sdl_screen_host->h) {
+        fprintf(stderr,"updatescreen invalid rect for screen\n");
         return;
     }
 
@@ -119,21 +120,25 @@ void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int
             SDL_LockSurface(sdl_screen_host);
 
         if (sdl_screen_host->format->BytesPerPixel == 4) {
-            for (dy=0;dy < h;dy++) {
-                srow = ((unsigned char*)sdl_screen->pixels) + (dy * sdl_screen->pitch);
+            for (dy=0;dy < (h*2);dy++) {
+                srow = ((unsigned char*)sdl_screen->pixels) + ((dy>>1U) * sdl_screen->pitch);
                 drow = ((unsigned char*)sdl_screen_host->pixels) + (dy * sdl_screen_host->pitch);
 
                 for (dx=0;dx < w;dx++)
-                    ((uint32_t*)drow)[dx] = sdl_palmap.map32[srow[dx]];
+                    ((uint32_t*)drow)[dx*2U + 0U] =
+                    ((uint32_t*)drow)[dx*2U + 1U] =
+                    sdl_palmap.map32[srow[dx]];
             }
         }
         else if (sdl_screen_host->format->BytesPerPixel == 2) {
-            for (dy=0;dy < h;dy++) {
-                srow = ((unsigned char*)sdl_screen->pixels) + (dy * sdl_screen->pitch);
+            for (dy=0;dy < (h*2);dy++) {
+                srow = ((unsigned char*)sdl_screen->pixels) + ((dy>>1U) * sdl_screen->pitch);
                 drow = ((unsigned char*)sdl_screen_host->pixels) + (dy * sdl_screen_host->pitch);
 
                 for (dx=0;dx < w;dx++)
-                    ((uint16_t*)drow)[dx] = sdl_palmap.map16[srow[dx]];
+                    ((uint16_t*)drow)[dx*2U + 0U] =
+                    ((uint16_t*)drow)[dx*2U + 1U] =
+                    sdl_palmap.map16[srow[dx]];
             }
         }
         else {
@@ -234,7 +239,7 @@ int Game_VideoInit(void) {
             for (y=0;y < sdl_screen->h;y++) {
                 row = (unsigned char*)(sdl_screen->pixels) + (y * sdl_screen->pitch);
                 for (x=0;x < sdl_screen->w;x++) {
-                    row[x] = x ^ y;
+                    row[x] = (x == 0 || y == 0 || x == (sdl_screen->w - 1) || y == (sdl_screen->h - 1)) ? 0 : x ^ y;
                 }
             }
 
