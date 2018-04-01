@@ -101,6 +101,9 @@ void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int
     /* Well, SDL2 doesn't seem to offer a "blit and convert 8bpp to host screen"
      * so we'll just do it ourselves */
 
+    /* Note that this game is designed around 320x240 or 320x200 256-color VGA mode.
+     * To display properly for modern users we have to scale up. */
+
     dst.x = x * 2;
     dst.y = y * 2;
     dst.w = w * 2;
