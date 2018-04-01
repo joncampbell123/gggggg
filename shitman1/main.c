@@ -410,8 +410,8 @@ int main(int argc,char **argv) {
 
         srand(time(NULL));
         for (c=0;c < 1000;c++) {
-            x = ((unsigned int)rand() % 640) - 320;
-            y = ((unsigned int)rand() % 480) - 240;
+            x = ((unsigned int)rand() % Game_ScreenWidth);
+            y = ((unsigned int)rand() % Game_ScreenHeight);
             Game_BitBlt(x,y,64,64,&blt);
             SDL_Delay(1);
         }
