@@ -191,6 +191,12 @@ typedef struct GAMEBLT {
 #endif
 } GAMEBLT;
 
+void Game_Delay(const unsigned int ms) {
+#if defined(USING_SDL2)
+    SDL_Delay(ms);
+#endif
+}
+
 void Game_ClearScreen(void) {
 #if defined(USING_SDL2)
     unsigned char *row;
@@ -413,10 +419,10 @@ int main(int argc,char **argv) {
             x = ((unsigned int)rand() % Game_ScreenWidth);
             y = ((unsigned int)rand() % Game_ScreenHeight);
             Game_BitBlt(x,y,64,64,&blt);
-            SDL_Delay(1);
+            Game_Delay(1);
         }
 
-        SDL_Delay(1000);
+        Game_Delay(1000);
 
         {
             unsigned char pal[768];
@@ -431,7 +437,7 @@ int main(int argc,char **argv) {
             Game_SetPalette(0,256,pal);
         }
 
-        SDL_Delay(1000);
+        Game_Delay(1000);
 
         free(bmp);
     }
