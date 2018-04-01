@@ -418,6 +418,21 @@ int main(int argc,char **argv) {
 
         SDL_Delay(1000);
 
+        {
+            unsigned char pal[768];
+            unsigned int i;
+
+            for (i=0;i < 256;i++) {
+                pal[i*3 + 0] = i;
+                pal[i*3 + 1] = 0;
+                pal[i*3 + 2] = 0;
+            }
+
+            Game_SetPalette(0,256,pal);
+        }
+
+        SDL_Delay(1000);
+
         free(bmp);
     }
 
