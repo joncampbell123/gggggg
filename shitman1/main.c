@@ -10,6 +10,58 @@
 # include <SDL2/SDL.h>
 #endif
 
+typedef uint8_t                 Game_KeyState;
+
+#define Game_KS_DOWN            (1U << 0U)
+#define Game_KS_LCTRL           (1U << 1U)
+#define Game_KS_RCTRL           (1U << 2U)
+#define Game_KS_LALT            (1U << 3U)
+#define Game_KS_RALT            (1U << 4U)
+#define Game_KS_LSHIFT          (1U << 5U)
+#define Game_KS_RSHIFT          (1U << 6U)
+
+#define Game_KS_CTRL            (Game_KS_LCTRL  | Game_KS_RCTRL)
+#define Game_KS_ALT             (Game_KS_LALT   | Game_KS_RALT)
+#define Game_KS_SHIFT           (Game_KS_LSHIFT | Game_KS_RSHIFT)
+
+#if defined(USING_SDL2)
+# define Game_KeyEventQueueMax  256
+typedef uint16_t                Game_KeyCode;/*SDL_SCANCODE_*/
+#else
+#error TODO
+#endif
+
+typedef struct Game_KeyEvent {
+    Game_KeyCode                code;
+    Game_KeyState               state;
+} Game_KeyEvent;
+
+unsigned int                    Game_KeyShiftState;
+Game_KeyEvent                   Game_KeyQueue[Game_KeyEventQueueMax];
+unsigned int                    Game_KeyQueue_In,Game_KeyQueue_Out;
+
+void Game_KeyShiftStateSet(unsigned int f,unsigned char s) {
+    if (s)
+        Game_KeyShiftState |=  f;
+    else
+        Game_KeyShiftState &= ~f;
+}
+
+Game_KeyEvent *Game_KeyEvent_Add(void) {
+    unsigned int nidx = (Game_KeyQueue_In + 1) % Game_KeyEventQueueMax;
+
+    if (nidx != Game_KeyQueue_Out) {
+        Game_KeyEvent *ev = Game_KeyQueue + Game_KeyQueue_In;
+
+        memset(ev,0,sizeof(ev));
+        Game_KeyQueue_In = nidx;
+
+        return ev;
+    }
+
+    return NULL;
+}
+
 typedef union palcnvmap {
     uint16_t        map16[256];
     uint32_t        map32[256];
@@ -273,6 +325,26 @@ void Game_SetPalette(unsigned char first,unsigned int number,const unsigned char
     Game_FinishPaletteUpdates();
 }
 
+int Game_KeyboardInit(void) {
+#if defined(USING_SDL2)
+    if (SDL_InitSubSystem(SDL_INIT_EVENTS) != 0) {
+        fprintf(stderr,"SDL_Init failed, %s\n",SDL_GetError());
+        return -1;
+    }
+#endif
+
+    Game_KeyQueue_In=0;
+    Game_KeyQueue_Out=0;
+    Game_KeyShiftState=0;
+    return 0;
+}
+
+void Game_FlushKeyboardQueue(void) {
+    Game_KeyQueue_In=0;
+    Game_KeyQueue_Out=0;
+    Game_KeyShiftState=0;
+}
+
 int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
 #if defined(USING_SDL2)
     if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
@@ -378,11 +450,59 @@ void Game_VideoShutdown(void) {
     Game_ScreenHeight = 0;
 }
 
+void Game_KeyboardShutdown(void) {
+#if defined(USING_SDL2)
+    /* SDL ties video and events */
+#endif
+}
+
+void Game_Idle(void) {
+#if defined(USING_SDL2)
+    unsigned int i;
+    SDL_Event ev;
+
+    for (i=0;i < 16;i++) {
+        if (SDL_PollEvent(&ev)) {
+            if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
+                Game_KeyEvent *gev = Game_KeyEvent_Add();
+
+                if (ev.key.keysym.scancode == SDL_SCANCODE_LCTRL)
+                    Game_KeyShiftStateSet(Game_KS_LCTRL,ev.key.state == SDL_PRESSED);
+                else if (ev.key.keysym.scancode == SDL_SCANCODE_RCTRL)
+                    Game_KeyShiftStateSet(Game_KS_RCTRL,ev.key.state == SDL_PRESSED);
+                else if (ev.key.keysym.scancode == SDL_SCANCODE_LALT)
+                    Game_KeyShiftStateSet(Game_KS_LALT,ev.key.state == SDL_PRESSED);
+                else if (ev.key.keysym.scancode == SDL_SCANCODE_RALT)
+                    Game_KeyShiftStateSet(Game_KS_RALT,ev.key.state == SDL_PRESSED);
+                else if (ev.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
+                    Game_KeyShiftStateSet(Game_KS_LSHIFT,ev.key.state == SDL_PRESSED);
+                else if (ev.key.keysym.scancode == SDL_SCANCODE_RSHIFT)
+                    Game_KeyShiftStateSet(Game_KS_RSHIFT,ev.key.state == SDL_PRESSED);
+
+                if (gev != NULL) {
+                    gev->code = ev.key.keysym.scancode;
+                    gev->state = ((ev.key.state == SDL_PRESSED) ? Game_KS_DOWN : 0x00) | Game_KeyShiftState;
+                }
+                else {
+                    fprintf(stderr,"SDL: Key event overrun\n");
+                }
+            }
+        }
+        else {
+            break;
+        }
+    }
+#endif
+}
+
 int main(int argc,char **argv) {
+    if (Game_KeyboardInit() < 0) {
+        fprintf(stderr,"Keyboard init failed\n");
+        goto exit;
+    }
     if (Game_VideoInit(320,240) < 0) {
         fprintf(stderr,"Video init failed\n");
-        Game_VideoShutdown();
-        return 1;
+        goto exit;
     }
 
     {
@@ -419,29 +539,19 @@ int main(int argc,char **argv) {
             x = ((unsigned int)rand() % Game_ScreenWidth);
             y = ((unsigned int)rand() % Game_ScreenHeight);
             Game_BitBlt(x,y,64,64,&blt);
+            Game_Idle();
         }
 
-        Game_Delay(1000);
-
-        {
-            unsigned char pal[768];
-            unsigned int i;
-
-            for (i=0;i < 256;i++) {
-                pal[i*3 + 0] = i;
-                pal[i*3 + 1] = 0;
-                pal[i*3 + 2] = 0;
-            }
-
-            Game_SetPalette(0,256,pal);
-        }
-
-        Game_Delay(1000);
+        do {
+            Game_Idle();
+        } while (!(Game_KeyShiftState & Game_KS_CTRL));
 
         free(bmp);
     }
 
+exit:
     Game_VideoShutdown();
+    Game_KeyboardShutdown();
     return 0;
 }
 
