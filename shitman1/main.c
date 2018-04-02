@@ -27,6 +27,8 @@ typedef uint8_t                 Game_KeyState;
 #if defined(USING_SDL2)
 # define Game_KeyEventQueueMax  256
 typedef uint16_t                Game_KeyCode;/*SDL_SCANCODE_*/
+
+# define Game_KC_ESCAPE         SDL_SCANCODE_ESCAPE
 #else
 #error TODO
 #endif
@@ -45,6 +47,24 @@ void Game_KeyShiftStateSet(unsigned int f,unsigned char s) {
         Game_KeyShiftState |=  f;
     else
         Game_KeyShiftState &= ~f;
+}
+
+Game_KeyEvent *Game_KeyEvent_Peek(void) {
+    if (Game_KeyQueue_Out != Game_KeyQueue_In)
+        return Game_KeyQueue + Game_KeyQueue_Out;
+
+    return NULL;
+}
+
+Game_KeyEvent *Game_KeyEvent_Get(void) {
+    Game_KeyEvent *ev = Game_KeyEvent_Peek();
+
+    if (ev != NULL) {
+        if ((++Game_KeyQueue_Out) >= Game_KeyEventQueueMax)
+            Game_KeyQueue_Out = 0;
+    }
+
+    return ev;
 }
 
 Game_KeyEvent *Game_KeyEvent_Add(void) {
@@ -543,8 +563,15 @@ int main(int argc,char **argv) {
         }
 
         do {
+            Game_KeyEvent *ev = Game_KeyEvent_Get();
+
+            if (ev != NULL) {
+                if (ev->code == Game_KC_ESCAPE)
+                    break;
+            }
+
             Game_Idle();
-        } while (!(Game_KeyShiftState & Game_KS_CTRL));
+        } while (1);
 
         free(bmp);
     }
