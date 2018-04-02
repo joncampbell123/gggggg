@@ -7,7 +7,7 @@ while (my $line = <X>) {
     $new = $line;
     $new =~ s/^SDL_SCANCODE/Game_KC/;
 
-    print substr("#define $new                                            ",0,32)."$line\n";
+    print substr("# define $new                                            ",0,32)."$line\n";
 }
 close(X);
 
