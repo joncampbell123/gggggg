@@ -108,9 +108,15 @@ typedef struct Game_KeyEvent {
     Game_KeyState               state;
 } Game_KeyEvent;
 
+typedef union palcnvmap {
+    uint16_t                    map16[256];
+    uint32_t                    map32[256];
+} palcnvmap;
+
 unsigned int                    Game_KeyShiftState;
 Game_KeyEvent                   Game_KeyQueue[Game_KeyEventQueueMax];
 unsigned int                    Game_KeyQueue_In,Game_KeyQueue_Out;
+unsigned int                    Game_ScreenWidth,Game_ScreenHeight;
 
 void Game_KeyShiftStateSet(unsigned int f,unsigned char s) {
     if (s)
@@ -152,11 +158,6 @@ Game_KeyEvent *Game_KeyEvent_Add(void) {
     return NULL;
 }
 
-typedef union palcnvmap {
-    uint16_t        map16[256];
-    uint32_t        map32[256];
-} palcnvmap;
-
 static inline unsigned int clamp0(int x) {
     return (x > 0) ? x : 0;
 }
@@ -189,8 +190,6 @@ static inline unsigned int bitmask2width(uint32_t x) {
 
     return c;
 }
-
-unsigned int                Game_ScreenWidth,Game_ScreenHeight;
 
 #if defined(USING_SDL2)
 static palcnvmap            sdl_palmap;
