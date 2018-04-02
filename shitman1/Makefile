@@ -5,7 +5,7 @@ SDL2_LIBS=$(shell pkg-config sdl2 --libs)
 
 SHITMAN=$(bindir)/shitman
 
-SHITMAN_OBJ=$(objdir)/main.o
+SHITMAN_OBJ=$(objdir)/main.o $(objdir)/gif_lib.o
 
 SHITMAN_CFLAGS=$(SDL2_CFLAGS) -I$(topdir) -std=gnu99 -DLINUX=1
 
@@ -16,6 +16,9 @@ objdir=$(topdir)/obj-linux
 all: $(bindir) $(objdir) $(SHITMAN)
 
 $(objdir)/main.o: main.c
+	gcc -c -o $@ $< $(SDL2_CFLAGS) $(SHITMAN_CFLAGS)
+
+$(objdir)/gif_lib.o: gif_lib.c
 	gcc -c -o $@ $< $(SDL2_CFLAGS) $(SHITMAN_CFLAGS)
 
 $(bindir):
