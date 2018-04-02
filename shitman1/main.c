@@ -70,6 +70,35 @@ typedef uint16_t                Game_KeyCode;/*SDL_SCANCODE_*/
 # define Game_KC_BACKSPACE      SDL_SCANCODE_BACKSPACE
 # define Game_KC_TAB            SDL_SCANCODE_TAB
 # define Game_KC_SPACE          SDL_SCANCODE_SPACE
+# define Game_KC_COMMA          SDL_SCANCODE_COMMA
+# define Game_KC_PERIOD         SDL_SCANCODE_PERIOD
+# define Game_KC_SLASH          SDL_SCANCODE_SLASH
+# define Game_KC_CAPSLOCK       SDL_SCANCODE_CAPSLOCK
+# define Game_KC_F1             SDL_SCANCODE_F1
+# define Game_KC_F2             SDL_SCANCODE_F2
+# define Game_KC_F3             SDL_SCANCODE_F3
+# define Game_KC_F4             SDL_SCANCODE_F4
+# define Game_KC_F5             SDL_SCANCODE_F5
+# define Game_KC_F6             SDL_SCANCODE_F6
+# define Game_KC_F7             SDL_SCANCODE_F7
+# define Game_KC_F8             SDL_SCANCODE_F8
+# define Game_KC_F9             SDL_SCANCODE_F9
+# define Game_KC_F10            SDL_SCANCODE_F10
+# define Game_KC_F11            SDL_SCANCODE_F11
+# define Game_KC_F12            SDL_SCANCODE_F12
+# define Game_KC_PRINTSCREEN    SDL_SCANCODE_PRINTSCREEN
+# define Game_KC_SCROLLLOCK     SDL_SCANCODE_SCROLLLOCK
+# define Game_KC_PAUSE          SDL_SCANCODE_PAUSE
+# define Game_KC_INSERT         SDL_SCANCODE_INSERT
+# define Game_KC_HOME           SDL_SCANCODE_HOME
+# define Game_KC_PAGEUP         SDL_SCANCODE_PAGEUP
+# define Game_KC_DELETE         SDL_SCANCODE_DELETE
+# define Game_KC_END            SDL_SCANCODE_END
+# define Game_KC_PAGEDOWN       SDL_SCANCODE_PAGEDOWN
+# define Game_KC_RIGHT          SDL_SCANCODE_RIGHT
+# define Game_KC_LEFT           SDL_SCANCODE_LEFT
+# define Game_KC_DOWN           SDL_SCANCODE_DOWN
+# define Game_KC_UP             SDL_SCANCODE_UP
 #else
 #error TODO
 #endif
