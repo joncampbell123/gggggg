@@ -333,6 +333,10 @@ typedef struct GAMEBLT {
 #endif
 } GAMEBLT;
 
+unsigned int Game_GetTime(void) {
+    return SDL_GetTicks();
+}
+
 void Game_Delay(const unsigned int ms) {
 #if defined(USING_SDL2)
     SDL_Delay(ms);
