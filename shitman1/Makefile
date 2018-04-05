@@ -13,7 +13,15 @@ bindir=$(topdir)/bin-linux
 
 objdir=$(topdir)/obj-linux
 
-all: $(bindir) $(objdir) $(SHITMAN)
+resdir=$(topdir)/res
+
+all: $(bindir) $(objdir) $(SHITMAN) shitmanres
+
+run: $(SHITMAN) shitmanres
+	cd $(bindir) && ./shitman
+
+shitmanres: $(bindir)
+	cp -f $(resdir)/* $(bindir)/
 
 $(objdir)/main.o: main.c
 	gcc -c -o $@ $< $(SDL2_CFLAGS) $(SHITMAN_CFLAGS)
