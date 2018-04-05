@@ -364,8 +364,7 @@ void Game_BitBlt(unsigned int x,unsigned int y,unsigned int w,unsigned int h,con
     if (blt->bmp == NULL)
         return;
 
-    if ((x+w) > Game_ScreenWidth) w = Game_ScreenWidth - x;
-    if ((y+h) > Game_ScreenHeight) h = Game_ScreenHeight - y;
+    if ((x+w) > Game_ScreenWidth || (y+h) > Game_ScreenHeight) return;
     if ((x|y|w|h) & (~0x7FFFU)) return; // negative coords, anything >= 32768
     if (w == 0 || h == 0) return;
 
