@@ -8,6 +8,8 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+#include "gif_lib.h"
+
 #ifndef O_BINARY
 #define O_BINARY (0)
 #endif
@@ -153,6 +155,34 @@ unsigned int                    Game_KeyShiftState;
 Game_KeyEvent                   Game_KeyQueue[Game_KeyEventQueueMax];
 unsigned int                    Game_KeyQueue_In,Game_KeyQueue_Out;
 unsigned int                    Game_ScreenWidth,Game_ScreenHeight;
+
+GifFileType *FreeGIF(GifFileType *gif) {
+    int err;
+
+    if (gif) DGifCloseFile(gif,&err);
+
+    return NULL;
+}
+
+GifFileType *LoadGIF(const char *path) {
+    GifFileType *gif;
+    int err;
+
+    gif = DGifOpenFileName(path,&err);
+    if (gif == NULL) return NULL;
+
+    /* TODO: How do we read only the first image? */
+    if (DGifSlurp(gif) != GIF_OK) {
+        DGifCloseFile(gif,&err);
+        return NULL;
+    }
+    if (gif->SavedImages.RasterBits == NULL) {
+        DGifCloseFile(gif,&err);
+        return NULL;
+    }
+
+    return gif;
+}
 
 void Game_KeyShiftStateSet(unsigned int f,unsigned char s) {
     if (s)
@@ -767,6 +797,51 @@ int main(int argc,char **argv) {
     if (Game_VideoInit(320,240) < 0) {
         fprintf(stderr,"Video init failed\n");
         goto exit;
+    }
+
+    {
+        GifFileType *gif;
+
+        gif = LoadGIF("title3.gif");
+        if (gif) {
+            SavedImage *s = &gif->SavedImages;
+            GAMEBLT blt;
+
+            {
+                unsigned char pal[768];
+                unsigned int i;
+
+                for (i=0;i < 256;i++) {
+                    pal[i*3 + 0] = gif->SColorMap.Colors[i].Red;
+                    pal[i*3 + 1] = gif->SColorMap.Colors[i].Green;
+                    pal[i*3 + 2] = gif->SColorMap.Colors[i].Blue;
+                }
+
+                Game_SetPalette(0,256,pal);
+            }
+
+            blt.src_h = s->ImageDesc.Height;
+            blt.stride = s->ImageDesc.Width;
+            blt.bmp = s->RasterBits;
+
+            Game_BitBlt(
+                (Game_ScreenWidth - s->ImageDesc.Width) / 2,
+                (Game_ScreenHeight - s->ImageDesc.Height) / 2,
+                s->ImageDesc.Width,s->ImageDesc.Height,&blt);
+
+            FreeGIF(gif);
+
+            do {
+                Game_KeyEvent *ev = Game_KeyEvent_Get();
+
+                if (ev != NULL && !(ev->state & Game_KS_DOWN)) {
+                    if (ev->code == Game_KC_RETURN)
+                        break;
+                }
+
+                Game_Idle();
+            } while (1);
+        }
     }
 
     {
