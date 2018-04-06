@@ -20,6 +20,12 @@ all: $(bindir) $(objdir) $(SHITMAN) shitmanres
 run: $(SHITMAN) shitmanres
 	cd $(bindir) && ./shitman
 
+run-gdb: $(SHITMAN) shitmanres
+	cd $(bindir) && gdb --args ./shitman
+
+run-vg: $(SHITMAN) shitmanres
+	cd $(bindir) && valgrind --leak-check=full --show-reachable=yes --track-origins=yes ./shitman
+
 shitmanres: $(bindir)
 	cp -f $(resdir)/* $(bindir)/
 
