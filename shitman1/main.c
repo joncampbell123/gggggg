@@ -28,7 +28,29 @@
 
 #include "gif_lib.h"
 
+#define Game_SS_Flag_Enabled            (1U << 0U)      /* sprite is enabled */
+#define Game_SS_Flag_Transparent        (1U << 1U)      /* transparent (color 0 is transparent) */
+
+typedef struct game_sprite_t {
+    int16_t                 x,y;
+    uint16_t                w,h;
+    uint16_t                flags;
+    uint16_t                stride;
+#if TARGET_MSDOS == 16
+    unsigned char far*      ptr;
+#else
+    unsigned char*          ptr;
+#endif
+} game_sprite_t;
+
+#define Game_SpriteMax      128
+
+game_sprite_t               Game_Sprite[Game_SpriteMax];
+uint16_t                    Game_SpriteCount; /* highest index + 1 */
+
 int Game_SpriteInit(void) {
+    memset(&Game_Sprite,0,sizeof(Game_Sprite));
+    Game_SpriteCount = 0;
     return 0;
 }
 
