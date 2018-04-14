@@ -68,6 +68,7 @@ int Game_SpriteInit(void) {
 }
 
 void Game_SpriteShutdown(void) {
+    Game_SpriteClearUpdate();
 }
 
 int main(int argc,char **argv) {
