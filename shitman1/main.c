@@ -47,16 +47,21 @@ typedef struct game_sprite_t {
 
 game_sprite_t               Game_Sprite[Game_SpriteMax];
 uint16_t                    Game_SpriteCount; /* highest index + 1 */
+uint16_t                    Game_SpriteAvail; /* next available sprite slot */
 
-int Game_SpriteInit(void) {
+void Game_SpriteClearAll(void) {
     memset(&Game_Sprite,0,sizeof(Game_Sprite));
     Game_SpriteCount = 0;
+    Game_SpriteAvail = 0;
+}
+
+int Game_SpriteInit(void) {
+    Game_SpriteClearAll();
     return 0;
 }
 
 void Game_SpriteShutdown(void) {
-    memset(&Game_Sprite,0,sizeof(Game_Sprite));
-    Game_SpriteCount = 0;
+    Game_SpriteClearAll();
 }
 
 int main(int argc,char **argv) {
