@@ -14,13 +14,9 @@
 #include "game_kb.h"
 #include "game_tm.h"
 #include "game_kev.h"
+#include "game_pal.h"
 
 #include "gif_lib.h"
-
-typedef union palcnvmap {
-    uint16_t                    map16[256];
-    uint32_t                    map32[256];
-} palcnvmap;
 
 unsigned int                    Game_ScreenWidth,Game_ScreenHeight;
 
@@ -86,54 +82,17 @@ static inline unsigned int bitmask2width(uint32_t x) {
 }
 
 #if defined(USING_SDL2)
-static palcnvmap            sdl_palmap;
-static SDL_Surface*         sdl_screen = NULL;
-static SDL_Surface*         sdl_screen_host = NULL;
-static SDL_Window*          sdl_screen_window = NULL;
-static unsigned char        sdl_rshift,sdl_rshiftp;
-static unsigned char        sdl_gshift,sdl_gshiftp;
-static unsigned char        sdl_bshift,sdl_bshiftp;
-static unsigned char        sdl_palidx=0;
+palcnvmap            sdl_palmap;
+SDL_Surface*         sdl_screen = NULL;
+SDL_Surface*         sdl_screen_host = NULL;
+SDL_Window*          sdl_screen_window = NULL;
+unsigned char        sdl_rshift,sdl_rshiftp;
+unsigned char        sdl_gshift,sdl_gshiftp;
+unsigned char        sdl_bshift,sdl_bshiftp;
+unsigned char        sdl_palidx=0;
 #endif
 
-static void Game_BeginPaletteUpdate(unsigned char idx) {
-#if defined(USING_SDL2)
-    sdl_palidx = idx;
-#endif
-}
-
-/* NTS: No guarantee that the change is immediately visible, especially with SDL */
-static void Game_SetPaletteEntry(unsigned char r,unsigned char g,unsigned char b) {
-#if defined(USING_SDL2)
-    sdl_screen->format->palette->colors[sdl_palidx].r = r;
-    sdl_screen->format->palette->colors[sdl_palidx].g = g;
-    sdl_screen->format->palette->colors[sdl_palidx].b = b;
-    sdl_screen->format->palette->colors[sdl_palidx].a = 255;
-
-    if (sdl_screen_host->format->BytesPerPixel == 4/*32bpp*/) {
-        sdl_palmap.map32[sdl_palidx] =
-            ((uint32_t)(r >> sdl_rshiftp) << (uint32_t)sdl_rshift) |
-            ((uint32_t)(g >> sdl_gshiftp) << (uint32_t)sdl_gshift) |
-            ((uint32_t)(b >> sdl_bshiftp) << (uint32_t)sdl_bshift) |
-            (uint32_t)sdl_screen_host->format->Amask;
-    }
-    else if (sdl_screen_host->format->BytesPerPixel == 2/*16bpp*/) {
-        sdl_palmap.map16[sdl_palidx] =
-            ((uint16_t)(r >> sdl_rshiftp) << (uint16_t)sdl_rshift) |
-            ((uint16_t)(g >> sdl_gshiftp) << (uint16_t)sdl_gshift) |
-            ((uint16_t)(b >> sdl_bshiftp) << (uint16_t)sdl_bshift) |
-            (uint16_t)sdl_screen_host->format->Amask;
-    }
-    else {
-        /* I doubt SDL2 fully supports 8bpp 256-color paletted */
-        fprintf(stderr,"Game set palette entry unsupported format\n");
-    }
-
-    sdl_palidx++;
-#endif
-}
-
-static void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int h) {
+void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int h) {
 #if defined(USING_SDL2)
     SDL_Rect dst;
 
@@ -209,18 +168,8 @@ static void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsig
 #endif
 }
 
-static void Game_UpdateScreen_All(void) {
+void Game_UpdateScreen_All(void) {
     Game_UpdateScreen(0,0,sdl_screen->w,sdl_screen->h);
-}
-
-static void Game_FinishPaletteUpdates(void) {
-#if defined(USING_SDL2)
-    /* This code converts from an 8bpp screen so palette animation requires redrawing the whole screen */
-    Game_UpdateScreen_All();
-#else
-    /* this will be a no-op under MS-DOS since our palette writing code will change hardware directly. */
-    /* Windows GDI builds will SetDIBitsToDevice here or call RealizePalette if 256-color mode. */
-#endif
 }
 
 typedef struct GAMEBLT {
