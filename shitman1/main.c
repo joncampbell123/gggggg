@@ -55,6 +55,8 @@ int Game_SpriteInit(void) {
 }
 
 void Game_SpriteShutdown(void) {
+    memset(&Game_Sprite,0,sizeof(Game_Sprite));
+    Game_SpriteCount = 0;
 }
 
 int main(int argc,char **argv) {
