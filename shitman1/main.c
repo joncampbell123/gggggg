@@ -199,14 +199,14 @@ void Game_SpriteDrawBltItem(game_sprite_t * const slot) {
     dptr += (uint16_t)x + ((uint16_t)y * Game_SpriteCompBlt.stride);
 
     if (slot->flags & Game_SS_Flag_Transparent) {
-        while (h > 0) {
+        while (h-- > 0) {
             memcpy_transparent(dptr,sptr,w);
             sptr += slot->stride;
             dptr += Game_SpriteCompBlt.stride;
         }
     }
     else {
-        while (h > 0) {
+        while (h-- > 0) {
             memcpy(dptr,sptr,w);
             sptr += slot->stride;
             dptr += Game_SpriteCompBlt.stride;
