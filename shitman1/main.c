@@ -17,38 +17,11 @@
 #include "game_kev.h"
 #include "game_pal.h"
 #include "game_utl.h"
+#include "game_lgf.h"
 
 #include "gif_lib.h"
 
 unsigned int                    Game_ScreenWidth,Game_ScreenHeight;
-
-GifFileType *FreeGIF(GifFileType *gif) {
-    int err;
-
-    if (gif) DGifCloseFile(gif,&err);
-
-    return NULL;
-}
-
-GifFileType *LoadGIF(const char *path) {
-    GifFileType *gif;
-    int err;
-
-    gif = DGifOpenFileName(path,&err);
-    if (gif == NULL) return NULL;
-
-    /* TODO: How do we read only the first image? */
-    if (DGifSlurp(gif) != GIF_OK) {
-        DGifCloseFile(gif,&err);
-        return NULL;
-    }
-    if (gif->SavedImages.RasterBits == NULL) {
-        DGifCloseFile(gif,&err);
-        return NULL;
-    }
-
-    return gif;
-}
 
 #if defined(USING_SDL2)
 palcnvmap            sdl_palmap;
