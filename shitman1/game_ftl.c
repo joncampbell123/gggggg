@@ -19,6 +19,8 @@
 #include "game_utl.h"
 #include "game_lgf.h"
 #include "game_ftl.h"
+#include "game_gen.h"
+#include "game_vid.h"
 
 void Game_FatalError(const char *fmt,...) {
     va_list va;

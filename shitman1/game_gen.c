@@ -21,6 +21,7 @@
 #include "game_idl.h"
 #include "game_ftl.h"
 #include "game_gen.h"
+#include "game_vid.h"
 
 void Game_Shutdown(void) {
     Game_VideoShutdown();
