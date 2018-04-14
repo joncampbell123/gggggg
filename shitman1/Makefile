@@ -5,7 +5,7 @@ SDL2_LIBS=$(shell pkg-config sdl2 --libs)
 
 SHITMAN=$(bindir)/shitman
 
-SHITMAN_OBJ=$(objdir)/main.o $(objdir)/gif_lib.o $(objdir)/game_kb.o $(objdir)/game_ks.o $(objdir)/game_tm.o $(objdir)/game_ftl.o $(objdir)/game_idl.o $(objdir)/game_gen.o $(objdir)/game_lgf.o $(objdir)/game_kev.o $(objdir)/game_pal.o
+SHITMAN_OBJ=$(objdir)/main.o $(objdir)/gif_lib.o $(objdir)/game_kb.o $(objdir)/game_ks.o $(objdir)/game_tm.o $(objdir)/game_ftl.o $(objdir)/game_idl.o $(objdir)/game_gen.o $(objdir)/game_lgf.o $(objdir)/game_kev.o $(objdir)/game_pal.o $(objdir)/game_vid.o
 
 SHITMAN_CFLAGS=$(SDL2_CFLAGS) -I$(topdir) -std=gnu99 -DLINUX=1
 
@@ -57,6 +57,9 @@ $(objdir)/game_lgf.o: game_lgf.c
 	gcc -c -o $@ $< $(SDL2_CFLAGS) $(SHITMAN_CFLAGS)
 
 $(objdir)/game_pal.o: game_pal.c
+	gcc -c -o $@ $< $(SDL2_CFLAGS) $(SHITMAN_CFLAGS)
+
+$(objdir)/game_vid.o: game_vid.c
 	gcc -c -o $@ $< $(SDL2_CFLAGS) $(SHITMAN_CFLAGS)
 
 $(objdir)/gif_lib.o: gif_lib.c
