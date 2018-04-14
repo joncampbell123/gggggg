@@ -14,6 +14,7 @@
 #include "game_kc.h"
 #include "game_kb.h"
 #include "game_tm.h"
+#include "game_vc.h"
 #include "game_kev.h"
 #include "game_pal.h"
 #include "game_utl.h"
@@ -127,22 +128,6 @@ typedef struct GAMEBLT {
     unsigned char*      bmp;
 #endif
 } GAMEBLT;
-
-void Game_ClearScreen(void) {
-#if defined(USING_SDL2)
-    unsigned char *row;
-
-    if (SDL_MUSTLOCK(sdl_screen))
-        SDL_LockSurface(sdl_screen);
-
-    memset(sdl_screen->pixels,0,sdl_screen->pitch*sdl_screen->h);
-
-    if (SDL_MUSTLOCK(sdl_screen))
-        SDL_UnlockSurface(sdl_screen);
-
-    Game_UpdateScreen_All();
-#endif
-}
 
 /* this checks the x,y,w,h values against the screen, does NOT clip but instead rejects.
  * the game engine is supposed to compose to the memory buffer (with clipping) and then call this function */
