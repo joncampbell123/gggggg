@@ -28,47 +28,11 @@
 
 #include "gif_lib.h"
 
-game_rectxy_t               sprite_update;
-
-void Game_SpriteAddUpdateRect(const int16_t x,const int16_t y,const int16_t w,const int16_t h) {
-    const int16_t x2 = x + w;
-    const int16_t y2 = y + h;
-
-    if (sprite_update.x1 > x)
-        sprite_update.x1 = x;
-    if (sprite_update.y1 > y)
-        sprite_update.y1 = y;
-    if (sprite_update.x2 < x2)
-        sprite_update.x2 = x2;
-    if (sprite_update.y2 < y2)
-        sprite_update.y2 = y2;
-}
-
-void Game_SpriteUpdateComplete(void) {
-    if (sprite_update.x1 < 0)
-        sprite_update.x1 = 0;
-    if (sprite_update.y1 < 0)
-        sprite_update.y1 = 0;
-    if (sprite_update.x2 > Game_ScreenWidth)
-        sprite_update.x2 = Game_ScreenWidth;
-    if (sprite_update.y2 > Game_ScreenHeight)
-        sprite_update.y2 = Game_ScreenHeight;
-}
-
-void Game_SpriteClearUpdate(void) {
-    sprite_update.x1 =  0x7FFF;
-    sprite_update.y1 =  0x7FFF;
-    sprite_update.x2 = -0x7FFF;
-    sprite_update.y2 = -0x7FFF;
-}
-
 int Game_SpriteInit(void) {
-    Game_SpriteClearUpdate();
     return 0;
 }
 
 void Game_SpriteShutdown(void) {
-    Game_SpriteClearUpdate();
 }
 
 int main(int argc,char **argv) {
