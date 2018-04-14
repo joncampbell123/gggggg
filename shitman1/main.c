@@ -180,16 +180,18 @@ void Game_SpriteDrawBltItem(game_sprite_t * const slot) {
         h += y;
         y = 0;
     }
-    if ((uint16_t)(x+w) > Game_SpriteCompBlt.stride)
-                     w  = Game_SpriteCompBlt.stride - x;
-    if ((uint16_t)(y+h) > Game_SpriteCompBlt.src_h)
-                     h  = Game_SpriteCompBlt.src_h - y;
+    if ((x+w) > (int16_t)Game_SpriteCompBlt.stride)
+           w  = (int16_t)(Game_SpriteCompBlt.stride - x);
+    if ((y+h) > (int16_t)Game_SpriteCompBlt.src_h)
+           h  = (int16_t)(Game_SpriteCompBlt.src_h - y);
     if (w <= 0 || h <= 0)
         return;
 
 #if 1/*DEBUG*/
     if (w <= 0 || h <= 0)
         Game_FatalError("sprite redraw w == 0 || h == 0, x=%d y=%d w=%u h=%u",x,y,w,h);
+    if (w > slot->w || h > slot->h)
+        Game_FatalError("sprite redraw w > max || h > max, x=%d y=%d w=%u h=%u",x,y,w,h);
     if (x < 0 || y < 0)
         Game_FatalError("sprite redraw x < 0 || y < 0");
     if ((x+w) > Game_ScreenWidth || (y+h) > Game_ScreenHeight)
@@ -435,7 +437,7 @@ int main(int argc,char **argv) {
     }
 
     {
-        game_sprite_index_t spr,spr2;
+        game_sprite_index_t spr,spr2,spr3;
         unsigned char *bmp;
         GAMEBLT blt;
         int x,y,c;
@@ -491,6 +493,9 @@ int main(int argc,char **argv) {
         spr2 = Game_SpriteAllocSlot();
         if (spr2 == game_sprite_index_none) abort();
 
+        spr3 = Game_SpriteAllocSlot();
+        if (spr3 == game_sprite_index_none) abort();
+
         Game_SpriteSlotSetImage(spr,64,64,64,bmp,0);
         Game_SpriteSlotMove(spr,0,0);
         Game_SpriteSlotShow(spr);
@@ -499,6 +504,10 @@ int main(int argc,char **argv) {
         Game_SpriteSlotMove(spr2,32,32);
         Game_SpriteSlotShow(spr2);
 
+        Game_SpriteSlotSetImage(spr3,64,64,64,bmp,0);
+        Game_SpriteSlotMove(spr2,64,64);
+        Game_SpriteSlotShow(spr3);
+
         Game_SpriteDraw();
 
         a = 0;
@@ -506,16 +515,22 @@ int main(int argc,char **argv) {
             Game_KeyEvent *ev = Game_KeyEvent_Get();
 
             x  = (Game_ScreenWidth / 2) - (64/2);
-            x += ((Game_ScreenWidth / 2) - 0) * sin(a);
+            x += ((Game_ScreenWidth / 2) + 32) * sin(a);
             y  = (Game_ScreenHeight / 2) - (64/2);
-            y += ((Game_ScreenHeight / 2) - 0) * cos(a);
+            y += ((Game_ScreenHeight / 2) + 32) * cos(a);
             Game_SpriteSlotMove(spr,x,y);
 
             x  = (Game_ScreenWidth / 2) - (64/2);
-            x += ((Game_ScreenWidth / 2) - 0) * sin(a/3);
+            x += ((Game_ScreenWidth / 2) - 0) * sin(a*0.99);
             y  = (Game_ScreenHeight / 2) - (64/2);
-            y += ((Game_ScreenHeight / 2) - 0) * cos(a/3);
+            y += ((Game_ScreenHeight / 2) - 0) * cos(a*0.99);
             Game_SpriteSlotMove(spr2,x,y);
+
+            x  = (Game_ScreenWidth / 2) - (64/2);
+            x += ((Game_ScreenWidth / 2) - 32) * sin(a*0.98);
+            y  = (Game_ScreenHeight / 2) - (64/2);
+            y += ((Game_ScreenHeight / 2) - 32) * cos(a*0.98);
+            Game_SpriteSlotMove(spr3,x,y);
 
             Game_SpriteDraw();
 
@@ -541,6 +556,7 @@ int main(int argc,char **argv) {
             Game_Idle();
         } while (1);
 
+        Game_SpriteFreeSlot(spr3);
         Game_SpriteFreeSlot(spr2);
         Game_SpriteFreeSlot(spr);
         Game_SpriteDraw();
