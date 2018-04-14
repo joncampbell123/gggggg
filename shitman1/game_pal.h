@@ -7,4 +7,5 @@ typedef union palcnvmap {
 void Game_BeginPaletteUpdate(unsigned char idx);
 void Game_SetPaletteEntry(unsigned char r,unsigned char g,unsigned char b);
 void Game_FinishPaletteUpdates(void);
+void Game_SetPalette(unsigned char first,unsigned int number,const unsigned char *palette);
 

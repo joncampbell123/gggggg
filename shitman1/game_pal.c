@@ -74,3 +74,18 @@ void Game_FinishPaletteUpdates(void) {
 #endif
 }
 
+void Game_SetPalette(unsigned char first,unsigned int number,const unsigned char *palette) {
+    if ((first+number) > 256)
+        return;
+
+    Game_BeginPaletteUpdate(first);
+
+    while (number-- > 0) {
+        Game_SetPaletteEntry(palette[0],palette[1],palette[2]);
+        palette += 3;
+        first++;
+    }
+
+    Game_FinishPaletteUpdates();
+}
+
