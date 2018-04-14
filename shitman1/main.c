@@ -397,6 +397,17 @@ int main(int argc,char **argv) {
             do {
                 Game_KeyEvent *ev = Game_KeyEvent_Get();
 
+                if (ev != NULL && (ev->state & Game_KS_DOWN)) {
+                    if (ev->code == Game_KC_RETURN)
+                        break;
+                }
+
+                Game_Idle();
+            } while (1);
+
+            do {
+                Game_KeyEvent *ev = Game_KeyEvent_Get();
+
                 if (ev != NULL && !(ev->state & Game_KS_DOWN)) {
                     if (ev->code == Game_KC_RETURN)
                         break;
@@ -447,8 +458,19 @@ int main(int argc,char **argv) {
         do {
             Game_KeyEvent *ev = Game_KeyEvent_Get();
 
-            if (ev != NULL) {
-                if (ev->code == Game_KC_ESCAPE)
+            if (ev != NULL && (ev->state & Game_KS_DOWN)) {
+                if (ev->code == Game_KC_RETURN)
+                    break;
+            }
+
+            Game_Idle();
+        } while (1);
+
+        do {
+            Game_KeyEvent *ev = Game_KeyEvent_Get();
+
+            if (ev != NULL && !(ev->state & Game_KS_DOWN)) {
+                if (ev->code == Game_KC_RETURN)
                     break;
             }
 
