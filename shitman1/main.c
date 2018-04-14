@@ -30,34 +30,29 @@
 
 game_rectxy_t               sprite_update;
 
-void Game_SpriteAddUpdateRect(int16_t x,int16_t y,int16_t w,int16_t h) {
-    if (x < 0) {
-        w += x;
-        x = 0;
-    }
-    if (y < 0) {
-        h += y;
-        y = 0;
-    }
+void Game_SpriteAddUpdateRect(const int16_t x,const int16_t y,const int16_t w,const int16_t h) {
+    const int16_t x2 = x + w;
+    const int16_t y2 = y + h;
 
-    if (w > 0 && h > 0) {
-        int16_t x2 = x + w;
-        int16_t y2 = y + h;
+    if (sprite_update.x1 > x)
+        sprite_update.x1 = x;
+    if (sprite_update.y1 > y)
+        sprite_update.y1 = y;
+    if (sprite_update.x2 < x2)
+        sprite_update.x2 = x2;
+    if (sprite_update.y2 < y2)
+        sprite_update.y2 = y2;
+}
 
-        if (x2 > Game_ScreenWidth)
-            x2 = Game_ScreenWidth;
-        if (y2 > Game_ScreenHeight)
-            y2 = Game_ScreenHeight;
-
-        if (sprite_update.x1 > x)
-            sprite_update.x1 = x;
-        if (sprite_update.y1 > y)
-            sprite_update.y1 = y;
-        if (sprite_update.x2 < x2)
-            sprite_update.x2 = x2;
-        if (sprite_update.y2 < y2)
-            sprite_update.y2 = y2;
-    }
+void Game_SpriteUpdateComplete(void) {
+    if (sprite_update.x1 < 0)
+        sprite_update.x1 = 0;
+    if (sprite_update.y1 < 0)
+        sprite_update.y1 = 0;
+    if (sprite_update.x2 > Game_ScreenWidth)
+        sprite_update.x2 = Game_ScreenWidth;
+    if (sprite_update.y2 > Game_ScreenHeight)
+        sprite_update.y2 = Game_ScreenHeight;
 }
 
 void Game_SpriteClearUpdate(void) {
