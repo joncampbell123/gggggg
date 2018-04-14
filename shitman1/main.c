@@ -218,6 +218,9 @@ void Game_SpriteDrawBlt(void) {
     game_sprite_t *slot;
     unsigned int i;
 
+    /* background */
+    memset(Game_SpriteCompBuffer,0,Game_SpriteCompBlt.stride * Game_SpriteCompBlt.src_h);
+
     for (i=0;i < Game_SpriteCount;i++) {
         slot = &Game_Sprite[i];
         if (slot->flags & Game_SS_Flag_Enabled)
@@ -432,6 +435,7 @@ int main(int argc,char **argv) {
     }
 
     {
+        game_sprite_index_t spr;
         unsigned char *bmp;
         GAMEBLT blt;
         int x,y,c;
@@ -454,6 +458,63 @@ int main(int argc,char **argv) {
             Game_BitBlt(x,y,64,64,&blt);
             Game_Idle();
         }
+
+        do {
+            Game_KeyEvent *ev = Game_KeyEvent_Get();
+
+            if (ev != NULL && (ev->state & Game_KS_DOWN)) {
+                if (ev->code == Game_KC_RETURN)
+                    break;
+            }
+
+            Game_Idle();
+        } while (1);
+
+        do {
+            Game_KeyEvent *ev = Game_KeyEvent_Get();
+
+            if (ev != NULL && !(ev->state & Game_KS_DOWN)) {
+                if (ev->code == Game_KC_RETURN)
+                    break;
+            }
+
+            Game_Idle();
+        } while (1);
+
+        /* sprite rendering test */
+        Game_SpriteDraw();
+
+        spr = Game_SpriteAllocSlot();
+        if (spr == game_sprite_index_none) abort();
+        Game_SpriteSlotSetImage(spr,64,64,64,bmp,0);
+        Game_SpriteSlotMove(spr,0,0);
+        Game_SpriteSlotShow(spr);
+        Game_SpriteDraw();
+
+        do {
+            Game_KeyEvent *ev = Game_KeyEvent_Get();
+
+            if (ev != NULL && (ev->state & Game_KS_DOWN)) {
+                if (ev->code == Game_KC_RETURN)
+                    break;
+            }
+
+            Game_Idle();
+        } while (1);
+
+        do {
+            Game_KeyEvent *ev = Game_KeyEvent_Get();
+
+            if (ev != NULL && !(ev->state & Game_KS_DOWN)) {
+                if (ev->code == Game_KC_RETURN)
+                    break;
+            }
+
+            Game_Idle();
+        } while (1);
+
+        Game_SpriteFreeSlot(spr);
+        Game_SpriteDraw();
 
         do {
             Game_KeyEvent *ev = Game_KeyEvent_Get();
