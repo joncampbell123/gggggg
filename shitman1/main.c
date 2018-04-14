@@ -12,6 +12,7 @@
 #include "game_ks.h"
 #include "game_kc.h"
 #include "game_kb.h"
+#include "game_tm.h"
 #include "game_kev.h"
 
 #include "gif_lib.h"
@@ -233,16 +234,6 @@ typedef struct GAMEBLT {
     unsigned char*      bmp;
 #endif
 } GAMEBLT;
-
-unsigned int Game_GetTime(void) {
-    return SDL_GetTicks();
-}
-
-void Game_Delay(const unsigned int ms) {
-#if defined(USING_SDL2)
-    SDL_Delay(ms);
-#endif
-}
 
 void Game_ClearScreen(void) {
 #if defined(USING_SDL2)
