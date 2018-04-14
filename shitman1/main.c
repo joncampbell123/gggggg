@@ -8,117 +8,12 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+#include "game.h"
+#include "game_ks.h"
+#include "game_kc.h"
+#include "game_kev.h"
+
 #include "gif_lib.h"
-
-#ifndef O_BINARY
-#define O_BINARY (0)
-#endif
-
-#if defined(LINUX)
-# define USING_SDL2
-#endif
-
-#if defined(USING_SDL2)
-# include <SDL2/SDL.h>
-#endif
-
-typedef uint8_t                 Game_KeyState;
-
-#define Game_KS_DOWN            (1U << 0U)
-#define Game_KS_LCTRL           (1U << 1U)
-#define Game_KS_RCTRL           (1U << 2U)
-#define Game_KS_LALT            (1U << 3U)
-#define Game_KS_RALT            (1U << 4U)
-#define Game_KS_LSHIFT          (1U << 5U)
-#define Game_KS_RSHIFT          (1U << 6U)
-
-#define Game_KS_CTRL            (Game_KS_LCTRL  | Game_KS_RCTRL)
-#define Game_KS_ALT             (Game_KS_LALT   | Game_KS_RALT)
-#define Game_KS_SHIFT           (Game_KS_LSHIFT | Game_KS_RSHIFT)
-
-#if defined(USING_SDL2)
-# define Game_KeyEventQueueMax  256
-typedef uint16_t                Game_KeyCode;/*SDL_SCANCODE_*/
-
-# define Game_KC_ESCAPE         SDL_SCANCODE_ESCAPE
-# define Game_KC_A              SDL_SCANCODE_A
-# define Game_KC_B              SDL_SCANCODE_B
-# define Game_KC_C              SDL_SCANCODE_C
-# define Game_KC_D              SDL_SCANCODE_D
-# define Game_KC_E              SDL_SCANCODE_E
-# define Game_KC_F              SDL_SCANCODE_F
-# define Game_KC_G              SDL_SCANCODE_G
-# define Game_KC_H              SDL_SCANCODE_H
-# define Game_KC_I              SDL_SCANCODE_I
-# define Game_KC_J              SDL_SCANCODE_J
-# define Game_KC_K              SDL_SCANCODE_K
-# define Game_KC_L              SDL_SCANCODE_L
-# define Game_KC_M              SDL_SCANCODE_M
-# define Game_KC_N              SDL_SCANCODE_N
-# define Game_KC_O              SDL_SCANCODE_O
-# define Game_KC_P              SDL_SCANCODE_P
-# define Game_KC_Q              SDL_SCANCODE_Q
-# define Game_KC_R              SDL_SCANCODE_R
-# define Game_KC_S              SDL_SCANCODE_S
-# define Game_KC_T              SDL_SCANCODE_T
-# define Game_KC_U              SDL_SCANCODE_U
-# define Game_KC_V              SDL_SCANCODE_V
-# define Game_KC_W              SDL_SCANCODE_W
-# define Game_KC_X              SDL_SCANCODE_X
-# define Game_KC_Y              SDL_SCANCODE_Y
-# define Game_KC_Z              SDL_SCANCODE_Z
-# define Game_KC_1              SDL_SCANCODE_1
-# define Game_KC_2              SDL_SCANCODE_2
-# define Game_KC_3              SDL_SCANCODE_3
-# define Game_KC_4              SDL_SCANCODE_4
-# define Game_KC_5              SDL_SCANCODE_5
-# define Game_KC_6              SDL_SCANCODE_6
-# define Game_KC_7              SDL_SCANCODE_7
-# define Game_KC_8              SDL_SCANCODE_8
-# define Game_KC_9              SDL_SCANCODE_9
-# define Game_KC_0              SDL_SCANCODE_0
-# define Game_KC_RETURN         SDL_SCANCODE_RETURN
-# define Game_KC_ESCAPE         SDL_SCANCODE_ESCAPE
-# define Game_KC_BACKSPACE      SDL_SCANCODE_BACKSPACE
-# define Game_KC_TAB            SDL_SCANCODE_TAB
-# define Game_KC_SPACE          SDL_SCANCODE_SPACE
-# define Game_KC_COMMA          SDL_SCANCODE_COMMA
-# define Game_KC_PERIOD         SDL_SCANCODE_PERIOD
-# define Game_KC_SLASH          SDL_SCANCODE_SLASH
-# define Game_KC_CAPSLOCK       SDL_SCANCODE_CAPSLOCK
-# define Game_KC_F1             SDL_SCANCODE_F1
-# define Game_KC_F2             SDL_SCANCODE_F2
-# define Game_KC_F3             SDL_SCANCODE_F3
-# define Game_KC_F4             SDL_SCANCODE_F4
-# define Game_KC_F5             SDL_SCANCODE_F5
-# define Game_KC_F6             SDL_SCANCODE_F6
-# define Game_KC_F7             SDL_SCANCODE_F7
-# define Game_KC_F8             SDL_SCANCODE_F8
-# define Game_KC_F9             SDL_SCANCODE_F9
-# define Game_KC_F10            SDL_SCANCODE_F10
-# define Game_KC_F11            SDL_SCANCODE_F11
-# define Game_KC_F12            SDL_SCANCODE_F12
-# define Game_KC_PRINTSCREEN    SDL_SCANCODE_PRINTSCREEN
-# define Game_KC_SCROLLLOCK     SDL_SCANCODE_SCROLLLOCK
-# define Game_KC_PAUSE          SDL_SCANCODE_PAUSE
-# define Game_KC_INSERT         SDL_SCANCODE_INSERT
-# define Game_KC_HOME           SDL_SCANCODE_HOME
-# define Game_KC_PAGEUP         SDL_SCANCODE_PAGEUP
-# define Game_KC_DELETE         SDL_SCANCODE_DELETE
-# define Game_KC_END            SDL_SCANCODE_END
-# define Game_KC_PAGEDOWN       SDL_SCANCODE_PAGEDOWN
-# define Game_KC_RIGHT          SDL_SCANCODE_RIGHT
-# define Game_KC_LEFT           SDL_SCANCODE_LEFT
-# define Game_KC_DOWN           SDL_SCANCODE_DOWN
-# define Game_KC_UP             SDL_SCANCODE_UP
-#else
-#error TODO
-#endif
-
-typedef struct Game_KeyEvent {
-    Game_KeyCode                code;
-    Game_KeyState               state;
-} Game_KeyEvent;
 
 typedef union palcnvmap {
     uint16_t                    map16[256];
@@ -151,9 +46,6 @@ typedef struct Game_ResEntry {
 
 Game_ResEntry                   Game_Res[Game_RE_MAX];
 
-unsigned int                    Game_KeyShiftState;
-Game_KeyEvent                   Game_KeyQueue[Game_KeyEventQueueMax];
-unsigned int                    Game_KeyQueue_In,Game_KeyQueue_Out;
 unsigned int                    Game_ScreenWidth,Game_ScreenHeight;
 
 GifFileType *FreeGIF(GifFileType *gif) {
@@ -182,46 +74,6 @@ GifFileType *LoadGIF(const char *path) {
     }
 
     return gif;
-}
-
-void Game_KeyShiftStateSet(unsigned int f,unsigned char s) {
-    if (s)
-        Game_KeyShiftState |=  f;
-    else
-        Game_KeyShiftState &= ~f;
-}
-
-Game_KeyEvent *Game_KeyEvent_Peek(void) {
-    if (Game_KeyQueue_Out != Game_KeyQueue_In)
-        return Game_KeyQueue + Game_KeyQueue_Out;
-
-    return NULL;
-}
-
-Game_KeyEvent *Game_KeyEvent_Get(void) {
-    Game_KeyEvent *ev = Game_KeyEvent_Peek();
-
-    if (ev != NULL) {
-        if ((++Game_KeyQueue_Out) >= Game_KeyEventQueueMax)
-            Game_KeyQueue_Out = 0;
-    }
-
-    return ev;
-}
-
-Game_KeyEvent *Game_KeyEvent_Add(void) {
-    unsigned int nidx = (Game_KeyQueue_In + 1) % Game_KeyEventQueueMax;
-
-    if (nidx != Game_KeyQueue_Out) {
-        Game_KeyEvent *ev = Game_KeyQueue + Game_KeyQueue_In;
-
-        memset(ev,0,sizeof(ev));
-        Game_KeyQueue_In = nidx;
-
-        return ev;
-    }
-
-    return NULL;
 }
 
 static inline unsigned int clamp0(int x) {
