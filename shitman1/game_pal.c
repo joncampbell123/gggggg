@@ -27,6 +27,8 @@ extern unsigned char        sdl_bshift,sdl_bshiftp;
 extern unsigned char        sdl_palidx;
 #endif
 
+void Game_UpdateScreen_All(void);
+
 void Game_BeginPaletteUpdate(unsigned char idx) {
 #if defined(USING_SDL2)
     sdl_palidx = idx;
