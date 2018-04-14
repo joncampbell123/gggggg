@@ -20,6 +20,7 @@
 #include "game_lgf.h"
 #include "game_idl.h"
 #include "game_ftl.h"
+#include "game_gen.h"
 
 #include "gif_lib.h"
 
@@ -293,11 +294,6 @@ void Game_VideoShutdown(void) {
 
     Game_ScreenWidth = 0;
     Game_ScreenHeight = 0;
-}
-
-void Game_Shutdown(void) {
-    Game_VideoShutdown();
-    Game_KeyboardShutdown();
 }
 
 int main(int argc,char **argv) {
