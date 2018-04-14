@@ -92,25 +92,32 @@ static SDL_Window*          sdl_screen_window = NULL;
 static unsigned char        sdl_rshift,sdl_rshiftp;
 static unsigned char        sdl_gshift,sdl_gshiftp;
 static unsigned char        sdl_bshift,sdl_bshiftp;
+static unsigned char        sdl_palidx=0;
 #endif
 
-/* NTS: No guarantee that the change is immediately visible, especially with SDL */
-static void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned char g,unsigned char b) {
+static void Game_BeginPaletteUpdate(unsigned char idx) {
 #if defined(USING_SDL2)
-    sdl_screen->format->palette->colors[entry].r = r;
-    sdl_screen->format->palette->colors[entry].g = g;
-    sdl_screen->format->palette->colors[entry].b = b;
-    sdl_screen->format->palette->colors[entry].a = 255;
+    sdl_palidx = idx;
+#endif
+}
+
+/* NTS: No guarantee that the change is immediately visible, especially with SDL */
+static void Game_SetPaletteEntry(unsigned char r,unsigned char g,unsigned char b) {
+#if defined(USING_SDL2)
+    sdl_screen->format->palette->colors[sdl_palidx].r = r;
+    sdl_screen->format->palette->colors[sdl_palidx].g = g;
+    sdl_screen->format->palette->colors[sdl_palidx].b = b;
+    sdl_screen->format->palette->colors[sdl_palidx].a = 255;
 
     if (sdl_screen_host->format->BytesPerPixel == 4/*32bpp*/) {
-        sdl_palmap.map32[entry] =
+        sdl_palmap.map32[sdl_palidx] =
             ((uint32_t)(r >> sdl_rshiftp) << (uint32_t)sdl_rshift) |
             ((uint32_t)(g >> sdl_gshiftp) << (uint32_t)sdl_gshift) |
             ((uint32_t)(b >> sdl_bshiftp) << (uint32_t)sdl_bshift) |
             (uint32_t)sdl_screen_host->format->Amask;
     }
     else if (sdl_screen_host->format->BytesPerPixel == 2/*16bpp*/) {
-        sdl_palmap.map16[entry] =
+        sdl_palmap.map16[sdl_palidx] =
             ((uint16_t)(r >> sdl_rshiftp) << (uint16_t)sdl_rshift) |
             ((uint16_t)(g >> sdl_gshiftp) << (uint16_t)sdl_gshift) |
             ((uint16_t)(b >> sdl_bshiftp) << (uint16_t)sdl_bshift) |
@@ -120,6 +127,8 @@ static void Game_SetPaletteEntry(unsigned char entry,unsigned char r,unsigned ch
         /* I doubt SDL2 fully supports 8bpp 256-color paletted */
         fprintf(stderr,"Game set palette entry unsupported format\n");
     }
+
+    sdl_palidx++;
 #endif
 }
 
@@ -301,8 +310,10 @@ void Game_SetPalette(unsigned char first,unsigned int number,const unsigned char
     if ((first+number) > 256)
         return;
 
+    Game_BeginPaletteUpdate(first);
+
     while (number-- > 0) {
-        Game_SetPaletteEntry(first,palette[0],palette[1],palette[2]);
+        Game_SetPaletteEntry(palette[0],palette[1],palette[2]);
         palette += 3;
         first++;
     }
