@@ -15,17 +15,7 @@
 #include "game_tm.h"
 #include "game_kev.h"
 #include "game_pal.h"
-
-#if defined(USING_SDL2)
-extern palcnvmap            sdl_palmap;
-extern SDL_Surface*         sdl_screen;
-extern SDL_Surface*         sdl_screen_host;
-extern SDL_Window*          sdl_screen_window;
-extern unsigned char        sdl_rshift,sdl_rshiftp;
-extern unsigned char        sdl_gshift,sdl_gshiftp;
-extern unsigned char        sdl_bshift,sdl_bshiftp;
-extern unsigned char        sdl_palidx;
-#endif
+#include "game_vid.h"
 
 void Game_UpdateScreen_All(void);
 
