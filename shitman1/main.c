@@ -310,18 +310,6 @@ void Game_SetPalette(unsigned char first,unsigned int number,const unsigned char
     Game_FinishPaletteUpdates();
 }
 
-void Game_FatalError(const char *fmt,...) {
-    va_list va;
-
-    va_start(va,fmt);
-    fprintf(stderr,"Game_FatalError: ");
-    vfprintf(stderr,fmt,va);
-    fprintf(stderr,"\n");
-    va_end(va);
-
-    exit(0);
-}
-
 int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
 #if defined(USING_SDL2)
     if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
@@ -466,14 +454,35 @@ void Game_Idle(void) {
 #endif
 }
 
+void Game_Shutdown(void) {
+    Game_VideoShutdown();
+    Game_KeyboardShutdown();
+}
+
+void Game_FatalError(const char *fmt,...) {
+    va_list va;
+
+    Game_Shutdown();
+
+    va_start(va,fmt);
+    fprintf(stderr,"Game_FatalError: ");
+    vfprintf(stderr,fmt,va);
+    fprintf(stderr,"\n");
+    va_end(va);
+
+    exit(0);
+}
+
 int main(int argc,char **argv) {
     if (Game_KeyboardInit() < 0) {
         fprintf(stderr,"Keyboard init failed\n");
-        goto exit;
+        Game_Shutdown();
+        return 1;
     }
     if (Game_VideoInit(320,240) < 0) {
         fprintf(stderr,"Video init failed\n");
-        goto exit;
+        Game_Shutdown();
+        return 1;
     }
 
     {
@@ -572,9 +581,7 @@ int main(int argc,char **argv) {
         free(bmp);
     }
 
-exit:
-    Game_VideoShutdown();
-    Game_KeyboardShutdown();
+    Game_Shutdown();
     return 0;
 }
 
