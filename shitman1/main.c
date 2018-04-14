@@ -335,12 +335,6 @@ int Game_KeyboardInit(void) {
     return 0;
 }
 
-void Game_FlushKeyboardQueue(void) {
-    Game_KeyQueue_In=0;
-    Game_KeyQueue_Out=0;
-    Game_KeyShiftState=0;
-}
-
 int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
 #if defined(USING_SDL2)
     if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {

@@ -16,6 +16,12 @@
 Game_KeyEvent                   Game_KeyQueue[Game_KeyEventQueueMax];
 unsigned int                    Game_KeyQueue_In,Game_KeyQueue_Out;
 
+void Game_FlushKeyboardQueue(void) {
+    Game_KeyQueue_In=0;
+    Game_KeyQueue_Out=0;
+    Game_KeyShiftState=0;
+}
+
 Game_KeyEvent *Game_KeyEvent_Peek(void) {
     if (Game_KeyQueue_Out != Game_KeyQueue_In)
         return Game_KeyQueue + Game_KeyQueue_Out;
