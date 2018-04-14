@@ -24,8 +24,7 @@
 #include "game_gen.h"
 #include "game_vid.h"
 #include "game_vbl.h"
-
-void Game_UpdateScreen(unsigned int x,unsigned int y,unsigned int w,unsigned int h);
+#include "game_vup.h"
 
 /* this checks the x,y,w,h values against the screen, does NOT clip but instead rejects.
  * the game engine is supposed to compose to the memory buffer (with clipping) and then call this function */

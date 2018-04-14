@@ -16,8 +16,7 @@
 #include "game_kev.h"
 #include "game_pal.h"
 #include "game_vid.h"
-
-void Game_UpdateScreen_All(void);
+#include "game_vup.h"
 
 void Game_BeginPaletteUpdate(unsigned char idx) {
 #if defined(USING_SDL2)

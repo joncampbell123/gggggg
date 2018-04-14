@@ -23,8 +23,7 @@
 #include "game_ftl.h"
 #include "game_gen.h"
 #include "game_vid.h"
-
-void Game_UpdateScreen_All(void);
+#include "game_vup.h"
 
 void Game_ClearScreen(void) {
 #if defined(USING_SDL2)
