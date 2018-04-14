@@ -28,6 +28,13 @@
 
 #include "gif_lib.h"
 
+int Game_SpriteInit(void) {
+    return 0;
+}
+
+void Game_SpriteShutdown(void) {
+}
+
 int main(int argc,char **argv) {
     if (Game_KeyboardInit() < 0) {
         fprintf(stderr,"Keyboard init failed\n");
@@ -36,6 +43,11 @@ int main(int argc,char **argv) {
     }
     if (Game_VideoInit(320,240) < 0) {
         fprintf(stderr,"Video init failed\n");
+        Game_Shutdown();
+        return 1;
+    }
+    if (Game_SpriteInit() < 0) {
+        fprintf(stderr,"Sprite init failed\n");
         Game_Shutdown();
         return 1;
     }
