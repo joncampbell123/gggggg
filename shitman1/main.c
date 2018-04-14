@@ -18,6 +18,7 @@
 #include "game_pal.h"
 #include "game_utl.h"
 #include "game_lgf.h"
+#include "game_ftl.h"
 
 #include "gif_lib.h"
 
@@ -335,20 +336,6 @@ void Game_Idle(void) {
 void Game_Shutdown(void) {
     Game_VideoShutdown();
     Game_KeyboardShutdown();
-}
-
-void Game_FatalError(const char *fmt,...) {
-    va_list va;
-
-    Game_Shutdown();
-
-    va_start(va,fmt);
-    fprintf(stderr,"Game_FatalError: ");
-    vfprintf(stderr,fmt,va);
-    fprintf(stderr,"\n");
-    va_end(va);
-
-    exit(0);
 }
 
 int main(int argc,char **argv) {
