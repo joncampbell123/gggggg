@@ -20,32 +20,6 @@ typedef union palcnvmap {
     uint32_t                    map32[256];
 } palcnvmap;
 
-enum Game_ResType {
-    Game_RT_None=0,
-    Game_RT_Other,
-
-    Game_RT_MAX
-};
-
-enum Game_ResEnum {
-    Game_RE_NULL,
-
-    Game_RE_MAX
-};
-
-typedef struct Game_ResEntry {
-    uint32_t                    res_size;
-#if TARGET_MSDOS == 16
-    unsigned char far*          ptr;
-#else
-    unsigned char*              ptr;
-#endif
-    uint8_t                     res_type;
-    uint8_t                     lockcount;
-} Game_ResEntry;
-
-Game_ResEntry                   Game_Res[Game_RE_MAX];
-
 unsigned int                    Game_ScreenWidth,Game_ScreenHeight;
 
 GifFileType *FreeGIF(GifFileType *gif) {
@@ -347,129 +321,6 @@ void Game_FatalError(const char *fmt,...) {
     exit(0);
 }
 
-int Game_ResAllocMem(unsigned int i,uint32_t sz,unsigned int type) {
-    if (i < Game_RE_MAX && sz != 0UL) {
-        if (Game_Res[i].ptr == NULL) {
-            Game_Res[i].res_type = type;
-            Game_Res[i].res_size = sz;
-
-#if TARGET_MSDOS == 16
-            if (sizeof(size_t) == 2 && sz > 0xFFF0UL) return -1; /* perhaps the memory model forces the _fmalloc param to 16-bit wide... */
-            Game_Res[i].ptr = _fmalloc((size_t)sz);
-#else
-            Game_Res[i].ptr = malloc(sz);
-#endif
-            if (Game_Res[i].ptr != NULL) return 0;
-        }
-        else if (Game_Res[i].res_size == sz && Game_Res[i].res_type == type) {
-            return 0;
-        }
-    }
-
-    return -1;
-}
-
-int Game_ResLoadFile(unsigned int i,uint32_t ofs,uint32_t sz,unsigned int type,const char *path) {
-    if (i < Game_RE_MAX) {
-        int fd=-1,res=-1;
-
-        if (sz == 0UL) {
-            /* sz == 0 means whatever size the file takes */
-            struct stat st;
-
-            if (stat(path,&st) != 0)
-                return -1;
-
-            /* sanity check */
-            if (sizeof(size_t) == 2 && st.st_size > 0xFFF0UL)
-                return -1;
-            if (st.st_size > 0x1FFF0UL) /* 128KB */
-                return -1;
-
-            sz = (uint32_t)st.st_size;
-        }
-
-        if (Game_ResAllocMem(i,sz,type) < 0)
-            return -1;
-
-        if (Game_Res[i].ptr == NULL)
-            Game_FatalError("LoadFile: Resource didn't allocate");
-
-        fd = open(path,O_BINARY|O_RDONLY);
-        if (fd >= 0) {
-            if (lseek(fd,(off_t)ofs,SEEK_SET) == (off_t)ofs) {
-#if TARGET_MSDOS == 16
-# error TODO
-#else
-                if (read(fd,Game_Res[i].ptr,sz) == sz)
-                    res = 0;
-#endif
-            }
-
-            close(fd);
-        }
-
-        return res;
-    }
-
-    return -1;
-}
-
-void Game_ResLock(unsigned int i) {
-    if (i < Game_RE_MAX) {
-        if (Game_Res[i].ptr != NULL) {
-            if (++Game_Res[i].lockcount == 255)
-                Game_FatalError("Game_ResLock: Too many locks on resource");
-        }
-    }
-}
-
-void Game_ResUnlock(unsigned int i) {
-    if (i < Game_RE_MAX) {
-        if (Game_Res[i].ptr != NULL) {
-            if (Game_Res[i].lockcount != 0)
-                Game_Res[i].lockcount--;
-            else
-                Game_FatalError("Game_ResUnlock: Attempt to unlock already unlocked resource");
-        }
-    }
-}
-
-void Game_ResFreeMem(unsigned int i) {
-    if (i < Game_RE_MAX) {
-        if (Game_Res[i].ptr != NULL) {
-            if (Game_Res[i].lockcount != 0) Game_FatalError("Attempt to free locked resource mem");
-#if TARGET_MSDOS == 16
-            _ffree(Game_Res[i].ptr);
-#else
-            free(Game_Res[i].ptr);
-#endif
-            Game_Res[i].ptr = NULL;
-        }
-    }
-}
-
-void Game_ResFree(unsigned int i) {
-    if (i < Game_RE_MAX) {
-        Game_ResFreeMem(i);
-        Game_Res[i].res_type = Game_RT_None;
-        Game_Res[i].res_size = 0;
-    }
-}
-
-void Game_ResourceInit(void) {
-    memset(&Game_Res,0,sizeof(Game_Res));
-}
-
-void Game_ResourceShutdown(void) {
-    unsigned int i;
-
-    for (i=0;i < Game_RE_MAX;i++) {
-        Game_Res[i].lockcount = 0;
-        Game_ResFree(i);
-    }
-}
-
 int Game_KeyboardInit(void) {
 #if defined(USING_SDL2)
     if (SDL_InitSubSystem(SDL_INIT_EVENTS) != 0) {
@@ -641,7 +492,6 @@ void Game_Idle(void) {
 }
 
 int main(int argc,char **argv) {
-    Game_ResourceInit();
     if (Game_KeyboardInit() < 0) {
         fprintf(stderr,"Keyboard init failed\n");
         goto exit;
@@ -750,7 +600,6 @@ int main(int argc,char **argv) {
 exit:
     Game_VideoShutdown();
     Game_KeyboardShutdown();
-    Game_ResourceShutdown();
     return 0;
 }
 
