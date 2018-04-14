@@ -180,16 +180,16 @@ void Game_SpriteDrawBltItem(game_sprite_t * const slot) {
         h += y;
         y = 0;
     }
-    if (w <= 0 || h <= 0)
-        return;
     if ((uint16_t)(x+w) > Game_SpriteCompBlt.stride)
                      w  = Game_SpriteCompBlt.stride - x;
     if ((uint16_t)(y+h) > Game_SpriteCompBlt.src_h)
                      h  = Game_SpriteCompBlt.src_h - y;
+    if (w <= 0 || h <= 0)
+        return;
 
 #if 1/*DEBUG*/
     if (w <= 0 || h <= 0)
-        Game_FatalError("sprite redraw w == 0 || h == 0");
+        Game_FatalError("sprite redraw w == 0 || h == 0, x=%d y=%d w=%u h=%u",x,y,w,h);
     if (x < 0 || y < 0)
         Game_FatalError("sprite redraw x < 0 || y < 0");
     if ((x+w) > Game_ScreenWidth || (y+h) > Game_ScreenHeight)
@@ -435,10 +435,11 @@ int main(int argc,char **argv) {
     }
 
     {
-        game_sprite_index_t spr;
+        game_sprite_index_t spr,spr2;
         unsigned char *bmp;
         GAMEBLT blt;
         int x,y,c;
+        double a;
 
         bmp = malloc(64*64);
         blt.src_h = 64;
@@ -486,13 +487,37 @@ int main(int argc,char **argv) {
 
         spr = Game_SpriteAllocSlot();
         if (spr == game_sprite_index_none) abort();
+
+        spr2 = Game_SpriteAllocSlot();
+        if (spr2 == game_sprite_index_none) abort();
+
         Game_SpriteSlotSetImage(spr,64,64,64,bmp,0);
         Game_SpriteSlotMove(spr,0,0);
         Game_SpriteSlotShow(spr);
+
+        Game_SpriteSlotSetImage(spr2,64,64,64,bmp,0);
+        Game_SpriteSlotMove(spr2,32,32);
+        Game_SpriteSlotShow(spr2);
+
         Game_SpriteDraw();
 
+        a = 0;
         do {
             Game_KeyEvent *ev = Game_KeyEvent_Get();
+
+            x  = (Game_ScreenWidth / 2) - (64/2);
+            x += ((Game_ScreenWidth / 2) - 0) * sin(a);
+            y  = (Game_ScreenHeight / 2) - (64/2);
+            y += ((Game_ScreenHeight / 2) - 0) * cos(a);
+            Game_SpriteSlotMove(spr,x,y);
+
+            x  = (Game_ScreenWidth / 2) - (64/2);
+            x += ((Game_ScreenWidth / 2) - 0) * sin(a/3);
+            y  = (Game_ScreenHeight / 2) - (64/2);
+            y += ((Game_ScreenHeight / 2) - 0) * cos(a/3);
+            Game_SpriteSlotMove(spr2,x,y);
+
+            Game_SpriteDraw();
 
             if (ev != NULL && (ev->state & Game_KS_DOWN)) {
                 if (ev->code == Game_KC_RETURN)
@@ -500,6 +525,9 @@ int main(int argc,char **argv) {
             }
 
             Game_Idle();
+            Game_Delay(1000 / 60);
+
+            a += M_PI / (60 * 1);
         } while (1);
 
         do {
@@ -513,6 +541,7 @@ int main(int argc,char **argv) {
             Game_Idle();
         } while (1);
 
+        Game_SpriteFreeSlot(spr2);
         Game_SpriteFreeSlot(spr);
         Game_SpriteDraw();
 
