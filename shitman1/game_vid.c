@@ -25,17 +25,17 @@
 
 void Game_ClearScreen(void);
 
-unsigned int                Game_ScreenWidth,Game_ScreenHeight;
+unsigned int            Game_ScreenWidth,Game_ScreenHeight;
 
 #if defined(USING_SDL2)
-palcnvmap            sdl_palmap;
-SDL_Surface*         sdl_screen = NULL;
-SDL_Surface*         sdl_screen_host = NULL;
-SDL_Window*          sdl_screen_window = NULL;
-unsigned char        sdl_rshift,sdl_rshiftp;
-unsigned char        sdl_gshift,sdl_gshiftp;
-unsigned char        sdl_bshift,sdl_bshiftp;
-unsigned char        sdl_palidx=0;
+palcnvmap               sdl_palmap;
+SDL_Surface*            sdl_screen = NULL;
+SDL_Surface*            sdl_screen_host = NULL;
+SDL_Window*             sdl_screen_window = NULL;
+unsigned char           sdl_rshift,sdl_rshiftp;
+unsigned char           sdl_gshift,sdl_gshiftp;
+unsigned char           sdl_bshift,sdl_bshiftp;
+unsigned char           sdl_palidx=0;
 #endif
 
 int Game_VideoInit(unsigned int screen_w,unsigned int screen_h) {
