@@ -20,7 +20,7 @@ std::string                                             cwd;
 typedef std::pair<std::string,struct stat>              dirlist_entry_t;
 
 std::vector<dirlist_entry_t>                            dirlist;
-int                                                     dirlist_sel = -1;
+size_t                                                  dirlist_sel;
 
 char                                                    redraw = 1;
 
@@ -110,6 +110,7 @@ int main() {
     tcsetattr(0/*STDIN*/,TCSANOW,&nterm);
 
     scan_dir();
+    dirlist_sel = 0;
 
     do {
         if (redraw) {
