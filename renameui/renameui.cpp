@@ -13,7 +13,17 @@
 std::vector< std::pair<std::string,struct stat> >       dirlist;
 int                                                     dirlist_sel = -1;
 
+struct termios                                          oterm,nterm;
+
 int main() {
+    tcgetattr(0/*STDIN*/,&oterm);
+    nterm = oterm;
+    nterm.c_lflag &= ~ICANON;
+    tcsetattr(0/*STDIN*/,TCSANOW,&nterm);
+
+
+
+    tcsetattr(0/*STDIN*/,TCSANOW,&oterm);
     return 0;
 }
 
