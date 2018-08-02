@@ -23,6 +23,28 @@ char read_char(void) {
     return c;
 }
 
+std::string read_in(void) {
+    std::string ret;
+    char c;
+
+    c = read_char();
+    ret += c;
+
+    if (c == 27) {
+        c = read_char();
+        ret += c;
+
+        if (c == '[') {
+            do {
+                c = read_char();
+                ret += c;
+            } while(isdigit(c));
+        }
+    }
+
+    return ret;
+}
+
 int main() {
     tcgetattr(0/*STDIN*/,&oterm);
     nterm = oterm;
