@@ -15,6 +15,14 @@ int                                                     dirlist_sel = -1;
 
 struct termios                                          oterm,nterm;
 
+char read_char(void) {
+    char c = 0;
+
+    read(0/*STDIN*/,&c,1);
+
+    return c;
+}
+
 int main() {
     tcgetattr(0/*STDIN*/,&oterm);
     nterm = oterm;
