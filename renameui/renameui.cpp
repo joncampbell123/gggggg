@@ -21,6 +21,7 @@ typedef std::pair<std::string,struct stat>              dirlist_entry_t;
 
 std::vector<dirlist_entry_t>                            dirlist;
 size_t                                                  dirlist_sel;
+size_t                                                  dirlist_scroll;
 
 char                                                    redraw = 1;
 
@@ -95,6 +96,17 @@ std::string read_in(void) {
     return ret;
 }
 
+void draw_dir(void) {
+    unsigned int y;
+
+    printf("\x1B[0m");
+    printf("\x1B[2J");
+    printf("\x1B[H");
+    fflush(stdout);
+
+    printf("In: %s\n",cwd.c_str());
+}
+
 int main() {
     std::string in;
 
@@ -106,14 +118,16 @@ int main() {
 
     tcgetattr(0/*STDIN*/,&oterm);
     nterm = oterm;
-    nterm.c_lflag &= ~ICANON;
+    nterm.c_lflag &= ~(ICANON|ECHO|ECHOE|ECHOK);
     tcsetattr(0/*STDIN*/,TCSANOW,&nterm);
 
     scan_dir();
     dirlist_sel = 0;
+    dirlist_scroll = 0;
 
     do {
         if (redraw) {
+            draw_dir();
             redraw = 0;
         }
 
