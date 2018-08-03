@@ -159,6 +159,8 @@ void draw_row(int sy,size_t sel) {
     printf("%s\n",temp_render);
 }
 
+#define TOPLIST_ROW 2
+
 void draw_dir(void) {
     unsigned int y;
 
@@ -171,8 +173,8 @@ void draw_dir(void) {
 
     draw_info(dirlist_sel);
 
-    for (y=2;y <= screen_rows;y++)
-        draw_row(y, dirlist_scroll+y-2);
+    for (y=TOPLIST_ROW;y <= screen_rows;y++)
+        draw_row(y, dirlist_scroll+y-TOPLIST_ROW);
 }
 
 int main() {
@@ -202,6 +204,35 @@ int main() {
         in = read_in();
         if (in.empty()) break;
         if (in == "\x1B" || in == "\x1B\x1B") break;
+
+        if (in == "\x1B[A") { /* up arrow */
+            if (dirlist_sel > 0) {
+                dirlist_sel--;
+                if (dirlist_scroll > dirlist_sel) {
+                    dirlist_scroll = dirlist_sel;
+                    redraw = 1;
+                }
+                else {
+                    draw_row(dirlist_sel +     TOPLIST_ROW - dirlist_scroll, dirlist_sel    );
+                    draw_row(dirlist_sel + 1 + TOPLIST_ROW - dirlist_scroll, dirlist_sel + 1);
+                }
+            }
+        }
+        else if (in == "\x1B[B") { /* down arrow */
+            if (dirlist.size() != 0) {
+                if (dirlist_sel < (dirlist.size() - 1u)) {
+                    dirlist_sel++;
+                    if ((dirlist_scroll + (screen_rows - TOPLIST_ROW)) < dirlist_sel) {
+                        dirlist_scroll = dirlist_sel - (screen_rows - TOPLIST_ROW);
+                        redraw = 1;
+                    }
+                    else {
+                        draw_row(dirlist_sel - 1 + TOPLIST_ROW - dirlist_scroll, dirlist_sel - 1);
+                        draw_row(dirlist_sel     + TOPLIST_ROW - dirlist_scroll, dirlist_sel    );
+                    }
+                }
+            }
+        }
     } while (1);
 
     tcsetattr(0/*STDIN*/,TCSANOW,&oterm);
