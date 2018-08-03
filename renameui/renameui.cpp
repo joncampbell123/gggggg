@@ -203,6 +203,10 @@ bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
             if (nuname.length() > 0)
                 nuname = nuname.substr(0,nuname.length()-1);
         }
+        else if (inkey == "/") {
+            /* allow forward slash, by converting to UTF-8 version */
+            nuname += "\xE2\x88\x95";
+        }
         else if (inkey[0] >= 32 || inkey[0] < 0)
             nuname += inkey;
     } while(1);
