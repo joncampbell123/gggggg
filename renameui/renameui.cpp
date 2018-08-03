@@ -255,6 +255,19 @@ int main() {
                 }
             }
         }
+        else if (in == "\x1B[5~") { /* page up */
+            size_t adj = screen_rows - TOPLIST_ROW;
+
+            if (dirlist_sel > 0) {
+                if (dirlist_sel >= adj)
+                    dirlist_sel -= adj;
+                else
+                    dirlist_sel = 0;
+
+                dirlist_scroll = dirlist_sel;
+                redraw = 1;
+            }
+        }
         else if (in == "\x1B[B") { /* down arrow */
             if (dirlist.size() != 0) {
                 if (dirlist_sel < (dirlist.size() - 1u)) {
@@ -268,6 +281,20 @@ int main() {
                         draw_row(dirlist_sel - 1 + TOPLIST_ROW - dirlist_scroll, dirlist_sel - 1);
                         draw_row(dirlist_sel     + TOPLIST_ROW - dirlist_scroll, dirlist_sel    );
                     }
+                }
+            }
+        }
+        else if (in == "\x1B[6~") { /* page down */
+            size_t adj = screen_rows - TOPLIST_ROW;
+
+            if (dirlist.size() != 0) {
+                if (dirlist_sel < (dirlist.size() - 1u)) {
+                    dirlist_sel += adj;
+                    if (dirlist_sel > (dirlist.size() - 1u))
+                        dirlist_sel = (dirlist.size() - 1u);
+
+                    dirlist_scroll = dirlist_sel - (screen_rows - TOPLIST_ROW);
+                    redraw = 1;
                 }
             }
         }
