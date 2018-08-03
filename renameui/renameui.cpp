@@ -267,11 +267,13 @@ void draw_row(int sy,size_t sel) {
     dirlist_entry_t &ent = dirlist[sel];
 
     int c = 0;
-    int col1 = screen_cols - 10;
+    int col1 = 10;
     const char *s;
     char tmp[64];
+    std::string tmp2;
 
-    s = ent.first.c_str();
+    sprintf(tmp,"%c %llu",S_ISDIR(ent.second.st_mode) ? 'D' : 'F',(unsigned long long)ent.second.st_size);
+    s = tmp;
     while (c < col1) {
         if (*s != 0)
             temp_render[c++] = *s++;
@@ -279,18 +281,12 @@ void draw_row(int sy,size_t sel) {
             temp_render[c++] = ' ';
     }
 
-    sprintf(tmp,"%c %llu",S_ISDIR(ent.second.st_mode) ? 'D' : 'F',(unsigned long long)ent.second.st_size);
-
-    s = tmp;
-    while (c < screen_cols) {
-        if (*s != 0)
-            temp_render[c++] = *s++;
-        else
-            temp_render[c++] = ' ';
-    }
-
     temp_render[c] = 0;
-    printf("%s\n",temp_render);
+    tmp2 = temp_render;
+    tmp2 += " ";
+    tmp2 += ent.first;
+
+    printf("%s\n",tmp2.c_str());
 }
 
 #define TOPLIST_ROW 3
