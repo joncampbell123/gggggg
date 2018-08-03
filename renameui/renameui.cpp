@@ -461,12 +461,14 @@ int main() {
                 std::string nname = ent.first;
 
                 if (prompt_edit_name(/*&*/nname, ent.first)) {
-                    std::string old = cwd + "/" + ent.first;
-                    std::string nu = cwd + "/" + nname;
+                    if (ent.first != nname) {
+                        DIR *dir = opendir(cwd.c_str());
+                        if (dir != NULL) {
+                            renameat(dirfd(dir), ent.first.c_str(), dirfd(dir), nname.c_str());
+                            scan_dir();
+                        }
 
-                    if (old != nu) {
-                        rename(old.c_str(), nu.c_str());
-                        scan_dir();
+                        closedir(dir);
                     }
                 }
 
