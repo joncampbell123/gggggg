@@ -292,8 +292,10 @@ int main() {
                     std::string old = cwd + "/" + ent.first;
                     std::string nu = cwd + "/" + nname;
 
-                    if (old != nu)
+                    if (old != nu) {
                         rename(old.c_str(), nu.c_str());
+                        scan_dir();
+                    }
                 }
 
                 redraw = 1;
