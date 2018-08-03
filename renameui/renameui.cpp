@@ -190,7 +190,7 @@ void scan_dir(void) {
             if (d->d_name[0] == '.') continue;
 
             if (fstatat(dirfd(dir), d->d_name, &st, AT_SYMLINK_NOFOLLOW)) continue;
-            if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode)) continue;
+            if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode)) continue;
 
             ent.first = d->d_name;
             ent.second = st;
@@ -268,7 +268,17 @@ void draw_row(int sy,size_t sel) {
     char tmp[64];
     std::string tmp2;
 
-    sprintf(tmp,"%c %llu",S_ISDIR(ent.second.st_mode) ? 'D' : 'F',(unsigned long long)ent.second.st_size);
+    {
+        char c = 'F';
+
+        if (S_ISLNK(ent.second.st_mode))
+            c = 'L';
+        else if (S_ISDIR(ent.second.st_mode))
+            c = 'D';
+
+        sprintf(tmp,"%c %llu",c,(unsigned long long)ent.second.st_size);
+    }
+
     s = tmp;
     while (c < col1) {
         if (*s != 0)
