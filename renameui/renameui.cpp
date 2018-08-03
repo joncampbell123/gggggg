@@ -189,7 +189,7 @@ void scan_dir(void) {
 
             if (d->d_name[0] == '.') continue;
 
-            if (lstat((cwd + "/" + d->d_name).c_str(), &st) != 0) continue;
+            if (fstatat(dirfd(dir), d->d_name, &st, AT_SYMLINK_NOFOLLOW)) continue;
             if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode)) continue;
 
             ent.first = d->d_name;
