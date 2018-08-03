@@ -313,6 +313,22 @@ void draw_dir(void) {
         draw_row(y, dirlist_scroll+y-TOPLIST_ROW);
 }
 
+void find_file_dir(const std::string &name) {
+    size_t i = 0;
+
+    while (i < dirlist.size()) {
+        dirlist_entry_t &ent = dirlist[i];
+
+        if (name == ent.first) {
+            dirlist_sel = i;
+            dirlist_scroll = i;
+            break;
+        }
+
+        i++;
+    }
+}
+
 bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
     printf("\x1B[0m");
     printf("\x1B[2J");
@@ -469,6 +485,7 @@ int main() {
                         if (dir != NULL) {
                             renameat(dirfd(dir), ent.first.c_str(), dirfd(dir), nname.c_str());
                             scan_dir();
+                            find_file_dir(nname);
                         }
 
                         closedir(dir);
