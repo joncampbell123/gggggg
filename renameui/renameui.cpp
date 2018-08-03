@@ -352,9 +352,10 @@ bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
             nuname += inkey;
     } while(1);
 
-    if (nuname == "." || nuname == "..")
-        return false;
     if (nuname.empty() || nuname == oldname || nuname.find_first_of('/') != std::string::npos)
+        return false;
+    assert(nuname.length() != 0);
+    if (nuname[0] == '.')
         return false;
 
     return true;
