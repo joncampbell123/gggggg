@@ -29,6 +29,9 @@ struct termios                                          oterm,nterm;
 
 char                                                    path_temp[PATH_MAX+1];
 
+int                                                     screen_rows = 25;
+int                                                     screen_cols = 80;
+
 bool dirlist_cmpi(const dirlist_entry_t &a,const dirlist_entry_t &b) {
     int d = strcasecmp(a.first.c_str(),b.first.c_str());
     return d < 0;
@@ -54,6 +57,7 @@ void scan_dir(void) {
             if (d->d_name[0] == '.') continue;
 
             if (lstat((cwd + "/" + d->d_name).c_str(), &st) != 0) continue;
+            if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode)) continue;
 
             ent.first = d->d_name;
             ent.second = st;
@@ -96,6 +100,65 @@ std::string read_in(void) {
     return ret;
 }
 
+char temp_render[4096];
+
+void draw_info(size_t sel) {
+    printf("\x1B[2H");
+    printf("\x1B[K");
+    fflush(stdout);
+
+    if (sel >= dirlist.size()) return;
+
+    dirlist_entry_t &ent = dirlist[sel];
+
+    temp_render[sizeof(temp_render)-1] = 0;
+    strncpy(temp_render,ent.first.c_str(),sizeof(temp_render)-1);
+    temp_render[screen_cols-1] = 0;
+
+    printf("%s\n",temp_render);
+}
+
+void draw_row(int sy,size_t sel) {
+    if (sel == dirlist_sel)
+        printf("\x1B[1;33;44m");
+    else
+        printf("\x1B[0m");
+
+    printf("\x1B[%d;1H",sy);
+    printf("\x1B[K");
+    fflush(stdout);
+
+    if (sel >= dirlist.size()) return;
+
+    dirlist_entry_t &ent = dirlist[sel];
+
+    int c = 0;
+    int col1 = screen_cols - 10;
+    const char *s;
+    char tmp[64];
+
+    s = ent.first.c_str();
+    while (c < col1) {
+        if (*s != 0)
+            temp_render[c++] = *s++;
+        else
+            temp_render[c++] = ' ';
+    }
+
+    sprintf(tmp,"%c %llu",S_ISDIR(ent.second.st_mode) ? 'D' : 'F',(unsigned long long)ent.second.st_size);
+
+    s = tmp;
+    while (c < screen_cols) {
+        if (*s != 0)
+            temp_render[c++] = *s++;
+        else
+            temp_render[c++] = ' ';
+    }
+
+    temp_render[c] = 0;
+    printf("%s\n",temp_render);
+}
+
 void draw_dir(void) {
     unsigned int y;
 
@@ -105,6 +168,11 @@ void draw_dir(void) {
     fflush(stdout);
 
     printf("In: %s\n",cwd.c_str());
+
+    draw_info(dirlist_sel);
+
+    for (y=2;y <= screen_rows;y++)
+        draw_row(y, dirlist_scroll+y-2);
 }
 
 int main() {
