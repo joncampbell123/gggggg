@@ -104,6 +104,7 @@ char temp_render[4096];
 
 void draw_info(size_t sel) {
     printf("\x1B[2H");
+    printf("\x1B[0;32m");
     printf("\x1B[K");
     fflush(stdout);
 
@@ -159,7 +160,7 @@ void draw_row(int sy,size_t sel) {
     printf("%s\n",temp_render);
 }
 
-#define TOPLIST_ROW 2
+#define TOPLIST_ROW 3
 
 void draw_dir(void) {
     unsigned int y;
@@ -213,6 +214,7 @@ int main() {
                     redraw = 1;
                 }
                 else {
+                    draw_info(dirlist_sel);
                     draw_row(dirlist_sel +     TOPLIST_ROW - dirlist_scroll, dirlist_sel    );
                     draw_row(dirlist_sel + 1 + TOPLIST_ROW - dirlist_scroll, dirlist_sel + 1);
                 }
@@ -227,6 +229,7 @@ int main() {
                         redraw = 1;
                     }
                     else {
+                        draw_info(dirlist_sel);
                         draw_row(dirlist_sel - 1 + TOPLIST_ROW - dirlist_scroll, dirlist_sel - 1);
                         draw_row(dirlist_sel     + TOPLIST_ROW - dirlist_scroll, dirlist_sel    );
                     }
