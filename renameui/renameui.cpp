@@ -245,11 +245,7 @@ void draw_info(size_t sel) {
 
     dirlist_entry_t &ent = dirlist[sel];
 
-    temp_render[sizeof(temp_render)-1] = 0;
-    strncpy(temp_render,ent.first.c_str(),sizeof(temp_render)-1);
-    temp_render[screen_cols-1] = 0;
-
-    printf("%s\n",temp_render);
+    printf("%s\n",ent.first.c_str());
 }
 
 void draw_row(int sy,size_t sel) {
