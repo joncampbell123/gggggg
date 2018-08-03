@@ -8,12 +8,144 @@
 #include <limits.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <stdio.h>
 
 #include <string>
 #include <vector>
 #include <algorithm>
+
+enum {
+	UTF8ERR_INVALID=-1,
+	UTF8ERR_NO_ROOM=-2
+};
+
+#ifndef UNICODE_BOM
+#define UNICODE_BOM 0xFEFF
+#endif
+
+typedef char utf8_t;
+typedef uint16_t utf16_t;
+
+int utf8_encode(char **ptr,char *fence,uint32_t code) {
+	int uchar_size=1;
+	char *p = *ptr;
+
+	if (!p) return UTF8ERR_NO_ROOM;
+	if (code >= (uint32_t)0x80000000UL) return UTF8ERR_INVALID;
+	if (p >= fence) return UTF8ERR_NO_ROOM;
+
+	if (code >= 0x4000000) uchar_size = 6;
+	else if (code >= 0x200000) uchar_size = 5;
+	else if (code >= 0x10000) uchar_size = 4;
+	else if (code >= 0x800) uchar_size = 3;
+	else if (code >= 0x80) uchar_size = 2;
+
+	if ((p+uchar_size) > fence) return UTF8ERR_NO_ROOM;
+
+	switch (uchar_size) {
+		case 1:	*p++ = (char)code;
+			break;
+		case 2:	*p++ = (char)(0xC0 | (code >> 6));
+			*p++ = (char)(0x80 | (code & 0x3F));
+			break;
+		case 3:	*p++ = (char)(0xE0 | (code >> 12));
+			*p++ = (char)(0x80 | ((code >> 6) & 0x3F));
+			*p++ = (char)(0x80 | (code & 0x3F));
+			break;
+		case 4:	*p++ = (char)(0xF0 | (code >> 18));
+			*p++ = (char)(0x80 | ((code >> 12) & 0x3F));
+			*p++ = (char)(0x80 | ((code >> 6) & 0x3F));
+			*p++ = (char)(0x80 | (code & 0x3F));
+			break;
+		case 5:	*p++ = (char)(0xF8 | (code >> 24));
+			*p++ = (char)(0x80 | ((code >> 18) & 0x3F));
+			*p++ = (char)(0x80 | ((code >> 12) & 0x3F));
+			*p++ = (char)(0x80 | ((code >> 6) & 0x3F));
+			*p++ = (char)(0x80 | (code & 0x3F));
+			break;
+		case 6:	*p++ = (char)(0xFC | (code >> 30));
+			*p++ = (char)(0x80 | ((code >> 24) & 0x3F));
+			*p++ = (char)(0x80 | ((code >> 18) & 0x3F));
+			*p++ = (char)(0x80 | ((code >> 12) & 0x3F));
+			*p++ = (char)(0x80 | ((code >> 6) & 0x3F));
+			*p++ = (char)(0x80 | (code & 0x3F));
+			break;
+	};
+
+	*ptr = p;
+	return 0;
+}
+
+int utf8_decode(const char **ptr,const char *fence) {
+	const char *p = *ptr;
+	int uchar_size=1;
+	int ret = 0,c;
+
+	if (!p) return UTF8ERR_NO_ROOM;
+	if (p >= fence) return UTF8ERR_NO_ROOM;
+
+	ret = (unsigned char)(*p);
+	if (ret >= 0xFE) { p++; return UTF8ERR_INVALID; }
+	else if (ret >= 0xFC) uchar_size=6;
+	else if (ret >= 0xF8) uchar_size=5;
+	else if (ret >= 0xF0) uchar_size=4;
+	else if (ret >= 0xE0) uchar_size=3;
+	else if (ret >= 0xC0) uchar_size=2;
+	else if (ret >= 0x80) { p++; return UTF8ERR_INVALID; }
+
+	if ((p+uchar_size) > fence)
+		return UTF8ERR_NO_ROOM;
+
+	switch (uchar_size) {
+		case 1:	p++;
+			break;
+		case 2:	ret = (ret&0x1F)<<6; p++;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= c&0x3F;
+			break;
+		case 3:	ret = (ret&0xF)<<12; p++;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<6;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= c&0x3F;
+			break;
+		case 4:	ret = (ret&0x7)<<18; p++;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<12;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<6;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= c&0x3F;
+			break;
+		case 5:	ret = (ret&0x3)<<24; p++;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<18;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<12;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<6;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= c&0x3F;
+			break;
+		case 6:	ret = (ret&0x1)<<30; p++;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<24;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<18;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<12;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= (c&0x3F)<<6;
+			c = (unsigned char)(*p++); if ((c&0xC0) != 0x80) return UTF8ERR_INVALID;
+			ret |= c&0x3F;
+			break;
+	};
+
+	*ptr = p;
+	return ret;
+}
 
 std::string                                             cwd;
 
