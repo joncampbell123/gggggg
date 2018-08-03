@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <stdint.h>
+#include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 
@@ -332,8 +333,14 @@ bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
         else if (inkey == "\x0A" || inkey == "\x0D")
             break;
         else if (inkey == "\x08" || inkey == "\x7F") {
-            if (nuname.length() > 0)
-                nuname = nuname.substr(0,nuname.length()-1);
+            if (nuname.length() > 0) {
+                /* UTF-8 erase 0xC0 0x80 */
+                int e = (int)nuname.length() - 1;
+                while (e > 0 && ((unsigned char)nuname[e] >= 0x80 && (unsigned char)nuname[e] < 0xC0)) e--;
+                assert(e >= 0);
+                assert(e <= (int)nuname.length());
+                nuname = nuname.substr(0,e);
+            }
         }
         else if (inkey == "/") {
             /* allow forward slash, by converting to UTF-8 version */
