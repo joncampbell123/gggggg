@@ -360,6 +360,9 @@ bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
                 nuname = nuname.substr(0,e);
             }
         }
+        else if (inkey == "\x1B[3~") { /* delete */
+            nuname.clear();
+        }
         else if (inkey == "/") {
             /* allow forward slash, by converting to UTF-8 version */
             nuname += "\xE2\x88\x95";
