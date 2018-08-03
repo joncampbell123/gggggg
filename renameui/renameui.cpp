@@ -266,6 +266,10 @@ int main() {
         }
     } while (1);
 
+    printf("\x1B[0m");
+    printf("\x1B[99H");
+    fflush(stdout);
+
     tcsetattr(0/*STDIN*/,TCSANOW,&oterm);
     return 0;
 }
