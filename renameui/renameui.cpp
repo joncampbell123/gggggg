@@ -178,6 +178,41 @@ void draw_dir(void) {
         draw_row(y, dirlist_scroll+y-TOPLIST_ROW);
 }
 
+bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
+    printf("\x1B[0m");
+    printf("\x1B[2J");
+    printf("\x1B[H");
+    printf("Edit name:\n\n");
+    fflush(stdout);
+
+    do {
+        printf("\x1B[3H");
+        printf("%s",nuname.c_str());
+        printf("\x1B[J");
+        fflush(stdout);
+
+        std::string inkey = read_in();
+
+        if (inkey.empty())
+            return false;
+        else if (inkey == "\x1B" || inkey == "\x1B\x1B")
+            return false;
+        else if (inkey == "\x0A" || inkey == "\x0D")
+            break;
+        else if (inkey == "\x08" || inkey == "\x7F") {
+            if (nuname.length() > 0)
+                nuname = nuname.substr(0,nuname.length()-1);
+        }
+        else if (inkey[0] >= 32 || inkey[0] < 0)
+            nuname += inkey;
+    } while(1);
+
+    if (nuname.empty() || nuname == oldname || nuname.find_first_of('/') != std::string::npos)
+        return false;
+
+    return true;
+}
+
 int main() {
     std::string in;
 
@@ -244,6 +279,22 @@ int main() {
                 scan_dir();
                 dirlist_sel = 0;
                 dirlist_scroll = 0;
+
+                redraw = 1;
+            }
+        }
+        else if (in == "E") {
+            if (dirlist_sel < dirlist.size()) {
+                dirlist_entry_t &ent = dirlist[dirlist_sel];
+                std::string nname = ent.first;
+
+                if (prompt_edit_name(/*&*/nname, ent.first)) {
+                    std::string old = cwd + "/" + ent.first;
+                    std::string nu = cwd + "/" + nname;
+
+                    if (old != nu)
+                        rename(old.c_str(), nu.c_str());
+                }
 
                 redraw = 1;
             }
