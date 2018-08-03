@@ -236,6 +236,34 @@ int main() {
                 }
             }
         }
+        else if (in == "\x08" || in == "\x7F") { /* backspace */
+            size_t pos = cwd.find_last_of('/');
+            if (pos != std::string::npos && pos > 0) {
+                cwd = cwd.substr(0,pos);
+
+                scan_dir();
+                dirlist_sel = 0;
+                dirlist_scroll = 0;
+
+                redraw = 1;
+            }
+        }
+        else if (in == "\x0D" || in == "\x0A") { /* enter */
+            if (dirlist_sel < dirlist.size()) {
+                dirlist_entry_t &ent = dirlist[dirlist_sel];
+
+                if (S_ISDIR(ent.second.st_mode)) {
+                    cwd += "/";
+                    cwd += ent.first;
+
+                    scan_dir();
+                    dirlist_sel = 0;
+                    dirlist_scroll = 0;
+
+                    redraw = 1;
+                }
+            }
+        }
     } while (1);
 
     tcsetattr(0/*STDIN*/,TCSANOW,&oterm);
