@@ -413,6 +413,11 @@ void editorLoop(const char *src,const std::string &tmp,xmlDocPtr &doc) {
 						int subcount = 3;
 
 						while (subcount-- > 0 && cc != NULL) {
+							if (trc == nav || trc == showList[i])
+								printf("\x1B[1;33;44m");
+							else
+								printf("\x1B[0m");
+
 							printf("\x1B[%dC",((showList.size() - (i + 1)) + 1) * 4);
 							printf_tag(cc);
 							printf("\n");
