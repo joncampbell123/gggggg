@@ -292,7 +292,9 @@ void printf_tag(xmlNodePtr trc) {
 				}
 			}
 
+			printf("\x1B[37;40m");
 			printf("%s",str.c_str());
+
 			xmlFree(xp);
 		}
 	}
