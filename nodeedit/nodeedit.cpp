@@ -238,7 +238,21 @@ void printf_tag(xmlNodePtr trc) {
 			xmlChar *xp;
 			xp = xmlNodeListGetString(trc->doc,p->children,1);
 			if (xp != NULL) {
-				printf(" \"%s\"=\"%s\"",p->name,(char*)xp);
+				printf("\x1B[31m");
+				printf(" \"");
+
+				printf("\x1B[32m");
+				printf("%s",p->name);
+
+				printf("\x1B[31m");
+				printf("\"=\"");
+
+				printf("\x1B[32m");
+				printf("%s",(char*)xp);
+
+				printf("\x1B[31m");
+				printf("\"");
+
 				xmlFree(xp);
 				acount++;
 			}
