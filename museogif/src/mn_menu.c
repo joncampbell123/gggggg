@@ -81,7 +81,6 @@ static boolean SCLoadGame(int option);
 static boolean SCSaveGame(int option);
 static boolean SCMessages(int option);
 static boolean SCEndGame(int option);
-static boolean SCInfo(int option);
 static void DrawMainMenu(void);
 static void DrawEpisodeMenu(void);
 static void DrawSkillMenu(void);
@@ -90,7 +89,6 @@ static void DrawOptions2Menu(void);
 static void DrawOptions3Menu(void);
 static void DrawFileSlots(Menu_t *menu);
 static void DrawFilesMenu(void);
-static void MN_DrawInfo(void);
 static void DrawLoadMenu(void);
 static void DrawSaveMenu(void);
 static void DrawSlider(Menu_t *menu, int item, int width, int slot);
@@ -108,7 +106,6 @@ extern char* homedir;
 /* Public Data */
 
 boolean MenuActive;
-int InfoType;
 boolean messageson;
 
 /* Private Data */
@@ -139,7 +136,6 @@ static MenuItem_t MainItems[] =
   { ITT_EFUNC, "NEW GAME", SCNetCheck, 1, MENU_EPISODE },
   { ITT_SETMENU, "OPTIONS", NULL, 0, MENU_OPTIONS },
   { ITT_SETMENU, "GAME FILES", NULL, 0, MENU_FILES },
-  { ITT_EFUNC, "INFO", SCInfo, 0, MENU_NONE },
   { ITT_EFUNC, "QUIT GAME", SCQuitGame, 0, MENU_NONE }
 };
 
@@ -147,7 +143,7 @@ static Menu_t MainMenu =
 {
   110, 56,
   DrawMainMenu,
-  5, MainItems,
+  4, MainItems,
   0,
   MENU_NONE
 };
@@ -539,11 +535,6 @@ void MN_Drawer(void)
   else
     {
       /* UpdateState |= I_FULLSCRN; */
-      if(InfoType)
-	{
-	  MN_DrawInfo();
-	  return;
-	}
       if(screenblocks < maxblocks-1)
 	{
 	  BorderNeedRefresh = true;
@@ -1189,25 +1180,6 @@ static boolean SCScreenSize(int option)
 /*
   //---------------------------------------------------------------------------
   //
-  // PROC SCInfo
-  //
-  //---------------------------------------------------------------------------
-*/
-static boolean SCInfo(int __attribute__((unused)) option)
-{
-  InfoType = 1;
-  S_StartSound(NULL, sfx_dorcls);
-  if(!netgame && !demoplayback)
-    {
-      paused = true;
-    }
-  return true;
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
   // FUNC MN_Responder
   //
   //---------------------------------------------------------------------------
@@ -1232,30 +1204,6 @@ boolean MN_Responder(event_t *event)
       return(false);
     }
   key = event->data1;
-  if(InfoType)
-    {
-      if(shareware)
-	{
-	  InfoType = (InfoType+1)%5;
-	}
-      else
-	{
-	  InfoType = (InfoType+1)%4;
-	}
-      if(key == KEY_ESCAPE)
-	{
-	  InfoType = 0;
-	}
-      if(!InfoType)
-	{
-	  paused = false;
-	  MN_DeactivateMenu();
-	  SB_state = -1; /* refresh the statbar */
-	  BorderNeedRefresh = true;
-	}
-      S_StartSound(NULL, sfx_dorcls);
-      return(true); /* make the info screen eat the keypress */
-    }
   
   if(ravpic && key == KEY_F1)
     {
@@ -1347,10 +1295,6 @@ boolean MN_Responder(event_t *event)
 	  /* UpdateState |= I_FULLSCRN; */
 	  return(true);
 #ifndef __NeXT__
-	case KEY_F1: /* help screen */
-	  SCInfo(0); /* start up info screens */
-	  MenuActive = true;
-	  return(true);
 	case KEY_F2: /* save game */
 	  if(gamestate == GS_LEVEL && !demoplayback)
 	    {
@@ -1732,22 +1676,6 @@ void MN_DeactivateMenu(void)
     }
   players[consoleplayer].message = NULL;
   players[consoleplayer].messageTics = 1;
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
-  // PROC MN_DrawInfo
-  //
-  //---------------------------------------------------------------------------
-*/
-void MN_DrawInfo(void)
-{
-  I_SetPalette(W_CacheLumpName("PLAYPAL", PU_CACHE));
-
-  V_DrawRawScreen((byte *)W_CacheLumpNum(W_GetNumForName("TITLE")
-					 +InfoType, PU_CACHE));
 }
 
 
