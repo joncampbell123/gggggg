@@ -31,7 +31,6 @@ typedef enum
 typedef enum
 {
   MENU_MAIN,
-  MENU_EPISODE,
   MENU_SKILL,
   MENU_OPTIONS,
   MENU_OPTIONS2,
@@ -68,7 +67,6 @@ static void InitFonts(void);
 static void SetMenu(MenuType_t menu);
 static boolean SCNetCheck(int option);
 static boolean SCQuitGame(int option);
-static boolean SCEpisode(int option);
 static boolean SCSkill(int option);
 static boolean SCMouseXSensi(int option);
 static boolean SCMouseYSensi(int option);
@@ -79,10 +77,8 @@ static boolean SCMusicVolume(int option);
 static boolean SCScreenSize(int option);
 static boolean SCLoadGame(int option);
 static boolean SCSaveGame(int option);
-static boolean SCMessages(int option);
 static boolean SCEndGame(int option);
 static void DrawMainMenu(void);
-static void DrawEpisodeMenu(void);
 static void DrawSkillMenu(void);
 static void DrawOptionsMenu(void);
 static void DrawOptions2Menu(void);
@@ -146,24 +142,6 @@ static Menu_t MainMenu =
   4, MainItems,
   0,
   MENU_NONE
-};
-
-static MenuItem_t EpisodeItems[] =
-{
-  { ITT_EFUNC, "CITY OF THE DAMNED", SCEpisode, 1, MENU_NONE },
-  { ITT_EFUNC, "HELL'S MAW", SCEpisode, 2, MENU_NONE },
-  { ITT_EFUNC, "THE DOME OF D'SPARIL", SCEpisode, 3, MENU_NONE },
-  { ITT_EFUNC, "THE OSSUARY", SCEpisode, 4, MENU_NONE },
-  { ITT_EFUNC, "THE STAGNANT DEMESNE", SCEpisode, 5, MENU_NONE }
-};
-
-static Menu_t EpisodeMenu =
-{
-  80, 50,
-  DrawEpisodeMenu,
-  3, EpisodeItems,
-  0,
-  MENU_MAIN
 };
 
 static MenuItem_t FilesItems[] =
@@ -295,7 +273,6 @@ static Menu_t Options3Menu =
 static Menu_t *Menus[] =
 {
   &MainMenu,
-  &EpisodeMenu,
   &SkillMenu,
   &OptionsMenu,
   &Options2Menu,
@@ -321,11 +298,6 @@ void MN_Init(void)
   mouseLook = true;
   mouseInvert = true;
   SkullBaseLump = W_GetNumForName("M_SKL00");
-  if(ExtendedWAD)
-    { /* Add episodes 4 and 5 to the menu */
-      EpisodeMenu.itemCount = 5;
-      EpisodeMenu.y -= ITEM_HEIGHT;
-    }
 }
 
 
@@ -579,18 +551,6 @@ static void DrawMainMenu(void)
   V_DrawPatch(40, Y_DISP+10, W_CacheLumpNum(SkullBaseLump+(17-frame),
 				     PU_CACHE));
   V_DrawPatch(232, Y_DISP+10, W_CacheLumpNum(SkullBaseLump+frame, PU_CACHE));
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
-  // PROC DrawEpisodeMenu
-  //
-  //---------------------------------------------------------------------------
-*/
-static void DrawEpisodeMenu(void)
-{
 }
 
 
@@ -978,29 +938,6 @@ static boolean SCSaveGame(int option)
       quicksave = option+1;
       players[consoleplayer].message = NULL;
       players[consoleplayer].messageTics = 1;
-    }
-  return true;
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
-  // PROC SCEpisode
-  //
-  //---------------------------------------------------------------------------
-*/
-static boolean SCEpisode(int option)
-{
-  if(shareware && (option > 1))
-    {
-      P_SetMessage(&players[consoleplayer],
-		   "ONLY AVAILABLE IN THE REGISTERED VERSION", true);
-    }
-  else
-    {
-      MenuEpisode = option;
-      SetMenu(MENU_SKILL);
     }
   return true;
 }
