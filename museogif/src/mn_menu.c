@@ -35,9 +35,6 @@ typedef enum
   MENU_OPTIONS,
   MENU_OPTIONS2,
   MENU_OPTIONS3,
-  MENU_FILES,
-  MENU_LOAD,
-  MENU_SAVE,
   MENU_NONE
 } MenuType_t;
 
@@ -83,10 +80,6 @@ static void DrawSkillMenu(void);
 static void DrawOptionsMenu(void);
 static void DrawOptions2Menu(void);
 static void DrawOptions3Menu(void);
-static void DrawFileSlots(Menu_t *menu);
-static void DrawFilesMenu(void);
-static void DrawLoadMenu(void);
-static void DrawSaveMenu(void);
 static void DrawSlider(Menu_t *menu, int item, int width, int slot);
 void MN_LoadSlotText(void);
 
@@ -131,7 +124,6 @@ static MenuItem_t MainItems[] =
 {
   { ITT_EFUNC, "NEW GAME", SCNetCheck, 1, MENU_SKILL },
   { ITT_SETMENU, "OPTIONS", NULL, 0, MENU_OPTIONS },
-  { ITT_SETMENU, "GAME FILES", NULL, 0, MENU_FILES },
   { ITT_EFUNC, "QUIT GAME", SCQuitGame, 0, MENU_NONE }
 };
 
@@ -139,62 +131,9 @@ static Menu_t MainMenu =
 {
   110, 56,
   DrawMainMenu,
-  4, MainItems,
+  3, MainItems,
   0,
   MENU_NONE
-};
-
-static MenuItem_t FilesItems[] =
-{
-  { ITT_EFUNC, "LOAD GAME", SCNetCheck, 2, MENU_LOAD },
-  { ITT_SETMENU, "SAVE GAME", NULL, 0, MENU_SAVE }
-};
-
-static Menu_t FilesMenu =
-{
-  110, 60,
-  DrawFilesMenu,
-  2, FilesItems,
-  0,
-  MENU_MAIN
-};
-
-static MenuItem_t LoadItems[] =
-{
-  { ITT_EFUNC, NULL, SCLoadGame, 0, MENU_NONE },
-  { ITT_EFUNC, NULL, SCLoadGame, 1, MENU_NONE },
-  { ITT_EFUNC, NULL, SCLoadGame, 2, MENU_NONE },
-  { ITT_EFUNC, NULL, SCLoadGame, 3, MENU_NONE },
-  { ITT_EFUNC, NULL, SCLoadGame, 4, MENU_NONE },
-  { ITT_EFUNC, NULL, SCLoadGame, 5, MENU_NONE }
-};
-
-static Menu_t LoadMenu =
-{
-  70, 30,
-  DrawLoadMenu,
-  6, LoadItems,
-  0,
-  MENU_FILES
-};
-
-static MenuItem_t SaveItems[] =
-{
-  { ITT_EFUNC, NULL, SCSaveGame, 0, MENU_NONE },
-  { ITT_EFUNC, NULL, SCSaveGame, 1, MENU_NONE },
-  { ITT_EFUNC, NULL, SCSaveGame, 2, MENU_NONE },
-  { ITT_EFUNC, NULL, SCSaveGame, 3, MENU_NONE },
-  { ITT_EFUNC, NULL, SCSaveGame, 4, MENU_NONE },
-  { ITT_EFUNC, NULL, SCSaveGame, 5, MENU_NONE }
-};
-
-static Menu_t SaveMenu =
-{
-  70, 30,
-  DrawSaveMenu,
-  6, SaveItems,
-  0,
-  MENU_FILES
 };
 
 static MenuItem_t SkillItems[] =
@@ -276,10 +215,7 @@ static Menu_t *Menus[] =
   &SkillMenu,
   &OptionsMenu,
   &Options2Menu,
-  &Options3Menu,
-  &FilesMenu,
-  &LoadMenu,
-  &SaveMenu
+  &Options3Menu
 };
 
 
@@ -565,57 +501,6 @@ static void DrawSkillMenu(void)
 {
 }
 
-//---------------------------------------------------------------------------
-//
-// PROC DrawFilesMenu
-//
-//---------------------------------------------------------------------------
-
-static void DrawFilesMenu(void)
-{
-  /* clear out the quicksave/quickload stuff */
-  quicksave = 0;
-  quickload = 0;
-  players[consoleplayer].message = NULL;
-  players[consoleplayer].messageTics = 1;
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
-  // PROC DrawLoadMenu
-  //
-  //---------------------------------------------------------------------------
-*/
-static void DrawLoadMenu(void)
-{
-  MN_DrTextB("LOAD GAME", 160-MN_TextBWidth("LOAD GAME")/2, Y_DISP+10);
-  if(!slottextloaded)
-    {
-      MN_LoadSlotText();
-    }
-  DrawFileSlots(&LoadMenu);
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
-  // PROC DrawSaveMenu
-  //
-  //---------------------------------------------------------------------------
-*/
-static void DrawSaveMenu(void)
-{
-  MN_DrTextB("SAVE GAME", 160-MN_TextBWidth("SAVE GAME")/2, Y_DISP+10);
-  if(!slottextloaded)
-    {
-      MN_LoadSlotText();
-    }
-  DrawFileSlots(&SaveMenu);
-}
-
 
 /*
   //===========================================================================
@@ -654,33 +539,6 @@ void MN_LoadSlotText(void)
       SlotStatus[i] = 1;
     }
   slottextloaded = true;
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
-  // PROC DrawFileSlots
-  //
-  //---------------------------------------------------------------------------
-*/
-static void DrawFileSlots(Menu_t *menu)
-{
-  int i;
-  int x;
-  int y;
-  
-  x = menu->x;
-  y = menu->y;
-  for(i = 0; i < 6; i++)
-    {
-      V_DrawPatch(x, Y_DISP+y, W_CacheLumpName("M_FSLOT", PU_CACHE));
-      if(SlotStatus[i])
-	{
-	  MN_DrTextA(SlotText[i], x+5, Y_DISP+y+5);
-	}
-      y += ITEM_HEIGHT;
-    }
 }
 
 
@@ -1201,38 +1059,6 @@ boolean MN_Responder(event_t *event)
 	  /* UpdateState |= I_FULLSCRN; */
 	  return(true);
 #ifndef __NeXT__
-	case KEY_F2: /* save game */
-	  if(gamestate == GS_LEVEL && !demoplayback)
-	    {
-	      MenuActive = true;
-	      FileMenuKeySteal = false;
-	      MenuTime = 0;
-	      CurrentMenu = &SaveMenu;
-	      CurrentItPos = CurrentMenu->oldItPos;
-	      if(!netgame && !demoplayback)
-		{
-		  paused = true;
-		}
-	      S_StartSound(NULL, sfx_dorcls);
-	      slottextloaded = false; /* reload the slot text, when needed */
-	    }
-	  return true;
-	case KEY_F3: /* load game */
-	  if(SCNetCheck(2))
-	    {
-	      MenuActive = true;
-	      FileMenuKeySteal = false;
-	      MenuTime = 0;
-	      CurrentMenu = &LoadMenu;
-	      CurrentItPos = CurrentMenu->oldItPos;
-	      if(!netgame && !demoplayback)
-		{
-		  paused = true;
-		}
-	      S_StartSound(NULL, sfx_dorcls);
-	      slottextloaded = false; /* reload the slot text, when needed */
-	    }
-	  return true;
 	case KEY_F4: /* volume */
 	  MenuActive = true;
 	  FileMenuKeySteal = false;
@@ -1248,72 +1074,11 @@ boolean MN_Responder(event_t *event)
 	  return true;
 	case KEY_F5: /* F5 isn't used in Heretic. (detail level) */
 	  return true;
-	case KEY_F6: /* quicksave */
-	  if(gamestate == GS_LEVEL && !demoplayback)
-	    {
-	      if(!quicksave || quicksave == -1)
-		{
-		  MenuActive = true;
-		  FileMenuKeySteal = false;
-		  MenuTime = 0;
-		  CurrentMenu = &SaveMenu;
-		  CurrentItPos = CurrentMenu->oldItPos;
-		  if(!netgame && !demoplayback)
-		    {
-		      paused = true;
-		    }
-		  S_StartSound(NULL, sfx_dorcls);
-		  slottextloaded = false; /* reload the slot text, when needed */
-		  quicksave = -1;
-		  P_SetMessage(&players[consoleplayer],
-			       "CHOOSE A QUICKSAVE SLOT", true);
-		}
-	      else
-		{
-		  askforquit = true;
-		  typeofask = 3;
-		  if(!netgame && !demoplayback)
-		    {
-		      paused = true;
-		    }
-		  S_StartSound(NULL, sfx_chat);
-		}
-	    }
-	  return true;
 	case KEY_F7: /* endgame */
 	  if(gamestate == GS_LEVEL && !demoplayback)
 	    {
 	      S_StartSound(NULL, sfx_chat);
 	      SCEndGame(0);
-	    }
-	  return true;
-	case KEY_F9: /* quickload */
-	  if(!quickload || quickload == -1)
-	    {
-	      MenuActive = true;
-	      FileMenuKeySteal = false;
-	      MenuTime = 0;
-	      CurrentMenu = &LoadMenu;
-	      CurrentItPos = CurrentMenu->oldItPos;
-	      if(!netgame && !demoplayback)
-		{
-		  paused = true;
-		}
-	      S_StartSound(NULL, sfx_dorcls);
- 	      slottextloaded = false; /* reload the slot text, when needed */
-	      quickload = -1;
-	      P_SetMessage(&players[consoleplayer],
-			   "CHOOSE A QUICKLOAD SLOT", true);
-	    }
-	  else
-	    {
-	      askforquit = true;
-	      if(!netgame && !demoplayback)
-		{
-		  paused = true;
-		}
-	      typeofask = 4;
-	      S_StartSound(NULL, sfx_chat);
 	    }
 	  return true;
 	case KEY_F10: /* quit */
