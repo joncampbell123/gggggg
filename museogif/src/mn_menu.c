@@ -133,7 +133,7 @@ static int quickload;
 
 static MenuItem_t MainItems[] =
 {
-  { ITT_EFUNC, "NEW GAME", SCNetCheck, 1, MENU_EPISODE },
+  { ITT_EFUNC, "NEW GAME", SCNetCheck, 1, MENU_SKILL },
   { ITT_SETMENU, "OPTIONS", NULL, 0, MENU_OPTIONS },
   { ITT_SETMENU, "GAME FILES", NULL, 0, MENU_FILES },
   { ITT_EFUNC, "QUIT GAME", SCQuitGame, 0, MENU_NONE }
@@ -235,7 +235,7 @@ static Menu_t SkillMenu =
   DrawSkillMenu,
   5, SkillItems,
   2,
-  MENU_EPISODE
+  MENU_MAIN
 };
 
 static MenuItem_t OptionsItems[] =
@@ -1015,9 +1015,10 @@ static boolean SCEpisode(int option)
 */
 static boolean SCSkill(int option)
 {
-  G_DeferedInitNew(option, MenuEpisode, 1);
-  MN_DeactivateMenu();
-  return true;
+    MenuEpisode = 1;
+    G_DeferedInitNew(option, MenuEpisode, 1);
+    MN_DeactivateMenu();
+    return true;
 }
 
 
