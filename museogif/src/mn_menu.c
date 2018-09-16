@@ -241,7 +241,6 @@ static Menu_t SkillMenu =
 static MenuItem_t OptionsItems[] =
 {
   { ITT_EFUNC, "END GAME", SCEndGame, 0, MENU_NONE },
-  { ITT_EFUNC, "MESSAGES : ", SCMessages, 0, MENU_NONE },
   { ITT_SETMENU, "EFFECTS...", NULL, 0, MENU_OPTIONS2 },
   { ITT_SETMENU, "CONTROLS...", NULL, 0, MENU_OPTIONS3 }
 };
@@ -250,7 +249,7 @@ static Menu_t OptionsMenu =
 {
   88, 30,
   DrawOptionsMenu,
-  4, OptionsItems,
+  3, OptionsItems,
   0,
   MENU_MAIN
 };
@@ -734,14 +733,6 @@ static void DrawFileSlots(Menu_t *menu)
 */
 static void DrawOptionsMenu(void)
 {
-  if(messageson)
-    {
-      MN_DrTextB("ON", 196, Y_DISP+50);
-    }
-  else
-    {
-      MN_DrTextB("OFF", 196, Y_DISP+50);
-    }
 }
 
 
@@ -862,29 +853,6 @@ static boolean SCEndGame(int __attribute__((unused)) option)
     {
       paused = true;
     }
-  return true;
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
-  // PROC SCMessages
-  //
-  //---------------------------------------------------------------------------
-*/
-static boolean SCMessages(int __attribute__((unused)) option)
-{
-  messageson ^= 1;
-  if(messageson)
-    {
-      P_SetMessage(&players[consoleplayer], "MESSAGES ON", true);
-    }
-  else
-    {
-      P_SetMessage(&players[consoleplayer], "MESSAGES OFF", true);
-    }
-  S_StartSound(NULL, sfx_chat);
   return true;
 }
 
@@ -1380,9 +1348,6 @@ boolean MN_Responder(event_t *event)
 	      S_StartSound(NULL, sfx_chat);
 	      SCEndGame(0);
 	    }
-	  return true;
-	case KEY_F8: /* toggle messages */
-	  SCMessages(0);
 	  return true;
 	case KEY_F9: /* quickload */
 	  if(!quickload || quickload == -1)
