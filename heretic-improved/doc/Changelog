@@ -1,0 +1,128 @@
+future
+* SDL module with SDLsound (esd)
+* more game resolutions - stability tests
+
+1.02 -> 1.03 (27.12.1999)
+* multiple game resolutions !!! (-mode width height)
+* SDL version (video only; sound via pipes from other procs)
+* bug fixes in several files
+* fastx11-module changed
+
+1.01 -> 1.02 (25.11.1999)
+* bug fixes in BIG_ENDIAN macros
+
+1.0 -> 1.01 (23.10.1999)
+(done by Douglas Paul:)
+* merged the arm and std header-files into a single one
+* the __attribute__ ((packed)) statements are now handled by the preprocessor,
+  this way, any future changes shouldn't break the ARM version
+* made some changes that will allow the wadfile and servers to be in
+  the path (or, for the wadfile in ../share/heretic from anything on the
+  path.)
+* it is possible now to build a working RPM
+
+1.0beta2 -> 1.0 final (20.08.1999)
+* GGI beta2 is supported
+* small bugfixes in graphics engine
+* minor fixes in SVGAlib module
+* ambient-sound-fixes (some sounds arn´t too loud any more)
+* compile fixes for LinuxPPC
+* old dependencies are deleted with 'make distclean'
+* X-shm code minor changes
+* disabled filtering (linear/bilinear) by default
+* x mouse-code changes
+
+1.0beta1 -> 1.0beta2 (14.04.1999)
+* Heretic runs on Alpha-machines now ! (code is 64bit-clean)
+* now possible to use original '[' and ']' keys for inventory access instead
+  of 'k' and 'l', if "-DORIG_INVKEYS" defined in Makefile
+* background run (SVGALib version only) support; vgaeretic will run
+  on the background, while you're switched off the console it runs on.
+  This can for example save network game from loosing client connection.
+  Background running is allowed by default. To disable this behaviour,
+  specify "-nobgrun" commandline switch and pass it as parameter to vgaheretic.
+* mouse sensitivity regulation now works within the full range
+  (0-100%)
+* while in demo modes, the main menu pop-up is now possible only through
+  the ESC key
+* Heretic-home(~/.heretic) directory permissions are now solved
+  (If vgaheretic is started as suid-root by a user, then he will be
+   the owner of the (~/.heretic)-directory.)
+* some or more bug-fixes
+
+0.9.5 -> 1.0beta1 (26.03.1999)
+* Music support via the lxdoom-musserver and a updated soundclient
+  (Now music works with standart OPL3, Midi-wavetable and
+  AWE32-Midi (sounds great))
+* several network fixes (IPX and UDP) - now it would be displayed if a player 
+  quits a game
+* Heretic now works an a Netwinder (ARM) and on a SCO-Unix
+  machine (happy Sysadmins :-))
+* some new graphic-feautures like linear and bilinear filtering within
+  all graphic targets (X11/GGI/VGA)
+* fastX11 - a new graphic-target has been written, but it works only on
+  x86 machines yet -> it doubles the fps-speed against the x11 target even
+  in truecolor-mode !
+
+0.9.3 -> 0.9.5: (13.02.1999)
+* UDP-network games are stable now !! You can play with up to four players
+  over the net now. (eight players are possible; only change MAYPLAYERS
+  in doomdef.h)
+* IPX-network games really should work from this time on ! Now it is possible
+  to play netgames over IPX even with the original DOS-Heretic.
+* GGI updates (optimized scaling, minor keyboard fixes, doublebuffering on
+  DirectBuffer improved (now it works in fullscreen at least), merged with
+  LinuxDoom GGI code).
+* Initial support for higher resolutions (automap, menus, statusbar and 
+  info screens work flawlessly now, but the 3d engine gets messed up or
+  crashes if vertical resolution exceeds 240. Horizontal resolutions are
+  limited to the common ones - 320, 512, 640, 800 and 1024 all work fine
+  but most inbetween causes crashes.)
+* Removed the evil busywaiting - usleep() when idle to free up CPU time on
+  fast machines.
+* Support for compiling with GSI sound (but it doesn't work right now).
+* Namespace fixes
+* introduced new file handling => the env. HERETICHOME can be set and the WAD will
+  be searched in this directory
+* the WAD can be copied into the homedir (~/.heretic) and will be found there at last
+* geometry patches in i.x11.c => the standard flags '-display' and '-geometry'
+  will work now
+* introduced dependency-checking in the Makefile
+
+0.9.2 -> 0.9.3: (02.02.1999)
+* No need for a -D__GLIBC2__ in Makefile any more; the c-library is
+  automatically detected.
+* Fixes in p_enemy.c => workaround for gcc (2.7.2.3 ??) enum-bug.
+* Fixes in d_net.c and i_udp.c => You can start now two Heretic-net-sessions
+  on one machine.
+* Fixes in i_vga.c => MOUSE_INTELLIMOUSE and MOUSE_IMPS2 are now supported.
+* minor BIG_ENDIAN fixes.
+* Fixes in mn_menu.c => the game doesn't crash any more if you press F1
+  several times in E3M8
+* Fixes in in_lude.c => the game-intermission screen isn't in disorder 
+  on BIG_ENDIAN-machines any more.
+* All the user-specific files (savegames/config-file) are kept in the 
+  homedirectory	(~/.heretic/) now.
+
+0.9.1.1 -> 0.9.2: (23.01.1999)
+* Sfx-sound works now ! There is asynchronous sound managed my a seperate
+  process which communicates with Heretic through a pipe.
+
+0.9.1 -> 0.9.1.1: (21.01.1999)
+* GGI updates: 
+        - Now uses DirectBuffer when available and works properly when it is 
+         not. 
+        - Support for scaling by a factor of 2. (-scale switch)
+        - Support for 8, 15, 16 and 32 bpp modes (24 can be achieved with the 
+         palemu target) 
+* Proper keyboard handling (the cheats work now ;) 
+* Simple FPS meter for GGI and X11 versions. 
+* Fixes in routine P_FindNextHighestFloor()
+
+0.9.0 -> 0.9.1:	(19.01.1999)
+It is now possible to compile and run Heretic for X11 under 
+Linux/x86, Linux/m68k and FreeBSD. (Alpha doesn't work now.)
+(I can't say anything about Linux/Sparc and other Linux-ports)
+Added SVGA Version. (code by Nic, see AUTHORS)
+
+0.9.0 => First public release. (18.01.1999)

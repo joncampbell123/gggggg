@@ -1,0 +1,39 @@
+The following keys are used by default (first start) in the Game:
+
+key_right:           cursor-right-key
+key_left:            cursor-left-key
+key_up:              cursor-up-key
+key_down:            cursor-down-key
+key-strafe-left:     ','
+key-strafe-right:    '.'
+
+key_fire:            Control-key 
+key_use:             Space-key 
+key_strafe:          Alt/Meta-key 
+key_speed:           Shift-key
+
+key_flyup:           PageUp-key 
+key_flydown:         Insert-key 
+key_flycenter:       Home-key
+
+key_lookup:          PageDown-key 
+key_lookdown:        Delete-key 
+key_lookcenter:      End-key
+
+key_invleft:         'k' (or '[' if "-DORIG_INVKEYS" defined in Makefile)
+key_invright:        'l' (or ']' if "-DORIG_INVKEYS" defined in Makefile)
+key_useartifact:     Return-key
+
+key_AUTOMAP:         TAB-key
+
+In game-mode:
+to make game screen bigger: '+'
+to make game screen smaller: '-'
+
+In Automap-mode:
+to zoom in: '+'
+zo zoom out: '-'
+
+
+To change these keys, edit the generated 'heretic.cfg'.
+

@@ -1,0 +1,1220 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec wish8.0 "$0" "$@"
+
+#
+# Copyright (C) 1998 by Udo Munk (um@compuserve.com)
+#
+# Taken from xdlaunch (the x doom game launcher) and hacked for heretic
+# 22-01-1999 by Nokey
+#
+# ========================================================================
+#			Initialization
+# ========================================================================
+
+#
+# some strings with the skill levels
+#
+set skill1	"Thou needeth a wet nurse"
+set skill2	"Yellowbellies-r-us"
+set skill3	"Bringest them oneth"
+set skill4	"Thou art a smite meister"
+set skill5	"Black plague posesses thee"
+
+#
+# the Heretic WAD filenames
+#
+set heretic	"heretic.wad"
+set unknown	"undeterminate"
+
+#
+# the Heretic save game filenames
+#
+set sfile0	"hticsav0.hsg"
+set sfile1	"hticsav1.hsg"
+set sfile2	"hticsav2.hsg"
+set sfile3	"hticsav3.hsg"
+set sfile4	"hticsav4.hsg"
+set sfile5	"hticsav5.hsg"
+
+#
+# strings for the .rc file
+#
+set str_mag	"magnification"
+set str_tran	"translucency"
+set str_mouse	"usemouse"
+set str_cdrom	"cdrom"
+set str_cdaudio	"cdaudio"
+set str_nomusic	"nomusic"
+set str_nosound	"nosound"
+set str_nomon	"nomonsters"
+set str_resmon	"resmonsters"
+set str_fastmon	"fastmonsters"
+set str_skill	"skill"
+set str_level	"level"
+set str_episode	"episode"
+set str_turbo	"turbo"
+set str_boost	"boost"
+set str_mode	"mode"
+set str_player	"player"
+set str_host1	"host1"
+set str_host2	"host2"
+set str_host3	"host3"
+set str_port	"port"
+set str_demosz	"demosize"
+
+# ========================================================================
+#				GUI
+# ========================================================================
+
+#
+# set window title
+#
+wm title . "XHeretic Launcher v1.0"
+
+#
+# create the top frame
+#
+frame .top
+
+#
+# Frame for handling IWADs and PWADs
+#
+frame .top.wad -borderwidth 2 -relief raised
+label .top.wad.l1 -text "Game IWAD file"
+entry .top.wad.i -width 15 -relief sunken -textvariable iwad
+label .top.wad.l2 -text "Custom PWAD files"
+set pwad [listbox .top.wad.p -yscrollcommand ".top.wad.s set" \
+	-height 1 -width 15 -selectmode multiple]
+scrollbar .top.wad.s -command {.top.wad.p yview} -orient vertical -width 10
+button .top.wad.b -text Browse -command BrowsePwads -padx 10
+#++
+grid .top.wad.l1 .top.wad.i -sticky w
+grid .top.wad.l2 .top.wad.p .top.wad.s .top.wad.b -sticky w
+#--
+grid columnconfigure .top.wad 4 -weight 1
+#**
+bind .top.wad.p <ButtonRelease-1> PwadSelected
+
+#
+# Frame to select magnification, mouse and CR-ROM
+#
+frame .top.mag -borderwidth 2 -relief raised
+label .top.mag.l -text "Magnification"
+radiobutton .top.mag.one -variable mag -text "x 1" -value 1
+radiobutton .top.mag.two -variable mag -text "x 2" -value 2
+radiobutton .top.mag.three -variable mag -text "x 3" -value 3
+radiobutton .top.mag.four -variable mag -text "x 4" -value 4
+label .top.mag.l0 -text "Translucency"
+checkbutton .top.mag.t -variable translu
+label .top.mag.l1 -text "Use Mouse"
+checkbutton .top.mag.m -variable mouse
+label .top.mag.l2 -text "IWAD on CD"
+checkbutton .top.mag.c -variable cdrom -command CDselected
+#++
+grid .top.mag.l .top.mag.one .top.mag.two .top.mag.three .top.mag.four \
+	-sticky w -padx 5
+grid .top.mag.l0 .top.mag.t -sticky w -padx 5
+grid .top.mag.l1 .top.mag.m -sticky w -padx 5
+grid .top.mag.l2 -row 2 -column 2 -columnspan 2 -sticky e -padx 5
+grid .top.mag.c -row 2 -column 4 -sticky w -padx 5
+
+#
+# Frame to select skill, episode, level and turbo speed
+#
+frame .top.skill -borderwidth 2 -relief raised
+label .top.skill.l -text "Player/Game Options"
+frame .top.skill.f -borderwidth 1 -relief groove
+label .top.skill.f.l1 -text "Skill"
+tk_optionMenu .top.skill.f.t skill $skill1 $skill2 $skill3 $skill4 $skill5
+.top.skill.f.t configure -takefocus 1 -width 20
+label .top.skill.f.l2 -text Episode
+set epie [entry .top.skill.f.e -width 3 -relief sunken -textvariable episode]
+label .top.skill.f.l3 -text Level
+entry .top.skill.f.l -width 3 -relief sunken -textvariable level
+label .top.skill.f.l4 -text Turbo
+checkbutton .top.skill.f.tu -text enable -variable turbo -command Turbo
+label .top.skill.f.l5 -text Boost
+set booste [entry .top.skill.f.b -width 3 -relief sunken -textvariable boost]
+#++
+grid .top.skill.l -sticky w -padx 10
+grid .top.skill.f -sticky news -ipadx 20 -ipady 15 -pady 10 -padx 10
+grid .top.skill.f.l1 -row 0 -column 0 -sticky w -pady 5
+grid .top.skill.f.t -row 0 -column 1 -columnspan 3 -sticky w -pady 5
+grid .top.skill.f.l2 .top.skill.f.e .top.skill.f.l3 .top.skill.f.l \
+	-sticky w -pady 5
+grid .top.skill.f.l4 .top.skill.f.tu .top.skill.f.l5 .top.skill.f.b \
+	-sticky w -pady 5
+#--
+grid columnconfigure .top.skill 1 -weight 1
+grid rowconfigure .top.skill 2 -weight 1
+
+#
+# Frame to select audio options
+#
+frame .top.audio -borderwidth 2 -relief raised
+label .top.audio.l -text "Audio Options"
+frame .top.audio.f -borderwidth 1 -relief groove
+checkbutton .top.audio.f.c -text "CD Music" -variable cdaudio
+checkbutton .top.audio.f.m -text "No Music" -variable nomusic
+checkbutton .top.audio.f.s -text "No Sound" -variable nosound
+#++
+grid .top.audio.l -sticky w -padx 10
+grid .top.audio.f -sticky news -ipadx 20 -ipady 15 -pady 10 -padx 10
+grid .top.audio.f.c -sticky w -pady 2
+grid .top.audio.f.m -sticky w -pady 2
+grid .top.audio.f.s -sticky w -pady 2
+#--
+grid rowconfigure .top.audio 3 -weight 1
+
+#
+# Frame to select monster options
+#
+frame .top.mon -borderwidth 2 -relief raised
+label .top.mon.l -text "Monster Options"
+frame .top.mon.f -borderwidth 1 -relief groove
+checkbutton .top.mon.f.m -text "No Monsters" -variable nomonsters \
+	-command NoMon
+checkbutton .top.mon.f.r -text "Respawn Monsters" -variable resmonsters \
+	-command Mon
+checkbutton .top.mon.f.b -text "Fast Monsters" -variable fastmonsters \
+	-command Mon
+#++
+grid .top.mon.l -sticky w -padx 10
+grid .top.mon.f -sticky news -ipadx 20 -ipady 15 -pady 10 -padx 10
+grid .top.mon.f.m -sticky w -pady 2
+grid .top.mon.f.r -sticky w -pady 2
+grid .top.mon.f.b -sticky w -pady 2
+#--
+grid rowconfigure .top.mon 2 -weight 1
+
+#
+# Frame for the multiplayer stuff
+#
+frame .top.mp -borderwidth 2 -relief raised
+label .top.mp.l -text "Multi-Player Network Game" -anchor nw
+frame .top.mp.f -borderwidth 1 -relief groove
+label .top.mp.f.l1 -text "Mode"
+checkbutton .top.mp.f.m1 -text "Cooperative" -variable mp_coop \
+	-command {NetGame mp_coop}
+checkbutton .top.mp.f.m2 -text "Cooperative 2" -variable mp_coop2 \
+	-command {NetGame mp_coop2}
+checkbutton .top.mp.f.m3 -text "Deathmatch" -variable mp_death \
+	-command {NetGame mp_death}
+checkbutton .top.mp.f.m4 -text "Deathmatch 2" -variable mp_death2 \
+	-command {NetGame mp_death2}
+label .top.mp.f.l2 -text "Player No."
+set playere [entry .top.mp.f.p -width 3 -relief sunken -textvariable player]
+label .top.mp.f.l3 -text "Host 1"
+set host1e [entry .top.mp.f.h1 -width 20 -relief sunken -textvariable host1]
+label .top.mp.f.l4 -text "Host 2"
+set host2e [entry .top.mp.f.h2 -width 20 -relief sunken -textvariable host2]
+label .top.mp.f.l5 -text "Host 3"
+set host3e [entry .top.mp.f.h3 -width 20 -relief sunken -textvariable host3]
+label .top.mp.f.l6 -text "Port"
+set porte [entry .top.mp.f.po -width 5 -relief sunken -textvariable port]
+#++
+grid .top.mp.l -sticky w -padx 10
+grid .top.mp.f -sticky news -ipadx 20 -ipady 15 -pady 10 -padx 10
+grid .top.mp.f.l1 .top.mp.f.m1 .top.mp.f.m2 -sticky nw -pady 5 -padx 2
+grid .top.mp.f.m3 -row 1 -column 1 -sticky nw -pady 5 -padx 2
+grid .top.mp.f.m4 -row 1 -column 2 -sticky nw -pady 5 -padx 2
+grid .top.mp.f.l2 .top.mp.f.p -sticky nw -pady 5
+grid .top.mp.f.l3 -row 3 -column 0 -sticky nw -pady 5
+grid .top.mp.f.h1 -row 3 -column 1 -columnspan 2 -sticky nw -pady 5
+grid .top.mp.f.l4 -row 4 -column 0 -sticky nw -pady 5
+grid .top.mp.f.h2 -row 4 -column 1 -columnspan 2 -sticky nw -pady 5
+grid .top.mp.f.l5 -row 5 -column 0 -sticky nw -pady 5
+grid .top.mp.f.h3 -row 5 -column 1 -columnspan 2 -sticky nw -pady 5
+grid .top.mp.f.l6 -row 6 -column 0 -sticky nw -pady 5
+grid .top.mp.f.po -row 6 -column 1 -columnspan 2 -sticky nw -pady 5
+#--
+grid columnconfigure .top.mp 1 -weight 1
+
+#
+# Frame for handling Demo files
+#
+frame .top.dem -borderwidth 2 -relief raised
+label .top.dem.l -text "Demos" -anchor nw
+frame .top.dem.f -borderwidth 1 -relief groove
+label .top.dem.f.l1 -text "play"
+set demo [listbox .top.dem.f.d -yscrollcommand ".top.dem.f.s set" \
+	-height 4 -width 15]
+scrollbar .top.dem.f.s -command {.top.dem.f.d yview} -orient vertical -width 10
+label .top.dem.f.l2 -text "record"
+entry .top.dem.f.r -width 15 -relief sunken -textvariable record
+label .top.dem.f.l3 -text "max size (kb)"
+entry .top.dem.f.sz -width 4 -relief sunken -textvariable demosize
+#++
+grid .top.dem.l -sticky nw -padx 10
+grid .top.dem.f -sticky news -ipadx 20 -ipady 15 -pady 10 -padx 10
+grid .top.dem.f.l1 -sticky nw
+grid .top.dem.f.d .top.dem.f.s -sticky nws -pady 5
+grid .top.dem.f.l2 -sticky nw
+grid .top.dem.f.r -sticky nw -pady 5
+grid .top.dem.f.l3 -sticky nw
+grid .top.dem.f.sz -sticky nw -pady 5
+#--
+grid rowconfigure .top.dem 3 -weight 1
+#**
+bind .top.dem.f.d <ButtonRelease-1> DemoSelected
+
+#
+# Frame for handling saved games
+#
+frame .top.sav -borderwidth 2 -relief raised
+label .top.sav.l -text "Saved Games"
+frame .top.sav.f -borderwidth 1 -relief groove
+set save1 [checkbutton .top.sav.f.s1 -width 24 -anchor w -variable sv_1 \
+	-command {SaveSel save1}]
+set save2 [checkbutton .top.sav.f.s2 -width 24 -anchor w -variable sv_2 \
+	-command {SaveSel save2}]
+set save3 [checkbutton .top.sav.f.s3 -width 24 -anchor w -variable sv_3 \
+	-command {SaveSel save3}]
+set save4 [checkbutton .top.sav.f.s4 -width 24 -anchor w -variable sv_4 \
+	-command {SaveSel save4}]
+set save5 [checkbutton .top.sav.f.s5 -width 24 -anchor w -variable sv_5 \
+	-command {SaveSel save5}]
+set save6 [checkbutton .top.sav.f.s6 -width 24 -anchor w -variable sv_6 \
+	-command {SaveSel save6}]
+#++
+grid .top.sav.l -sticky w -padx 10
+grid .top.sav.f -sticky news -ipadx 20 -ipady 15 -pady 10 -padx 10
+grid .top.sav.f.s1 -sticky w -pady 2
+grid .top.sav.f.s2 -sticky w -pady 2
+grid .top.sav.f.s3 -sticky w -pady 2
+grid .top.sav.f.s4 -sticky w -pady 2
+grid .top.sav.f.s5 -sticky w -pady 2
+grid .top.sav.f.s6 -sticky w -pady 2
+#--
+grid rowconfigure .top.sav 2 -weight 1
+
+#
+# Frame for XHeretic's log output
+#
+frame .top.log -borderwidth 2 -relief raised
+label .top.log.l -text "XHeretic log"
+set log [text .top.log.t -width 85 -heigh 5 -borderwidth 2 -relief sunken \
+	-yscrollcommand {.top.log.s set}]
+scrollbar .top.log.s -command {.top.log.t yview} -orient vertical -width 10
+#++
+grid .top.log.l -columnspan 2 -sticky nws
+grid .top.log.t .top.log.s -sticky news
+
+#
+# Frame for the command buttons
+#
+frame .top.cntl -borderwidth 2 -relief raised
+button .top.cntl.run -text Start -command Run
+button .top.cntl.quit -text Quit -command Bye
+#++
+grid .top.cntl.run .top.cntl.quit -sticky news -padx 100
+
+#
+# now place all the frames
+#
+grid .top -sticky news
+grid .top.wad -row 0 -column 0 -columnspan 1 -sticky news
+grid .top.mag -row 0 -column 1 -columnspan 2 -sticky news
+grid .top.skill -row 1 -column 0 -columnspan 1 -sticky news
+grid .top.audio -row 1 -column 1 -columnspan 1 -sticky news
+grid .top.mon -row 1 -column 2 -columnspan 1 -sticky news
+grid .top.mp -row 2 -column 0 -columnspan 1 -sticky news
+grid .top.dem -row 2 -column 1 -columnspan 1 -sticky news
+grid .top.sav -row 2 -column 2 -columnspan 1 -sticky news
+grid .top.log -row 3 -columnspan 3 -sticky news
+grid .top.cntl -row 4 -columnspan 3 -sticky news
+#--
+grid rowconfigure .top.log 1 -weight 1
+grid columnconfigure .top.log 0 -weight 1
+grid rowconfigure .top 3 -weight 1
+grid rowconfigure . 0 -weight 1
+grid columnconfigure .top 0 -weight 1
+grid columnconfigure . 0 -weight 1
+
+focus .top.wad.p
+
+# ========================================================================
+#			File handling
+# ========================================================================
+
+#
+# build a list with the PWAD files in the PWADs directory
+# and add them to the PWAD selection widget
+#
+proc GetPwads {} {
+	global pwad pwaddir
+	global heretic
+
+	set pwd [pwd]
+	cd $pwaddir
+	$pwad delete 0 end
+	$pwad insert end "<none>"
+	foreach match [lsort [glob -nocomplain "*.wad"]] {
+	  if {[string compare $match $heretic]  != 0 } {
+		$pwad insert end $match
+	  }
+	}
+	cd $pwd
+}
+
+#
+# build a list with the demo files in the current directory
+# and add them to the demo selection widget
+#
+proc GetDemos {} {
+	global demo
+
+	$demo delete 0 end
+	$demo insert end "<none>"
+	foreach match [lsort [glob -nocomplain "*.lmp"]] {
+		$demo insert end [file rootname $match]
+	}
+}
+
+#
+# test for saved game files and setup the select
+# buttons with the name of the saved game
+#
+proc GetSave {} {
+	global savedir sfile0 sfile1 sfile2 sfile3 sfile4 sfile5
+	global save1 save2 save3 save4 save5 save6
+
+	if [file exists [file join $savedir $sfile0]] {
+		$save1 config -state normal
+		$save1 config -text [GetSaveName [file join $savedir $sfile0]]
+	} else {
+		$save1 config -state disabled
+		$save1 config -text none
+		$save1 deselect
+	}
+
+	if [file exists [file join $savedir $sfile1]] {
+		$save2 config -state normal
+		$save2 config -text [GetSaveName [file join $savedir $sfile1]]
+	} else {
+		$save2 config -state disabled
+		$save2 config -text none
+		$save2 deselect
+	}
+
+	if [file exists [file join $savedir $sfile2]] {
+		$save3 config -state normal
+		$save3 config -text [GetSaveName [file join $savedir $sfile2]]
+	} else {
+		$save3 config -state disabled
+		$save3 config -text none
+		$save3 deselect
+	}
+
+	if [file exists [file join $savedir $sfile3]] {
+		$save4 config -state normal
+		$save4 config -text [GetSaveName [file join $savedir $sfile3]]
+	} else {
+		$save4 config -state disabled
+		$save4 config -text none
+		$save4 deselect
+	}
+
+	if [file exists [file join $savedir $sfile4]] {
+		$save5 config -state normal
+		$save5 config -text [GetSaveName [file join $savedir $sfile4]]
+	} else {
+		$save5 config -state disabled
+		$save5 config -text none
+		$save5 deselect
+	}
+
+	if [file exists [file join $savedir $sfile5]] {
+		$save6 config -state normal
+		$save6 config -text [GetSaveName [file join $savedir $sfile5]]
+	} else {
+		$save6 config -state disabled
+		$save6 config -text none
+		$save6 deselect
+	}
+}
+
+#
+# read the name of a saved game from a game save file
+#
+proc GetSaveName {fn} {
+	set name ""
+	set fd [open $fn r]
+
+	while {1} {
+		set c [read $fd 1]
+		if {$c == "\0"} {
+			break
+		}
+		append name $c
+	}
+
+	close $fd
+	return $name
+}
+
+#
+# save the GUI settings into .rc file
+#
+proc SaveSettings {} {
+	global str_mag mag str_mouse mouse str_cdrom cdrom str_nomusic nomusic
+	global str_cdaudio cdaudio str_tran translu
+	global str_nosound nosound str_nomon nomonsters str_resmon resmonsters
+	global str_fastmon fastmonsters str_skill skill str_level level
+	global skill1 skill2 skill3 skill4 skill5
+	global str_episode episode str_turbo turbo str_boost boost
+	global str_mode mp_coop mp_coop2 mp_death mp_death2
+	global str_player player str_host1 host1 str_host2 host2 str_host3 host3
+	global str_port port str_demosz demosize
+
+	set fd [open [file join "~" ".xdlaunchrc"] w 0600]
+
+	puts $fd [format "%s\t%s" $str_mag $mag]
+	puts $fd [format "%s\t%s" $str_tran $translu]
+	puts $fd [format "%s\t%s" $str_mouse $mouse]
+	puts $fd [format "%s\t%s" $str_cdrom $cdrom]
+	puts $fd [format "%s\t%s" $str_cdaudio $cdaudio]
+	puts $fd [format "%s\t%s" $str_nomusic $nomusic]
+	puts $fd [format "%s\t%s" $str_nosound $nosound]
+	puts $fd [format "%s\t%s" $str_nomon $nomonsters]
+	puts $fd [format "%s\t%s" $str_resmon $resmonsters]
+	puts $fd [format "%s\t%s" $str_fastmon $fastmonsters]
+	puts $fd [format "%s\t%s" $str_episode $episode]
+	puts $fd [format "%s\t%s" $str_level $level]
+
+	if {[string compare $skill $skill1] == 0} {
+		puts $fd [format "%s\t%s" $str_skill "1"]
+	} elseif {[string compare $skill $skill2] == 0} {
+		puts $fd [format "%s\t%s" $str_skill "2"]
+	} elseif {[string compare $skill $skill3] == 0} {
+		puts $fd [format "%s\t%s" $str_skill "3"]
+	} elseif {[string compare $skill $skill4] == 0} {
+		puts $fd [format "%s\t%s" $str_skill "4"]
+	} elseif {[string compare $skill $skill5] == 0} {
+		puts $fd [format "%s\t%s" $str_skill "5"]
+	}
+
+	puts $fd [format "%s\t%s" $str_turbo $turbo]
+	puts $fd [format "%s\t%s" $str_boost $boost]
+
+	if {$mp_coop} {
+		puts $fd [format "%s\t%s" $str_mode "1"]
+	} elseif {$mp_coop2} {
+		puts $fd [format "%s\t%s" $str_mode "2"]
+	} elseif {$mp_death} {
+		puts $fd [format "%s\t%s" $str_mode "3"]
+	} elseif {$mp_death2} {
+		puts $fd [format "%s\t%s" $str_mode "4"]
+	} else {
+		puts $fd [format "%s\t%s" $str_mode "0"]
+	}
+
+	if {[string length $player] != 0} {
+		puts $fd [format "%s\t%s" $str_player $player]
+	} else {
+		puts $fd [format "%s\t-" $str_player]
+	}
+	if {[string length $host1] != 0} {
+		puts $fd [format "%s\t%s" $str_host1 $host1]
+	} else {
+		puts $fd [format "%s\t-" $str_host1]
+	}
+	if {[string length $host2] != 0} {
+		puts $fd [format "%s\t%s" $str_host2 $host2]
+	} else {
+		puts $fd [format "%s\t-" $str_host2]
+	}
+	if {[string length $host3] != 0} {
+		puts $fd [format "%s\t%s" $str_host3 $host3]
+	} else {
+		puts $fd [format "%s\t-" $str_host3]
+	}
+	if {[string length $port] != 0} {
+		puts $fd [format "%s\t%s" $str_port $port]
+	} else {
+		puts $fd [format "%s\t-" $str_port]
+	}
+
+	if {[string length $demosize] != 0} {
+		puts $fd [format "%s\t%s" $str_demosz $demosize]
+	} else {
+		puts $fd [format "%s\t-" $str_demosz]
+	}
+
+	close $fd
+}
+
+#
+# restore the GUI setting from .rc file
+#
+proc RestoreSettings {} {
+	global str_mag mag str_mouse mouse str_cdrom cdrom str_nomusic nomusic
+	global str_cdaudio cdaudio str_tran translu
+	global str_nosound nosound str_nomon nomonsters str_resmon resmonsters
+	global str_fastmon fastmonsters str_skill skill str_level level
+	global skill1 skill2 skill3 skill4 skill5
+	global str_episode episode str_turbo turbo str_boost boost
+	global str_mode mp_coop mp_coop2 mp_death mp_death2
+	global str_player player str_host1 host1 str_host2 host2 str_host3 host3
+	global str_port port str_demosz demosize
+
+	if {![file exists [file join "~" ".xdlaunchrc"]]} {
+		return
+	}
+
+	set var ""
+	set val ""
+
+	set fd [open [file join "~" ".xdlaunchrc"] r]
+	while {[gets $fd line] != -1} {
+
+		scan $line "%s%s" var val
+		# debugging
+		# puts stdout [format "var=<%s>, val=<%s>" $var $val]
+
+		if {[string compare $var $str_mag] == 0} {
+			set mag $val
+		} elseif {[string compare $var $str_tran] == 0} {
+			set translu $val
+		} elseif {[string compare $var $str_mouse] == 0} {
+			set mouse $val
+		} elseif {[string compare $var $str_cdrom] == 0} {
+			set cdrom $val
+		} elseif {[string compare $var $str_cdaudio] == 0} {
+			set cdaudio $val
+		} elseif {[string compare $var $str_nomusic] == 0} {
+			set nomusic $val
+		} elseif {[string compare $var $str_nosound] == 0} {
+			set nosound $val
+		} elseif {[string compare $var $str_nomon] == 0} {
+			set nomonsters $val
+		} elseif {[string compare $var $str_resmon] == 0} {
+			set resmonsters $val
+		} elseif {[string compare $var $str_fastmon] == 0} {
+			set fastmonsters $val
+		} elseif {[string compare $var $str_level] == 0} {
+			set level $val
+		} elseif {[string compare $var $str_episode] == 0} {
+			set episode $val
+
+		} elseif {[string compare $var $str_skill] == 0} {
+			if {[string compare $val "1"] == 0} {
+				set skill $skill1
+			} elseif {[string compare $val "2"] == 0} {
+				set skill $skill2
+			} elseif {[string compare $val "3"] == 0} {
+				set skill $skill3
+			} elseif {[string compare $val "4"] == 0} {
+				set skill $skill4
+			} elseif {[string compare $val "5"] == 0} {
+				set skill $skill5
+			}
+
+		} elseif {[string compare $var $str_turbo] == 0} {
+			set turbo $val
+		} elseif {[string compare $var $str_boost] == 0} {
+			set boost $val
+
+		} elseif {[string compare $var $str_mode] == 0} {
+			if {[string compare $val "1"] == 0} {
+				set mp_coop 1
+			} elseif {[string compare $val "2"] == 0} {
+				set mp_coop2 1
+			} elseif {[string compare $val "3"] == 0} {
+				set mp_death 1
+			} elseif {[string compare $val "4"] == 0} {
+				set mp_death2 1
+			}
+
+		} elseif {[string compare $var $str_player] == 0} {
+			if {[string compare $val "-"] != 0} {
+				set player $val
+			} else {
+				set player ""
+			}
+		} elseif {[string compare $var $str_host1] == 0} {
+			if {[string compare $val "-"] != 0} {
+				set host1 $val
+			} else {
+				set host1 ""
+			}
+		} elseif {[string compare $var $str_host2] == 0} {
+			if {[string compare $val "-"] != 0} {
+				set host2 $val
+			} else {
+				set host2 ""
+			}
+		} elseif {[string compare $var $str_host3] == 0} {
+			if {[string compare $val "-"] != 0} {
+				set host3 $val
+			} else {
+				set host3 ""
+			}
+		} elseif {[string compare $var $str_port] == 0} {
+			if {[string compare $val "-"] != 0} {
+				set port $val
+			} else {
+				set port ""
+			}
+
+		} elseif {[string compare $var $str_demosz] == 0} {
+			if {[string compare $val "-"] != 0} {
+				set demosize $val
+			} else {
+				set demosize ""
+			}
+		}
+	}
+
+	close $fd
+}
+
+# ========================================================================
+# 		Variable initialization and processing
+# ========================================================================
+
+#
+# initialize GUI variables with usable defaults
+#
+set mag 1
+set mouse 0
+set cdrom 0
+set translu 1
+set cdaudio 0
+set nomusic 0
+set nosound 0
+set nomonsters 0
+set resmonsters 0
+set fastmonsters 0
+set skill $skill3
+set episode 1
+set level 1
+set turbo 0
+set boost 10
+$booste config -state disabled
+set mp_coop 0
+set mp_coop2 0
+set mp_death 0
+set mp_death2 0
+set player ""
+$playere config -state disabled
+set host1 ""
+$host1e config -state disabled
+set host2 ""
+$host2e config -state disabled
+set host3 ""
+$host3e config -state disabled
+set port ""
+$porte config -state disabled
+set record ""
+set demosize ""
+$log config -state disabled
+
+#
+# restore the GUI settings from .rc file
+#
+RestoreSettings
+
+#
+# get the directory with the IWAD file
+#
+if [catch {set hereticdir $env(HERETICHOME)} result] {
+	set hereticdir "."
+}
+
+#
+# we start looking there for PWADs too
+#
+set pwaddir $hereticdir
+GetPwads
+set pwad_selected ""
+
+#
+# look for demos
+#
+GetDemos
+set demo_selected ""
+
+#
+# look for saved games
+#
+if {$cdrom} {
+	set savedir [file join "~" "herticdata"]
+} else {
+	set savedir "."
+}
+GetSave
+
+#
+# Figure which IWAD is used. Carefull here, must be same order as in xheretic
+#
+if [file exists [file join $hereticdir $heretic]] {
+	set iwad heretic
+} else {
+	set iwad $unknown
+}
+.top.wad.i config -state disabled
+
+#
+# depending on the IWAD used the game doesn't have episodes
+#
+if {0} {
+	$epie config -state normal
+} else {
+	$epie config -state disabled
+}
+
+#
+# depending on the turbo button enable/disable boost input
+#
+if {$turbo} {
+	$booste config -state normal
+} else {
+	$booste config -state disabled
+}
+
+#
+# depending on the multiplayer options enable/disable player no.
+# and hosts/port input
+#
+if {$mp_coop || $mp_coop2 || $mp_death || $mp_death2} {
+	$playere config -state normal
+	$host1e config -state normal
+	$host2e config -state normal
+	$host3e config -state normal
+	$porte config -state normal
+} else {
+	$playere config -state disabled
+	$host1e config -state disabled
+	$host2e config -state disabled
+	$host3e config -state disabled
+	$porte config -state disabled
+}
+
+update idletasks
+wm minsize . [winfo width .] [winfo height .]
+
+# ========================================================================
+#			Event handling
+# ========================================================================
+
+#
+# no monster was selected, so make sure the other selections are off
+#
+proc NoMon {} {
+	global resmonsters fastmonsters
+	set resmonsters 0
+	set fastmonsters 0
+}
+
+#
+# respawn or fast monsters was selected, so no monsters off
+#
+proc Mon {} {
+	global nomonsters
+	set nomonsters 0
+}
+
+#
+# allow boost input depending on the turbo state
+#
+proc Turbo {} {
+	global turbo boost booste
+	if {$turbo} {
+		$booste config -state normal
+	} else {
+		$booste config -state disabled
+	}
+}
+
+#
+# one of the saved games was selected, make sure only one selection is active
+#
+proc SaveSel {sel} {
+	global save1 save2 save3 save4 save5 save6
+
+	foreach i {save1 save2 save3 save4 save5 save6} {
+		if {$i != $sel} {
+			upvar $i var
+			$var deselect
+		}
+	}
+}
+
+#
+# one of the multiplayer options was selected, make sure only one is active
+#
+proc NetGame {sel} {
+	global mp_coop mp_coop2 mp_death mp_death2
+	global playere host1e host2e host3e porte
+
+	upvar $sel val
+	if {$val} {
+		# a selection was made
+		foreach i {mp_coop mp_coop2 mp_death mp_death2} {
+			if {$i != $sel} {
+				upvar $i var
+				set var 0
+			}
+		}
+		$playere config -state normal
+		$host1e config -state normal
+		$host2e config -state normal
+		$host3e config -state normal
+		$porte config -state normal
+	} else {
+		# netgame was deselected
+		$playere config -state disabled
+		$host1e config -state disabled
+		$host2e config -state disabled
+		$host3e config -state disabled
+		$porte config -state disabled
+	}
+}
+
+# ========================================================================
+#			Start xheretic and read it's log
+# ========================================================================
+
+#
+# run xheretic
+#
+proc Run {} {
+	global skill skill1 skill2 skill3 skill4 skill5
+	global input log mag mouse translu cdaudio nomusic cdrom nosound
+	global episode level
+	global nomonsters resmonsters fastmonsters turbo boost
+	global iwad pwad_selected hereticdir unknown demo_selected
+	global sv_1 sv_2 sv_3 sv_4 sv_5 sv_6
+	global record demosize
+	global mp_coop mp_coop2 mp_death mp_death2
+	global player host1 host2 host3 port
+	global epie
+
+	# do we have an IWAD?
+	if {[string compare $iwad $unknown] == 0} {
+		tk_messageBox -type ok -message \
+		"No IWAD file found, set HERETICHOME appropriate!" \
+	 	-icon error -parent .
+		return
+	}
+
+	# magnification
+	set options "-"
+	append options $mag
+
+	# mouse
+	if {$mouse} {
+		append options " -grabmouse"
+	}
+
+	# CD-ROM
+	if {$cdrom} {
+		append options " -cdrom"
+	}
+
+	# translucency
+	if {!$translu} {
+		append options " -notrans"
+	}
+
+	# skill
+	append options " -skill "
+
+	if {[string compare $skill $skill1] == 0} {
+		append options "1"
+	} elseif {[string compare $skill $skill2] == 0} {
+		append options "2"
+	} elseif {[string compare $skill $skill3] == 0} {
+		append options "3"
+	} elseif {[string compare $skill $skill4] == 0} {
+		append options "4"
+	} elseif {[string compare $skill $skill5] == 0} {
+		append options "5"
+	}
+
+	# audio
+	if {$cdaudio} {
+		append options " -cdaudio"
+	}
+
+	if {$nomusic} {
+		append options " -nomusic"
+	}
+
+	if {$nosound} {
+		append options " -nosound"
+	}
+
+	# monsters
+	if {$nomonsters} {
+		append options " -nomonsters"
+	}
+
+	if {$resmonsters} {
+		append options " -respawn"
+	}
+
+	if {$fastmonsters} {
+		append options " -fast"
+	}
+
+	# episode/level
+	append options " -warp "
+        set tmp [$epie cget -state]
+	if {[string compare $tmp "normal"] == 0} {
+		append options $episode
+		append options " "
+	}
+	append options $level
+
+	# turbo boost
+	if {$turbo} {
+		append options " -turbo "
+		append options $boost
+	}
+
+	# saved games
+	set i -1
+	if {$sv_1} {
+		set i 0
+	} elseif {$sv_2} {
+		set i 1
+	} elseif {$sv_3} {
+		set i 2
+	} elseif {$sv_4} {
+		set i 3
+	} elseif {$sv_5} {
+		set i 4
+	} elseif {$sv_6} {
+		set i 5
+	}
+	if {$i != -1} {
+		append options " -loadgame "
+		append options $i
+	}
+
+	# add PWADs
+	if {[string length $pwad_selected] != 0} {
+		append options " -file"
+		append options $pwad_selected
+	}
+
+	# play demo
+	if {[string length $demo_selected] != 0} {
+		append options " -playdemo "
+		append options $demo_selected
+	}
+
+	# record demo
+	if {[string length $record] != 0} {
+		if {[file exists $record.lmp]} {
+			set choice [tk_messageBox -type yesno -default no \
+			-message "The demo file already exists. Really \
+				 overwrite it?" -icon warning -parent .]
+			if {[string compare $choice "no"] == 0} {
+				return
+			}
+		}
+		append options " -record "
+		append options $record
+		if {[string length $demosize] != 0} {
+			append options " -maxdemo "
+			append options $demosize
+		}
+	}
+
+	# network game
+	if {$mp_coop || $mp_coop2 || $mp_death || $mp_death2} {
+		if {$player < 1 || $player > 4} {
+			tk_messageBox -type ok \
+			-message "You need to enter a player no. 1-4. There \
+			must be one machine with player no. 1, this is the key \
+			system." \
+			-icon error -parent .
+			return
+		}
+
+		if {$mp_coop2} {
+			append options " -altcoop"
+		} elseif {$mp_death} {
+			append options " -deathmatch"
+		} elseif {$mp_death2} {
+			append options " -altdeath"
+		}
+
+		append options " -net "
+		append options $player
+		if {[string length $host1] != 0} {
+			append options " "
+			append options $host1
+		}
+		if {[string length $host2] != 0} {
+			append options " "
+			append options $host2
+		}
+		if {[string length $host3] != 0} {
+			append options " "
+			append options $host3
+		}
+
+		if {[string length $port] != 0} {
+			append options " -port "
+			append options $port
+		}
+	}
+	
+	# we don't want the end text in the log
+	append options " -noendtxt"
+
+	# activate log and clear it
+	$log config -state normal
+	$log delete 1.0 99.0
+
+	# for debugging
+	# puts stdout $options
+
+	# try to run xheretic with the options
+	if [catch {open "|xheretic $options |& cat" r+} input] {
+		$log insert end $input\n
+	} else {
+		fileevent $input readable Log
+	}
+
+	# this is for games loading a PWAD
+	puts $input \n
+	flush $input
+}
+
+#
+# read the log output from the program and write into the log text widget
+#
+proc Log {} {
+	global input log
+	if [eof $input] {
+		Stop
+	} else {
+		gets $input line
+		$log insert end $line\n
+		$log see end
+		if {[string first "ST_Init" $line] != -1} {
+			wm iconify .
+		}
+	}
+}
+
+#
+# xheretic terminated, close the log
+#
+proc Stop {} {
+	global input log
+	catch {close $input}
+	$log config -state disabled
+	GetSave
+	GetDemos
+	wm deiconify .
+}
+
+# ========================================================================
+#			PWAD selection
+# ========================================================================
+
+#
+# browse filesystem for PWADs
+#
+proc BrowsePwads {} {
+	global pwaddir pwad
+
+	set typelist {
+	  {"PWAD file" {".wad"}}
+	}
+
+	set wadfile [tk_getOpenFile -initialdir $pwaddir -filetypes $typelist \
+	-parent . -title "xdlaunch PWAD selection"]
+
+	if {[string length $wadfile] != 0} {
+	    set pwaddir [file dirname $wadfile]
+	    GetPwads
+
+	    set i 0
+	    set w [$pwad get 0]
+	    while {[string length $w] != 0} {
+		if {[string compare $w [file tail $wadfile]] == 0} {
+			break
+		}
+		incr i
+		set w [$pwad get $i]
+	    }
+	    $pwad selection set $i
+	}
+}
+
+#
+# some PWADs in the listbox were selected
+#
+proc PwadSelected {} {
+	global pwad pwaddir pwad_selected
+
+	set pwad_selected ""
+	set i [$pwad curselection]
+	if {$i == 0} {
+		$pwad selection clear 1 end
+		return
+	}
+	foreach i [$pwad curselection] {
+		if {$i != 0} {
+			append pwad_selected " "
+			append pwad_selected [file join $pwaddir [$pwad get $i]]
+		} else {
+			$pwad selection clear 1 end
+			break
+		}
+	}
+}
+
+# ========================================================================
+#			Demo selection
+# ========================================================================
+
+#
+# a demo in the listbox was selected
+#
+proc DemoSelected {} {
+	global demo demo_selected
+
+	set i [$demo curselection]
+	if {$i != 0} {
+		set demo_selected [$demo get $i]
+	} else {
+		set demo_selected ""
+	}
+}
+
+# ========================================================================
+#			CD selection
+# ========================================================================
+
+#
+# the CD selection was changed, saved games need to be re-read from
+# a different directory
+#
+proc CDselected {} {
+	global cdrom savedir
+
+	if {$cdrom} {
+		set savedir [file join "~" "hereticdata"]
+	} else {
+		set savedir "."
+	}
+	GetSave
+}
+
+# ========================================================================
+#			Program exit
+# ========================================================================
+
+proc Bye {} {
+	SaveSettings
+	exit
+}

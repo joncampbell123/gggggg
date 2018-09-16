@@ -1,0 +1,42 @@
+ID-Software/RAVEN-Software: original Dos-Heretic code
+
+Andre Werthmann: Port of Heretic to Linux; works with BSD's too.
+		 Rewrite of the Doom soundserver to work with Heretic,
+		 that means Sfx-sound works now !
+		 Made netgames(IPX/UDP) working.
+		 Multiple game resolutions
+		 Some feautures..
+
+Christian Groessler: original Doom-x11 and ipx code; modified by me to 
+		     work with Heretic.
+
+Jes Sorensen: has patched version 0.9.0, so Heretic works with Linux/m68k
+	      correct now !
+
+Nic Bellamy: added SVGAlib code for 0.9.1.
+
+Marcus Sundberg: GGI code. Keyboard fixes. Removed busywaiting loop.
+		 Support for resolutions higher than 320x200.
+
+Lee Killough: fixes in p_spec.c
+
+Maciej W. Rozycki: enum-fixes; udp-fixes; namespace fixes; geometry fixes;
+		   debug-fixes
+
+Robert Bowles: made an Alpha-cpu version true (cleaned up the sourcecode
+               to be 64bit-clean) !
+
+WHS: gsi-code
+
+Vedran Rodic: fixes in mn_menu.c
+
+Rafael Reilova: lxdoom-musserver and patches for Heretic-soundclient to 
+                work with lxmusserver
+
+Douglas Paul: patches for Heretic to make it work with Netwinders (ARM)
+
+???: x11_fast_version (sorry, but I couldn't find the name of the author)
+
+... and other authors (e-mail me, if you will be in the 'AUTHORS'-file)
+
+Note: The order of the names doesn't say anything !

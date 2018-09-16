@@ -1,0 +1,54 @@
+================================================================
+		DOOM/Heretic AWE32/64 support
+	Rafael Reilova <rreilova@ececs.uc.edu>
+================================================================
+
+* More Notes:
+
+- Support for the AWE cards have been integrated into lxmusserver
+  proper.  You don't need to apply any patches!
+
+- You NEED linux kernel version >= 2.1.64 preferably 2.2.x to get
+  AWE support.  In fact, I have only tested with 2.2.x.  If you
+  are still using the 2.1 tree then you probably know what you're
+  doing and can debug it by yourself ;-)  Let me know of any bugs
+  you find though.
+
+- Remember to load a sound font file into the AWE card using sfxload!
+  This should happen automatically when the driver module loads
+  (on a properly configured system).  But, if you are not getting
+  any music, yet everything seems to be running fine, check this
+  out first!
+
+- This should go without saying, but compiling under Linux 2.2.x
+  and running under 2.0.x will NOT get you AWE support. Things
+  will compile fine, but the binary will silently fail.
+
+- If you happen to be stuck with non-AWE binary, on a Linux kernel
+  with AWE support, try using MIDI emulation. I.e.
+  $ musserv -mu 1
+
+The original README.awe follows:
+
+================================================================
+		DOOM Musserver AWE32 patch
+	Takashi Iwai  <iwai@dragon.mm.t.u-tokyo.ac.jp>
+================================================================
+
+* Notes
+
+This is a patch to DOOM musserver to support AWE32 sound driver.
+With this patch, you can play back background music on your AWE32
+synthesizer in Linux or FreeBSD.
+
+Since the current patch supports AWE driver v0.3 features,
+no sfx conversion is necessary now.
+
+* New Option
+
+  -a	for specifying AWE32 device.
+
+Musserver searches the synth device and use AWE32 device as default,
+so this option is usually unnecessary.
+
+Enjoy!

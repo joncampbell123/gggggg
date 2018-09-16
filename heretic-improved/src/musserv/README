@@ -1,0 +1,116 @@
+This is lxmusserv, a music server for LxDoom.
+
+To compile, take a look at the Makefile and adjust for your system, then do
+
+$ make
+
+To install,
+
+$ make install
+
+will copy the executable to /usr/local/games by default.
+Make sure you have write permissions to the directory.
+Now run lxdoom or lsdoom and enjoy!
+
+Command line options:
+
+-l	Will list all synth devices reported by the OSS drivers (which should
+	be the same as reported by /proc/sound or /dev/sndstat) and exit.
+
+-f	Forces the use of FM-synth even if an AWE32 is detected.
+
+-a	Only use the AWE synth.  Not necessary, should be autodetected.
+
+-m	Use a generic (by default the last found) midi synth device
+
+-u 	specify a device number for the synth or midi device to use.
+        Necessary if there is more that one device for a given synth type
+	(fm, awe, or midi).  This is usually required for midi
+        devices.  Look at the output of "musserv -l" for the number to use.
+
+-v	Verbose.  Musserver is usually silent.  This turns on output.
+
+-h	Gives terse usage information
+
+-1	For FM-synth, do not use the secondary voice of double-voice
+        channels.  Instruments will sound poorer, but there should be less
+        dropped notes.  Musserv auto-tunes depending on your card, so
+        this option shouldn't be necessary, unless you want to hear it
+	just like in the old days ;-)
+
+-2	For FM-synth, force the use of the secondary voice, even on
+        soundcards with limited voices.  Can cause a great deal of
+        note-droppage on these cards.
+
+-B	Don't increase pitch by an octave when doing FM.  Only for
+        really old voxware drivers (950728).
+
+-D	Causes all songs + the FM-patch info to be dumped to files, see below.
+
+
+If you don't know how to set up passing command-line arguments
+automatically from lxdoom (and need to do so), look at the docs that
+come with it.  If you're anxious, do the following hack: Rename
+"musserv" to something else, i.e.
+
+$ mv /usr/local/games/musserv /usr/local/games/musserv.bin
+
+Create a shell script called "musserv" that invokes musserv.bin with
+the proper options,
+
+$ echo "exec /usr/local/games/musserv.bin {add your options}" > musserv
+
+Make sure to set the execute bit of the script file,
+
+$ chmod 755 musserv
+
+now run lxdoom and enjoy!
+
+
+MIDI synth setup:
+----------------
+
+Since most soundcards have a MIDI uart device (but most people
+don't have a MIDI synth connected to them), FM synth is given
+preference over gen-midi to avoid sending data to non-existant
+devices (and consequent lack of music). Because of this...
+
+*** NOTE *** NOTE *** NOTE *** NOTE *** NOTE *** NOTE *** NOTE ***
+If you have a midi synth device and your card does FM-synth also, you
+must give them -m option and the -u [device #] option to musserv to
+hear the music though your midi synthesizer.  Otherwise you'll get
+just FM-output.
+*** NOTE *** NOTE *** NOTE *** NOTE *** NOTE *** NOTE *** NOTE ***
+
+
+Dumping of MUS files / standalone operation
+-------------------------------------------
+
+Lxmusserv supports standalone playing of MUS files, if you don't have
+a MUS-file extractor, the following crude method will get them for
+you.  Pass the -D option to musserv to cause it to dump all songs sent
+by lxdoom to different files.  You also need write access to the
+directory where lxmusserv is run.  The files will be named
+"songXX.mus", where XX is a number 0-99, starting at zero.  Another
+file called raw_midi.patch will also be created, you'll need this to
+play through FM-cards.  To play a song give the song name as
+argument to lxmusserv. If you're using FM-syth also give the FM-patch
+file above as a second argument, ie.
+
+$ musserv song01.mus raw_midi.patch
+
+
+Problems/Troubleshooting:
+------------------------
+
+	Musserv relies on the OSS drivers, before reporting bugs
+please make sure that your drivers are either compiled in the kernel
+or the required modules loaded, AND WORKING properly.  If you're
+autoloading your modules make sure you're setup is correct.  Bugs in
+the sound drivers should be reported to their respective maintainers.
+
+Report lxmusserv bugs to "Rafael Reilova" <rreilova@ececs.uc.edu>
+
+The original README file that came with musserver is in README.orig,
+it covers hardware requirements and other considerations, although is
+now somewhat dated.
