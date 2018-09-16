@@ -31,7 +31,6 @@ typedef enum
 typedef enum
 {
   MENU_MAIN,
-  MENU_SKILL,
   MENU_OPTIONS,
   MENU_OPTIONS2,
   MENU_OPTIONS3,
@@ -64,7 +63,6 @@ static void InitFonts(void);
 static void SetMenu(MenuType_t menu);
 static boolean SCNetCheck(int option);
 static boolean SCQuitGame(int option);
-static boolean SCSkill(int option);
 static boolean SCMouseXSensi(int option);
 static boolean SCMouseYSensi(int option);
 static boolean SCMouseLook(int option);
@@ -76,7 +74,6 @@ static boolean SCLoadGame(int option);
 static boolean SCSaveGame(int option);
 static boolean SCEndGame(int option);
 static void DrawMainMenu(void);
-static void DrawSkillMenu(void);
 static void DrawOptionsMenu(void);
 static void DrawOptions2Menu(void);
 static void DrawOptions3Menu(void);
@@ -122,7 +119,7 @@ static int quickload;
 
 static MenuItem_t MainItems[] =
 {
-  { ITT_EFUNC, "NEW GAME", SCNetCheck, 1, MENU_SKILL },
+  { ITT_EFUNC, "NEW GAME", SCNetCheck, 1, MENU_NONE },
   { ITT_SETMENU, "OPTIONS", NULL, 0, MENU_OPTIONS },
   { ITT_EFUNC, "QUIT GAME", SCQuitGame, 0, MENU_NONE }
 };
@@ -134,25 +131,6 @@ static Menu_t MainMenu =
   3, MainItems,
   0,
   MENU_NONE
-};
-
-static MenuItem_t SkillItems[] =
-{
-  { ITT_EFUNC, "THOU NEEDETH A WET-NURSE", SCSkill, sk_baby, MENU_NONE },
-  { ITT_EFUNC, "YELLOWBELLIES-R-US", SCSkill, sk_easy, MENU_NONE },
-  { ITT_EFUNC, "BRINGEST THEM ONETH", SCSkill, sk_medium, MENU_NONE },
-  { ITT_EFUNC, "THOU ART A SMITE-MEISTER", SCSkill, sk_hard, MENU_NONE },
-  { ITT_EFUNC, "BLACK PLAGUE POSSESSES THEE",
-    SCSkill, sk_nightmare, MENU_NONE }
-};
-
-static Menu_t SkillMenu =
-{
-  38, 30,
-  DrawSkillMenu,
-  5, SkillItems,
-  2,
-  MENU_MAIN
 };
 
 static MenuItem_t OptionsItems[] =
@@ -212,7 +190,6 @@ static Menu_t Options3Menu =
 static Menu_t *Menus[] =
 {
   &MainMenu,
-  &SkillMenu,
   &OptionsMenu,
   &Options2Menu,
   &Options3Menu
@@ -491,18 +468,6 @@ static void DrawMainMenu(void)
 
 
 /*
-  //---------------------------------------------------------------------------
-  //
-  // PROC DrawSkillMenu
-  //
-  //---------------------------------------------------------------------------
-*/
-static void DrawSkillMenu(void)
-{
-}
-
-
-/*
   //===========================================================================
   //
   // MN_LoadSlotText
@@ -609,25 +574,10 @@ static void DrawOptions3Menu(void)
 */
 static boolean SCNetCheck(int option)
 {
-  if(!netgame)
-    { /* okay to go into the menu */
-      return true;
-    }
-  switch(option)
-    {
-    case 1:
-      P_SetMessage(&players[consoleplayer],
-		   "YOU CAN'T START A NEW GAME IN NETPLAY!", true);
-      break;
-    case 2:
-      P_SetMessage(&players[consoleplayer],
-		   "YOU CAN'T LOAD A GAME IN NETPLAY!", true);
-      break;
-    default:
-      break;
-    }
-  MenuActive = false;
-  return false;
+    MenuEpisode = 1;
+    G_DeferedInitNew(sk_medium, MenuEpisode, 1);
+    MN_DeactivateMenu();
+    return false;
 }
 
 
@@ -798,22 +748,6 @@ static boolean SCSaveGame(int option)
       players[consoleplayer].messageTics = 1;
     }
   return true;
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
-  // PROC SCSkill
-  //
-  //---------------------------------------------------------------------------
-*/
-static boolean SCSkill(int option)
-{
-    MenuEpisode = 1;
-    G_DeferedInitNew(option, MenuEpisode, 1);
-    MN_DeactivateMenu();
-    return true;
 }
 
 
