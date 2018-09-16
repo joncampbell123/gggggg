@@ -4,13 +4,6 @@
 
 #include "doomdef.h"
 
-#ifdef IPX_PROTOCOL
-#include "i_ipx.h"
-#endif
-#ifdef UDP_PROTOCOL
-#include "i_udp.h"
-#endif
-
 
 void (* netget)(void);
 void (* netsend)(void);
@@ -48,39 +41,6 @@ void I_InitNetwork (void)
   else
     doomcom-> extratics = 0;
   /* shared parameters end */
-
-#ifdef IPX_PROTOCOL
-  
-  /* check, whether IPX network play is wanted */
-  
-  i = M_CheckParm("-ipx");
-  if (i)
-    {
-      netsend = IPXPacketSend;
-      netget = (void (*)(void)) IPXPacketGet; /* IPXPacketGet() normally returns an int */
-      netgame = true;
-      I_InitIPX();
-      return;
-    }
-  
-#endif
-  
-#ifdef UDP_PROTOCOL
-  
-  /*
-   * parse UDP/IP network game options,
-   *  -net <consoleplayer> <host> <host> ...
-   */
-  i = M_CheckParm ("-net");
-  if (i)
-    {
-      netsend = UDPPacketSend;
-      netget = UDPPacketGet;
-      netgame = true;
-      I_InitUDP();
-      return;
-    }
-#endif
   
   /* single player game */
   netgame = false;
