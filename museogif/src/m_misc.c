@@ -387,8 +387,6 @@ boolean		mouseLook;
 
 extern	long	screenblocks;
 
-extern char     *chat_macros[10];
-
 typedef struct
 {
 	char    *name;
@@ -498,18 +496,7 @@ default_t defaults[] =
   
   { "snd_channels", &numChannels, 3, 0/*scantranslate*/, 0/*untranslated*/ },
     
-  { "usegamma", &usegamma, 0, 0/*scantranslate*/, 0/*untranslated*/ },
-  
-  { "chatmacro0", (long *) &chat_macros[0], (long) HUSTR_CHATMACRO0, 0/*scantranslate*/, 0/*untranslated*/ },
-  { "chatmacro1", (long *) &chat_macros[1], (long) HUSTR_CHATMACRO1, 0/*scantranslate*/, 0/*untranslated*/ },
-  { "chatmacro2", (long *) &chat_macros[2], (long) HUSTR_CHATMACRO2, 0/*scantranslate*/, 0/*untranslated*/ },
-  { "chatmacro3", (long *) &chat_macros[3], (long) HUSTR_CHATMACRO3, 0/*scantranslate*/, 0/*untranslated*/ },
-  { "chatmacro4", (long *) &chat_macros[4], (long) HUSTR_CHATMACRO4, 0/*scantranslate*/, 0/*untranslated*/ },
-  { "chatmacro5", (long *) &chat_macros[5], (long) HUSTR_CHATMACRO5, 0/*scantranslate*/, 0/*untranslated*/ },
-  { "chatmacro6", (long *) &chat_macros[6], (long) HUSTR_CHATMACRO6, 0/*scantranslate*/, 0/*untranslated*/ },
-  { "chatmacro7", (long *) &chat_macros[7], (long) HUSTR_CHATMACRO7, 0/*scantranslate*/, 0/*untranslated*/ },
-  { "chatmacro8", (long *) &chat_macros[8], (long) HUSTR_CHATMACRO8, 0/*scantranslate*/, 0/*untranslated*/ },
-  { "chatmacro9", (long *) &chat_macros[9], (long) HUSTR_CHATMACRO9, 0/*scantranslate*/, 0/*untranslated*/ }
+  { "usegamma", &usegamma, 0, 0/*scantranslate*/, 0/*untranslated*/ }
 };
 
 int numdefaults;

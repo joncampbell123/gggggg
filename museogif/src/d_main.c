@@ -205,7 +205,6 @@ void D_Display(void)
 	AM_Drawer ();
       else
 	R_RenderPlayerView (&players[displayplayer]);
-      CT_Drawer();
       /* UpdateState |= I_FULLVIEW; */
       SB_Drawer();
       break;
@@ -796,8 +795,6 @@ void D_DoomMain(void)
   
   printf("MN_Init: Init menu system.\n");
   MN_Init();
-  
-  CT_Init();
   
   printf("R_Init: Init Heretic refresh daemon.\n");
   

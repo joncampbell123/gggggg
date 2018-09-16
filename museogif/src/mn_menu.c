@@ -1322,7 +1322,7 @@ boolean MN_Responder(event_t *event)
 	}
       return false; /* don't let the keys filter thru */
     }
-  if(MenuActive == false && !chatmodeon)
+  if(MenuActive == false)
     {
       switch(key)
 	{

@@ -360,7 +360,6 @@ void G_BuildTiccmd (ticcmd_t *cmd)
   /*
    * buttons
    */
-  cmd->chatchar = CT_dequeueChatChar();
   
   if (gamekeydown[key_fire] || mousebuttons[mousebfire]
       || joybuttons[joybfire])
@@ -602,10 +601,6 @@ boolean G_Responder(event_t *ev)
   
   if(gamestate == GS_LEVEL)
     {
-      if(CT_Responder(ev))
-	{ /* Chat ate the event */
-	  return(true);
-	}
       if(SB_Responder(ev))
 	{ /* Status bar ate the event */
 	  return(true);
@@ -864,7 +859,6 @@ void G_Ticker (void)
       P_Ticker ();
       SB_Ticker ();
       AM_Ticker ();
-      CT_Ticker();
       break;
     case GS_INTERMISSION:
       IN_Ticker ();
