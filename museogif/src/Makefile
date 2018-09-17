@@ -93,7 +93,10 @@ OBJS =	am_map.o ct_chat.o d_main.o d_net.o f_finale.o g_game.o \
 	tables.o v_video.o w_wad.o z_zone.o in_lude.o \
 	info.o i_net.o i_system.o i_udp.o i_ipx.o i_main.o $(SOUND_OBJS)
 
-all: sdl
+all: sdl wadlist
+
+wadlist: wadlist.c
+	gcc $(COPT.arch) -o $@ $<
 
 all-targets: x11 fastx11 sdl sndserver
 
