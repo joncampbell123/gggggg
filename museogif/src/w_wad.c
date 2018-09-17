@@ -145,70 +145,7 @@ void ExtractFileBase (char *path, char *dest)
 
 int wadopen(const char* fileName)
 {
-    int fd = -1;
-    char* fn;
-    char* envhome;
-    
-
-    fn = (char*) malloc(strlen("./")+strlen(fileName)+1);
-    assert(fn);
-    sprintf(fn, "./%s", fileName);
-    if (!access(fn, R_OK))
-	{
-	    fd = open(fn, O_RDONLY | O_BINARY);
-	    free(fn);
-	    return fd;
-	}
-    
-    if ((envhome = getenv("HERETICHOME")) != NULL)
-	{
-	    fn = (char*) malloc(strlen(envhome)+strlen("/")+strlen(fileName)+1);
-	    assert(fn);
-	    sprintf(fn, "%s/%s", envhome, fileName);
-	    fd = open(fn, O_RDONLY | O_BINARY);
-	    free(fn);
-	}
-
-    if ((fd < 0) && ((envhome = getenv("HOME")) != NULL))
-	{
-	    fn = (char*) malloc(strlen(envhome)+strlen(HOMEDIR"/")
-				+strlen(fileName)+1);
-	    assert(fn);
-	    sprintf(fn, "%s"HOMEDIR"/%s", envhome, fileName);
-	    fd = open(fn, O_RDONLY | O_BINARY);
-	    free(fn);
-	}
-
-    if ((fd < 0) && (envhome = getenv("PATH")))
-        {
-            char *path = strdup(envhome), *curentry;
-            assert(path);
-            while (strlen(path) && (fd < 0))
-                {
-                    if (!(curentry = strrchr(path, ':')))
-                        curentry = path;
-                    else
-                        *curentry++ = 0;
-                    fn = (char*) malloc(strlen(curentry)+19+strlen(fileName));  /* Add space for /, ../share/heretic/ */
-                    assert(fn);
-                    sprintf(fn, "%s/%s", curentry, fileName);
-                    fd = open(fn, O_RDONLY | O_BINARY);      
-                    /* check ../share/heretic */
-                    if (fd < 0)                 
-                        {      
-                            sprintf(fn, "%s/../share/heretic/%s", curentry, fileName);
-                            fd = open(fn, O_RDONLY | O_BINARY);
-                        }
-                    free(fn);
-                    *curentry = 0;                          
-                }
-            free(path);
-        }      
-
-    if (fd < 0)
-        fd = open(fileName, O_RDONLY | O_BINARY);
-
-    return fd;
+    return open(fileName, O_RDONLY | O_BINARY);
 }
 
 
