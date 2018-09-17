@@ -68,7 +68,6 @@ static boolean SCMouseYSensi(int option);
 static boolean SCMouseLook(int option);
 static boolean SCMouseInvert(int option);
 static boolean SCSfxVolume(int option);
-static boolean SCMusicVolume(int option);
 static boolean SCScreenSize(int option);
 static boolean SCLoadGame(int option);
 static boolean SCSaveGame(int option);
@@ -154,8 +153,6 @@ static MenuItem_t Options2Items[] =
   { ITT_LRFUNC, "SCREEN SIZE", SCScreenSize, 0, MENU_NONE },
   { ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
   { ITT_LRFUNC, "SFX VOLUME", SCSfxVolume, 0, MENU_NONE },
-  { ITT_EMPTY, NULL, NULL, 0, MENU_NONE },
-  { ITT_LRFUNC, "MUSIC VOLUME", SCMusicVolume, 0, MENU_NONE },
   { ITT_EMPTY, NULL, NULL, 0, MENU_NONE }
 };
 
@@ -163,7 +160,7 @@ static Menu_t Options2Menu =
 {
   90, 20,
   DrawOptions2Menu,
-  6, Options2Items,
+  4, Options2Items,
   0,
   MENU_OPTIONS
 };
@@ -531,7 +528,6 @@ static void DrawOptions2Menu(void)
   int diff = minblocks-1;
   DrawSlider(&Options2Menu, 1, maxblocks-(diff), screenblocks-(diff+1));
   DrawSlider(&Options2Menu, 3, 16, snd_SfxVolume);
-  DrawSlider(&Options2Menu, 5, 16, snd_MusicVolume);
 }
 
 
@@ -821,31 +817,6 @@ static boolean SCSfxVolume(int option)
     }
   S_SetSfxVolume(snd_SfxVolume); /* don't recalc the sound curve, yet */
   /* soundchanged = true; */  /* we'll set it when we leave the menu */
-  return true;
-}
-
-
-/*
-  //---------------------------------------------------------------------------
-  //
-  // PROC SCMusicVolume
-  //
-  //---------------------------------------------------------------------------
-*/
-static boolean SCMusicVolume(int option)
-{
-  if(option == RIGHT_DIR)
-    {
-      if(snd_MusicVolume < 15)
-	{
-	  snd_MusicVolume++;
-	}
-    }
-  else if(snd_MusicVolume)
-    {
-      snd_MusicVolume--;
-    }
-  S_SetMusicVolume(snd_MusicVolume);
   return true;
 }
 
