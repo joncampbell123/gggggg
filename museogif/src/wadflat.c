@@ -89,7 +89,7 @@ int main(int argc,char **argv) {
     for (i=0;i < header.numlumps;i++) {
         memcpy(tmp,lumps[i].name,8); tmp[8] = 0;
         if (!strcmp(tmp,"F_START")) need_fstart = 0;
-        if (!need_fstart && !strcmp(tmp,"F_END")) {
+        if (!need_fstart && (!strcmp(tmp,"F_END") || !strcmp(tmp,"F1_END"))) {
             need_fend = 0;
             nent = i; /* insert here */
             break;
@@ -106,6 +106,11 @@ int main(int argc,char **argv) {
         lumps[header.numlumps].size = 0;
         header.numlumps++;
         nent = header.numlumps;
+    }
+
+    if (nent < header.numlumps) {
+        memmove(lumps+nent+1,lumps+nent,sizeof(filelump_t) * (header.numlumps - nent));
+        header.numlumps++;
     }
 
     lumps[nent].filepos = ofs;
