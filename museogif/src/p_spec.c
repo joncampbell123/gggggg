@@ -7,7 +7,7 @@
 
 /* Macros */
 
-#define MAX_AMBIENT_SFX 8 /* Per level */
+#define MAX_AMBIENT_SFX 32 /* Per level */
 
 /* Types */
 
