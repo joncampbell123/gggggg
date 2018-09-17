@@ -15,7 +15,9 @@ static char tmp[256];
 
 int main(int argc,char **argv) {
     wadinfo_t header;
+    filelump_t lump;
     int fd;
+    int c;
 
     if (argc < 2) {
         fprintf(stderr,"Must specify WAD file\n");
@@ -35,6 +37,17 @@ int main(int argc,char **argv) {
 
     memcpy(tmp,header.identification,4); tmp[4]=0;
     printf("WAD header: '%s' lumps=%u offset=%u\n",tmp,header.numlumps,header.infotableofs);
+
+    if (lseek(fd,header.infotableofs,SEEK_SET) != header.infotableofs)
+        return 1;
+
+    for (c=0;c < header.infotableofs;c++) {
+        if (read(fd,&lump,sizeof(lump)) != sizeof(lump))
+            break;
+
+        memcpy(tmp,lump.name,8); tmp[8] = 0;
+        printf(" Entry: filepos=%u size=%u name='%s'\n",lump.filepos,lump.size,tmp);
+    }
 
     close(fd);
     return 0;
