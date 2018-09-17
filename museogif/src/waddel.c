@@ -94,12 +94,12 @@ int main(int argc,char **argv) {
             }
         }
 
-        for (;o < oldlumps;o++)
-            memset(nlumps+o,0,sizeof(filelump_t));
-
         free(lumps);
         lumps = nlumps;
         header.numlumps = o;
+
+        for (;o < oldlumps;o++)
+            memset(nlumps+o,0,sizeof(filelump_t));
     }
 
     if (lseek(fd,0,SEEK_SET) != 0)
