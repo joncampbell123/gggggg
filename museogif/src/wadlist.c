@@ -46,7 +46,7 @@ int main(int argc,char **argv) {
             break;
 
         memcpy(tmp,lump.name,8); tmp[8] = 0;
-        printf(" Entry: filepos=%u size=%u name='%s'\n",lump.filepos,lump.size,tmp);
+        printf(" Entry %d: filepos=%u size=%u name='%s'\n",c,lump.filepos,lump.size,tmp);
     }
 
     close(fd);
