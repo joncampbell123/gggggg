@@ -20,11 +20,6 @@
 #include "i_sound.h"
 #include "doomdef.h"
 
-#ifdef MUSSERV
-char *musserver_filename = "./musserv";
-char *musserver_options = "";
-#endif /* MUSSERV */
-
 /* UNIX hack, to be removed. */
 #ifdef SNDSERV
 /* Separate sound server process. */
@@ -396,164 +391,43 @@ void I_InitSound(void)
  * lxdoom v1.3.5 music API by Colin Phipps -- (12/3/99)
  */
 
-#ifdef MUSSERV
-static FILE *musserver;
-static unsigned char *musdata;
 static int loaded_handle;
-static int muslen;
-#endif
 static int playing_handle;
 
 void I_SetMusicVolume(int volume)
 {
-#ifdef MUSSERV
-  if (musserver) {
-    fprintf(musserver, "V%d\n", volume);
-    fflush(musserver);
-  }
-#endif /* #ifdef MUSSERV */
 }
 
 void I_InitMusic(void)
 {
-#ifdef MUSSERV
-  char *buffer = (char *)malloc(256);
-  int old_uid=-1;
-  
-  if (!buffer)
-  	return;
-  
-  sprintf(buffer, "%s", musserver_filename);
-  find_in_path(&buffer, 256);
-  
-  if (!access(buffer,X_OK)) {
-    /* start musserver via popen() (ugly) */
-    if (strlen(musserver_options)) {
-      strcat(buffer," ");
-      strcat(buffer,musserver_options);
-    }
-    if ((old_uid=geteuid()) == 0 && getuid() != 0) { /* we are running suid-root! */
-      old_uid=geteuid();
-      seteuid(getuid());  /* set euid to uid for creating sub-process */
-    }
-    musserver = popen(buffer,"w");
-    
-    if (!musserver) {
-      fprintf(stderr,"Could not start music server [%s]: %s\n",buffer,strerror(errno));
-      free(buffer);
-      return;
-    }
-
-    /* pass GENMIDI */
-    {
-      int lump = W_GetNumForName("GENMIDI");
-      size_t len = W_LumpLength(lump);
-      fwrite(W_CacheLumpNum(lump, PU_CACHE), len, 1, musserver);
-      fflush(musserver);
-    }
-
-   if (old_uid != -1)
-      seteuid(old_uid);
-  }
-  else {
-    fprintf(stderr,"Could not start music server [%s]\n",buffer);
-  }
-  
-  free(buffer);
-#endif /* MUSSERV */
 }
 
 void I_ShutdownMusic(void)
 {
-#ifdef MUSSERV
-  if (musserver) {
-    fputc('Q', musserver);
-    fclose(musserver); /* pclose? */
-    musserver = NULL;
-  }
-#endif /* MUSSERV */
 }
 
 void I_PlaySong(int handle, int looping)
 {
-#ifdef MUSSERV
-  if (musserver == NULL) return;
-
-  if (musdata == NULL) 
-    fprintf(stderr, "I_PlaySong: no MUS data available\n");
-  else if (loaded_handle != handle)
-    fprintf(stderr, "I_PlaySong: non-current handle used\n");
-  else {
-    fprintf(musserver, "N%d\n", looping);
-    fwrite(musdata, muslen, 1, musserver);
-    fflush(musserver);
-    playing_handle = handle;
-  }
-#endif
 }
 
 void I_PauseSong (int __attribute__((unused)) handle)
 {
-#ifdef MUSSERV
-  if (musserver == NULL) return;
-
-  fputc('P', musserver);
-  fflush(musserver);
-#endif
 }
 
 void I_ResumeSong (int __attribute__((unused)) handle)
 {
-#ifdef MUSSERV
-  if (musserver == NULL || playing_handle == 0)
-    return;
-
-  fputc('R', musserver);
-  fflush(musserver);
-#endif
 }
 
 void I_StopSong(int __attribute__((unused)) handle)
 {
-#ifdef MUSSERV
-  if ((musserver == NULL) || (playing_handle == 0))
-    return;
-
-  fputc('S', musserver);
-  fflush(musserver);
-  playing_handle = 0;	
-#endif
 }
 
 void I_UnRegisterSong(int handle)
 {
-#ifdef MUSSERV
-  if (handle != loaded_handle)
-    fprintf(stderr, "I_UnRegisterSong: song not registered\n");
-  else {
-    if (musdata != NULL)
-      musdata = NULL;
-
-    if (playing_handle == loaded_handle)
-      I_StopSong(playing_handle);
-
-    loaded_handle = 0;
-  }
-#endif
 }
 
 int I_RegisterSong(void* data, int len)
 {
-#ifdef MUSSERV
-  const char sig[4] = {'M', 'U', 'S', 0x1a};
-
-  if (memcmp(data, sig, 4))
-    return 0;
-
-  musdata = (unsigned char *) data;
-  muslen = len;
-
-#endif
   return (++loaded_handle);
 }
 
@@ -565,36 +439,5 @@ int I_QrySongPlaying(int handle)
 
 void find_in_path(char **filename, int size)
 {
-    char *envhome = getenv("PATH"), *path, *curentry, *fn;
-    
-    if (strchr(*filename, '/') || !envhome)
-        return;
-        
-    if (!(path = strdup(envhome)))
-        return;
-    
-    while (strlen(path))
-        {
-            if (!(curentry = strrchr(path, ':')))
-                curentry = path;
-            else
-                *curentry++ = 0;
-            if (!(fn = (char*)malloc(strlen(curentry)+2+strlen(*filename))))
-                {
-                    free(path);
-                    return;
-                }
-            sprintf(fn, "%s/%s", curentry, *filename);
-            if (!access(fn, X_OK))
-                {
-                    strncpy(*filename, fn, size-1);
-                    free(fn);
-                    free(path);
-                    return;
-                }
-            free(fn);                                
-            *curentry = 0;
-        }
-   free(path);
 }      
 

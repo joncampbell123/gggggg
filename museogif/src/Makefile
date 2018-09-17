@@ -63,7 +63,7 @@ SOUND_OBJS = gsisound/i_sound.o gsisound/soundst.o gsisound/sounds.o \
 SOUND_REFS = gsisound/i_sound.c gsisound/soundst.c gsisound/sounds.c \
 	     gsisound/gsi.c m_misc.c
 
-COPT.sound = -D__DOSOUND__ -D__DOMUSIC__ -DUSE_GSI -Igsisound
+COPT.sound = -D__DOSOUND__ -DUSE_GSI -Igsisound # -D__DOMUSIC__
 X11LIBS = -Xext -lX11 -lm
 else
 SOUND_OBJS = soundclient/i_sound.o soundclient/soundst.o soundclient/sounds.o \
@@ -71,10 +71,9 @@ SOUND_OBJS = soundclient/i_sound.o soundclient/soundst.o soundclient/sounds.o \
 SOUND_REFS = soundclient/i_sound.c soundclient/soundst.c soundclient/sounds.c \
 	     m_misc.c
 
-COPT.sound = -D__DOSOUND__ -DSNDSERV -Isoundclient -D__DOMUSIC__ -DMUSSERV # -D_DEBUGSOUND
+COPT.sound = -D__DOSOUND__ -DSNDSERV -Isoundclient # -D__DOMUSIC__ -D_DEBUGSOUND
 X11LIBS = -lXext -lX11
 
-MUSSERV = musserver
 SNDSERV = sndserver
 
 endif
@@ -96,14 +95,13 @@ OBJS =	am_map.o ct_chat.o d_main.o d_net.o f_finale.o g_game.o \
 
 all: sdl
 
-all-targets: x11 fastx11 sdl sndserver musserver
+all-targets: x11 fastx11 sdl sndserver
 
 clean:	
 	rm -f $(OBJS) xheretic xaheretic ggiheretic vgaheretic \
 	sdlheretic graphics/i_x11.o graphics/i_x11_fast.o \
 	graphics/i_ggi.o graphics/i_vga.o graphics/i_sdl.o
 	(cd sndserv; $(MAKE) clean; cd ..) || exit 1
-	(cd musserv; $(MAKE) clean; cd ..) || exit 1
 
 distclean:
 	rm -f $(OBJS) xheretic xaheretic ggiheretic vgaheretic \
@@ -113,7 +111,6 @@ distclean:
         .depend soundclient/*~ gsisound/*~ sndserv/*~ *~ *.rej *.orig \
 	doc/*~ doc/*.rej doc/*.orig
 	(cd sndserv; $(MAKE) clean; cd ..) || exit 1
-	(cd musserv; $(MAKE) clean; cd ..) || exit 1
 
 depx11:
 	$(CC) -E -M $(CFLAGS) $(X_LDFLAGS) *.c $(SOUND_REFS) \
@@ -135,15 +132,12 @@ depsdl:
 	$(CC) -E -M $(CFLAGS) $(X_LDFLAGS) *.c $(SOUND_REFS) \
 	graphics/i_sdl.c > .depend                                                               
 
-sdl:    depsdl $(OBJS) graphics/i_sdl.o $(MUSSERV) $(SNDSERV)
+sdl:    depsdl $(OBJS) graphics/i_sdl.o $(SNDSERV)
 	$(CC) $(CFLAGS) $(X_LDFLAGS) $(SDLLIBS) $(OBJS) \
 	graphics/i_sdl.o -o sdlheretic
 
 sndserver:
 	$(MAKE) -C sndserv COPT.arch="$(COPT.arch)" $@
-
-musserver:
-	$(MAKE) -C musserv COPT.arch="$(COPT.arch)" $@
 
 %.o:	%.c
 	$(CC) $(CFLAGS) -c $< -o $@
