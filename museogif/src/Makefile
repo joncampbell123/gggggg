@@ -94,25 +94,7 @@ OBJS =	am_map.o ct_chat.o d_main.o d_net.o f_finale.o g_game.o \
 	tables.o v_video.o w_wad.o z_zone.o in_lude.o \
 	info.o i_net.o i_system.o i_udp.o i_ipx.o i_main.o $(SOUND_OBJS)
 
-all:	
-	@echo "Choose one of following actions:"
-	@echo
-	@echo " make x11       - will build xheretic - runs under X11"
-	@echo
-	@echo " make fastx11   - will build xaheretic (fast X-version) - runs under X11"
-	@echo
-	@echo " make ggi       - will build ggiheretic - runs under GGI"
-	@echo		
-	@echo " make vga       - will build vgaheretic - runs under SVGAlib"
-	@echo
-	@echo " make sdl       - will build sdlheretic - runs under SDL-lib"
-	@echo
-	@echo " make sndserver - will build the soundserver for Heretic"
-	@echo
-	@echo " make musserver - will build the musicserver (from lxdoom) for Heretic"
-	@echo
-	@echo " make clean     - will clean up object and exec files"
-	@echo
+all: sdl
 
 all-targets: x11 fastx11 sdl sndserver musserver
 
