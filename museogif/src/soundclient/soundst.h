@@ -5,7 +5,6 @@
 #define __SOUNDSTH__
 
 extern long snd_SfxVolume;
-extern long snd_MusicVolume;
 
 /*
  * Initializes sound stuff, including volume

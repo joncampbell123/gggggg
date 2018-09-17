@@ -815,7 +815,7 @@ void D_DoomMain(void)
   D_CheckNetGame();
   
   printf("S_Init: Setting up sound.\n");
-  S_Init( snd_SfxVolume, snd_MusicVolume ); 
+  S_Init( snd_SfxVolume, 10 ); 
  
   printf("SB_Init: Loading patches.\n");
   SB_Init();

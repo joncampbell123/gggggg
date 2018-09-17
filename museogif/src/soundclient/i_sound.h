@@ -18,7 +18,6 @@ extern char *musserver_options;
 #endif
 
 extern long snd_SfxVolume;
-extern long snd_MusicVolume;
 
 
 

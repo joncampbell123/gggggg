@@ -431,7 +431,6 @@ default_t defaults[] =
   /*{ "mouse_look", &mouseLook, 1 },
     { "mouse_invert", &mouseInvert, 1 },*/
   { "sfx_volume", &snd_SfxVolume, 10, 0/*scantranslate*/, 0/*untranslated*/},
-  { "music_volume", &snd_MusicVolume, 10, 0/*scantranslate*/, 0/*untranslated*/},
 
 #ifdef UNIX
   { "key_right", &key_right, KEY_RIGHTARROW, 0/*scantranslate*/, 0/*untranslated*/ },

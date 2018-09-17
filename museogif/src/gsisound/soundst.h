@@ -4,7 +4,6 @@
 
 
 extern int snd_SfxVolume;
-extern int snd_MusicVolume;
 
 
 /*

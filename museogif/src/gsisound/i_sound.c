@@ -357,8 +357,6 @@ void I_SetSfxVolume(int volume)
  */
 void I_SetMusicVolume(int volume)
 {   
-    /* Internal state variable. */
-    snd_MusicVolume = volume;
     /*
      * Now set volume on output device.
      * Whatever( snd_MusciVolume );

@@ -15,9 +15,6 @@
  */
 long snd_SfxVolume = 15;
 
-/* volume of music */
-long snd_MusicVolume = 15;
-
 #define S_MAX_VOLUME		127
 
 /*
@@ -754,7 +751,6 @@ void S_SetMusicVolume(int volume)
     }
   
   I_SetMusicVolume(volume);
-  snd_MusicVolume = volume;
 
 #endif
 

@@ -94,10 +94,6 @@ static channel_t*	channels;
  */
 int 		snd_SfxVolume = 15;
 
-/* Maximum volume of music. Useless so far. */
-int 		snd_MusicVolume = 15; 
-
-
 
 /* whether songs are mus_paused */
 static boolean		mus_paused;	
@@ -546,7 +542,6 @@ void S_SetMusicVolume(int volume)
     
     /* I_SetMusicVolume(127); */
     I_SetMusicVolume(volume*8);
-    snd_MusicVolume = volume;
 }
 
 
