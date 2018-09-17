@@ -135,22 +135,6 @@ depsdl:
 	$(CC) -E -M $(CFLAGS) $(X_LDFLAGS) *.c $(SOUND_REFS) \
 	graphics/i_sdl.c > .depend                                                               
 
-x11:	depx11 $(OBJS) graphics/i_x11.o $(MUSSERV) $(SNDSERV)
-	$(CC) $(CFLAGS) $(X_LDFLAGS) $(X11LIBS) $(OBJS) \
-	graphics/i_x11.o -o xheretic
-
-fastx11:depx11f $(OBJS) graphics/i_x11_fast.o $(MUSSERV) $(SNDSERV)
-	$(CC) $(CFLAGS) $(X_LDFLAGS) $(X11LIBS) $(OBJS) \
-	graphics/i_x11_fast.o -o xaheretic
-
-ggi:	depggi $(OBJS) graphics/i_ggi.o $(MUSSERV) $(SNDSERV)
-	$(CC) $(CFLAGS) $(GGILIBS) $(OBJS) \
-	graphics/i_ggi.o -o ggiheretic
-
-vga:	depvga $(OBJS) graphics/i_vga.o $(MUSSERV) $(SNDSERV)
-	$(CC) $(CFLAGS) $(VGALIBS) $(OBJS) \
-	graphics/i_vga.o -o vgaheretic
-
 sdl:    depsdl $(OBJS) graphics/i_sdl.o $(MUSSERV) $(SNDSERV)
 	$(CC) $(CFLAGS) $(X_LDFLAGS) $(SDLLIBS) $(OBJS) \
 	graphics/i_sdl.o -o sdlheretic
