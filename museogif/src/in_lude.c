@@ -148,7 +148,6 @@ void IN_Start(void)
   intertime = 0;
   oldintertime = 0;
   AM_Stop();
-  S_ChangeMusic(mus_intr, true);
 }
 
 

@@ -259,14 +259,15 @@ static int S_getChannel( void* origin, sfxinfo_t* sfxinfo )
  */
 void S_Init( int sfxVolume, int	musicVolume )
 {
+    (void)musicVolume;
+
 #ifdef __DOSOUND__
   int i;
-  
+
   /* Whatever these did with DMX, these are rather dummies now. */
   I_SetChannels();
 
   S_SetSfxVolume(sfxVolume);
-  S_SetMusicVolume(musicVolume);
   
   /*
    * Allocating the internal channels for mixing
@@ -352,7 +353,6 @@ void S_Start(void)
 	mnum = spmus[gamemap-1];
     }
 
-  S_ChangeMusic(mnum, true);
   }
 #endif /* __DOMUSIC__ */
   nextcleanup = 15;  
@@ -659,35 +659,20 @@ void S_UpdateSounds(void* listener_p)
 #endif
 }
 
-
 /*
  * Starts some music with the music id found in sounds.h.
  */
-void S_StartMusic(int music_id)
-{
-    (void)music_id;
-}
-
-
-void S_StopMusic(void)
-{
-}
-
-
-void S_ChangeMusic( int	music_id, int looping )
-{
-    (void)music_id;
-    (void)looping;
-}
-
-
-void S_SetMusicVolume(int volume)
-{
-    (void)volume;
-}
-
 
 void S_SetSfxVolume(int volume)
 {
-    (void)volume; 
+#ifdef __DOSOUND__
+    if (volume < 0 || volume > 127)
+        I_Error("Attempt to set sfx volume at %d", volume);
+
+    snd_SfxVolume = volume;
+#endif /* __DOSOUND__ */
+
+#ifdef _DEBUGSOUND
+    fprintf(stderr, "FIXME: Calling S_SetSfxVolume...\n");
+#endif
 }

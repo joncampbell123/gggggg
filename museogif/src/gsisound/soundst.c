@@ -63,10 +63,8 @@ extern char *doomwaddir; /* for GSI */
  * Current music/sfx card - index useless
  *  w/o a reference LUT in a sound module.
  */
-extern int snd_MusicDevice;
 extern int snd_SfxDevice;
 /* Config file? Same disclaimer as above. */
-extern int snd_DesiredMusicDevice;
 extern int snd_DesiredSfxDevice;
 
 
@@ -141,7 +139,6 @@ void S_Init( int sfxVolume, int	musicVolume )
     I_SetChannels();
     
     S_SetSfxVolume(sfxVolume);
-    S_SetMusicVolume(musicVolume);
     
     numChannels = 8; /* whs: added .. */
     /*
@@ -274,8 +271,6 @@ void S_Start(void)
     else
       mnum = spmus[gamemap-1];
     }
-    
-    S_ChangeMusic(mnum, true);
   
     nextcleanup = 15;
 }
@@ -532,19 +527,6 @@ void S_UpdateSounds(void* listener_p)
 }
 
 
-void S_SetMusicVolume(int volume)
-{
-    if (volume < 0 || volume > 127)
-	{
-	    I_Error("Attempt to set music volume at %d",
-		    volume);
-	}
-    
-    /* I_SetMusicVolume(127); */
-    I_SetMusicVolume(volume*8);
-}
-
-
 void S_SetSfxVolume(int volume)
 {
 
@@ -553,75 +535,6 @@ void S_SetSfxVolume(int volume)
 
     snd_SfxVolume = volume;
 
-}
-
-
-/*
- * Starts some music with the music id found in sounds.h.
- */
-void S_StartMusic(int m_id)
-{
-    S_ChangeMusic(m_id, false);
-}
-
-
-void S_ChangeMusic( int musicnum, int looping )
-{
-    musicinfo_t*	music=0;
-    char		namebuf[9];
-
-#define mus_None -1
-    if ( (musicnum <= mus_None)
-	 || (musicnum >= NUMMUSIC) )
-	{
-	    I_Error("Bad music number %d", musicnum);
-	}
-    else
-	music = &S_music[musicnum];
-    
-    if (mus_playing == music) {
-	fprintf(stderr, "this music is already playing\n");
-	return;
-    }
-    
-    /* shutdown old music */
-    S_StopMusic();
-    
-    /* get lumpnum if neccessary */
-    if (!music->lumpnum)
-	{	    
-	    sprintf(namebuf, "%s", music->name);
-	    music->lumpnum = W_GetNumForName(namebuf);
-	}
-
-    /* Andre: This must be fixed ! */
-    
-    gsi_load_song_from("heretic.wad", lumpinfo[music->lumpnum].position);
-    /* load & register it */
-    music->data = (void *) W_CacheLumpNum(music->lumpnum, PU_MUSIC);
-    music->handle = I_RegisterSong(music->data);
-    
-    /* play it */
-    I_PlaySong(music->handle, looping);
-    
-    mus_playing = music;
-}
-
-
-void S_StopMusic(void)
-{
-    if (mus_playing)
-	{
-	    if (mus_paused)
-		I_ResumeSong(mus_playing->handle);
-	    
-	    I_StopSong(mus_playing->handle);
-	    I_UnRegisterSong(mus_playing->handle);
-	    Z_ChangeTag(mus_playing->data, PU_CACHE);
-	    
-	    mus_playing->data = 0;
-	    mus_playing = 0;
-	}
 }
 
 

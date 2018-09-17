@@ -374,7 +374,6 @@ void D_DoAdvanceDemo (void)
       pagetic = 210;
       gamestate = GS_DEMOSCREEN;
       pagename = "TITLE";
-      S_StartMusic(mus_titl);
       
       break;
     case 1:
