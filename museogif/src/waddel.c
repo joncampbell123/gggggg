@@ -100,6 +100,8 @@ int main(int argc,char **argv) {
 
         for (;o < oldlumps;o++)
             memset(nlumps+o,0,sizeof(filelump_t));
+
+        fprintf(stderr,"Lumps changed from %u to %u\n",oldlumps,header.numlumps);
     }
 
     if (lseek(fd,0,SEEK_SET) != 0)
