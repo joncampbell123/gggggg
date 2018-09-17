@@ -107,7 +107,7 @@ wadlist: wadlist.c
 all-targets: x11 fastx11 sdl sndserver
 
 clean:	
-	rm -f $(OBJS) xheretic xaheretic ggiheretic vgaheretic \
+	rm -f $(OBJS) xheretic xaheretic ggiheretic vgaheretic wadlist waddel wadrepk \
 	sdlheretic graphics/i_x11.o graphics/i_x11_fast.o \
 	graphics/i_ggi.o graphics/i_vga.o graphics/i_sdl.o
 	(cd sndserv; $(MAKE) clean; cd ..) || exit 1
