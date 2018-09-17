@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -98,6 +99,7 @@ int main(int argc,char **argv) {
     ofs = lseek(fd,0,SEEK_END);
 
     if (need_fstart) {
+        assert(nent == header.numlumps);
         memset(&lumps[header.numlumps],0,sizeof(filelump_t));
         strcpy(lumps[header.numlumps].name,"F_START");
         lumps[header.numlumps].filepos = ofs;
@@ -112,6 +114,7 @@ int main(int argc,char **argv) {
     if (nent == header.numlumps) header.numlumps++;
 
     if (need_fend) {
+        assert((nent+1) == header.numlumps);
         memset(&lumps[header.numlumps],0,sizeof(filelump_t));
         strcpy(lumps[header.numlumps].name,"F_END");
         lumps[header.numlumps].filepos = ofs;
