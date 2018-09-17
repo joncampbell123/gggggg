@@ -42,11 +42,6 @@
 #include "doomdef.h"
 
 
-#ifndef HOMEDIR
-#define HOMEDIR "/.heretic"
-#endif /* HOMEDIR */
-
-
 /* ===============
  *    TYPES
  * =============== 
