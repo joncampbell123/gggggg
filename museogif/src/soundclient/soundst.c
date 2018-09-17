@@ -665,111 +665,29 @@ void S_UpdateSounds(void* listener_p)
  */
 void S_StartMusic(int music_id)
 {
-#ifdef __DOMUSIC__
-  S_ChangeMusic(music_id, false);
-#endif
-
-#ifdef _DEBUGSOUND
-  fprintf(stderr, "FIXME: Calling S_StartMusic...\n");
-#endif
+    (void)music_id;
 }
 
 
 void S_StopMusic(void)
 {
-#ifdef __DOMUSIC__
-  if (mus_playing)
-    {
-      if (mus_paused)
-	I_ResumeSong(mus_playing->handle);
-      
-      I_StopSong(mus_playing->handle);
-      I_UnRegisterSong(mus_playing->handle);
-      Z_ChangeTag(mus_playing->data, PU_CACHE);
-      
-      mus_playing->data = 0;
-      mus_playing = 0;
-    }
-
-#endif
-
-#ifdef _DEBUGSOUND
-  fprintf(stderr, "FIXME: Calling S_StopMusic...\n");
-#endif
 }
 
 
 void S_ChangeMusic( int	music_id, int looping )
 {
-#ifdef __DOMUSIC__
-  musicinfo_t*	music;
- 
-  if ( (music_id <= mus_None)
-       || (music_id >= NUMMUSIC) )
-    {
-      I_Error("Bad music number %d", music_id);
-    }
-
-  music = &S_music[music_id];
-  
-  if (mus_playing == music)
-    return;
-  
-  /* shutdown old music */
-  S_StopMusic();
-  
-  /* get lumpnum if neccessary */
-  if (!music->lumpnum)
-    {
-      music->lumpnum = W_GetNumForName(music->name);
-    }
-  
-  /* load & register it */
-  music->data = (void *) W_CacheLumpNum(music->lumpnum, PU_MUSIC);
-  music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
-  
-  /* play it */
-  I_PlaySong(music->handle, looping);
-  
-  mus_playing = music;
-
-#endif
-
-#ifdef _DEBUGSOUND
-  fprintf(stderr, "FIXME: Calling S_ChangeMusic...\n");
-#endif
+    (void)music_id;
+    (void)looping;
 }
 
 
 void S_SetMusicVolume(int volume)
 {
-#ifdef __DOMUSIC__
-  if (volume < 0 || volume > 15)
-    {
-      I_Error("Attempt to set music volume at %d",
-	      volume);
-    }
-  
-  I_SetMusicVolume(volume);
-
-#endif
-
-#ifdef _DEBUGSOUND
-  fprintf(strerr, "FIXME: Calling S_SetMusicVolume...\n");
-#endif
+    (void)volume;
 }
 
 
 void S_SetSfxVolume(int volume)
 {
-#ifdef __DOSOUND__
-  if (volume < 0 || volume > 127)
-    I_Error("Attempt to set sfx volume at %d", volume);
-  
-  snd_SfxVolume = volume;
-#endif /* __DOSOUND__ */
-  
-#ifdef _DEBUGSOUND
-  fprintf(stderr, "FIXME: Calling S_SetSfxVolume...\n");
-#endif
+    (void)volume; 
 }

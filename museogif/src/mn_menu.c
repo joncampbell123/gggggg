@@ -570,6 +570,8 @@ static void DrawOptions3Menu(void)
 */
 static boolean SCNetCheck(int option)
 {
+    (void)option;
+
     MenuEpisode = 1;
     G_DeferedInitNew(sk_medium, MenuEpisode, 1);
     MN_DeactivateMenu();

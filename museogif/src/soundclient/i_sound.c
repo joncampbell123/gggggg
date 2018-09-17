@@ -396,6 +396,7 @@ static int playing_handle;
 
 void I_SetMusicVolume(int volume)
 {
+    (void)volume;
 }
 
 void I_InitMusic(void)
@@ -408,6 +409,8 @@ void I_ShutdownMusic(void)
 
 void I_PlaySong(int handle, int looping)
 {
+    (void)handle;
+    (void)looping;
 }
 
 void I_PauseSong (int __attribute__((unused)) handle)
@@ -424,10 +427,13 @@ void I_StopSong(int __attribute__((unused)) handle)
 
 void I_UnRegisterSong(int handle)
 {
+    (void)handle;
 }
 
 int I_RegisterSong(void* data, int len)
 {
+    (void)data;
+    (void)len;
   return (++loaded_handle);
 }
 
@@ -439,5 +445,7 @@ int I_QrySongPlaying(int handle)
 
 void find_in_path(char **filename, int size)
 {
+    (void)filename;
+    (void)size;
 }      
 
