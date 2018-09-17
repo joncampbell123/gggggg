@@ -18,6 +18,7 @@ wadinfo_t       header;
 filelump_t*     lumps = NULL;
 
 int main(int argc,char **argv) {
+    int oldlumps;
     int fd;
     int c;
     int i;
@@ -80,6 +81,8 @@ int main(int argc,char **argv) {
         filelump_t* nlumps;
         int i=0,o=0;
 
+        oldlumps = header.numlumps;
+
         nlumps = malloc(sizeof(filelump_t) * header.numlumps);
         if (nlumps == NULL)
             return 1;
@@ -90,6 +93,9 @@ int main(int argc,char **argv) {
                 o++;
             }
         }
+
+        for (;o < oldlumps;o++)
+            memset(nlumps+o,0,sizeof(filelump_t));
 
         free(lumps);
         lumps = nlumps;
@@ -105,7 +111,7 @@ int main(int argc,char **argv) {
     if (lseek(fd,header.infotableofs,SEEK_SET) != header.infotableofs)
         return 1;
 
-    if (write(fd,lumps,sizeof(filelump_t) * header.numlumps) != (sizeof(filelump_t) * header.numlumps))
+    if (write(fd,lumps,sizeof(filelump_t) * oldlumps) != (sizeof(filelump_t) * oldlumps))
         return 1;
 
     free(lumps);
