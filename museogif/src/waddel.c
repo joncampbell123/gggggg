@@ -75,6 +75,33 @@ int main(int argc,char **argv) {
         }
     }
 
+    /* update wadlist */
+    {
+        filelump_t* nlumps;
+        int i=0,o=0;
+
+        nlumps = malloc(sizeof(filelump_t) * header.numlumps);
+        if (nlumps == NULL)
+            return 1;
+
+        for (;i < header.numlumps;i++) {
+            if (lumps[i].filepos != 0 && lumps[i].name[0] != 0) {
+                memcpy(nlumps+o,lumps+i,sizeof(filelump_t));
+                o++;
+            }
+        }
+
+        free(lumps);
+        lumps = nlumps;
+        header.numlumps = o;
+    }
+
+    if (lseek(fd,0,SEEK_SET) != 0)
+        return 1;
+
+    if (write(fd,&header,sizeof(header)) != sizeof(header))
+        return 1;
+
     if (lseek(fd,header.infotableofs,SEEK_SET) != header.infotableofs)
         return 1;
 
