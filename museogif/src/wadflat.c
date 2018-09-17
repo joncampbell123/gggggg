@@ -51,6 +51,9 @@ int main(int argc,char **argv) {
     int fd;
     int c;
     int i;
+    int nent;
+    int need_fend=1;
+    int need_fstart=1;
 
     if (argc < 4) {
         fprintf(stderr,"wadflat <WAD> <NAME> <64x64 BMP FILE>\n");
@@ -74,18 +77,50 @@ int main(int argc,char **argv) {
     if (lseek(fd,header.infotableofs,SEEK_SET) != header.infotableofs)
         return 1;
 
-    lumps = malloc(sizeof(filelump_t) * (header.numlumps + 1));
+    lumps = malloc(sizeof(filelump_t) * (header.numlumps + 3)); /* add up to 3: the flat, and possible F_START/F_END */
     if (lumps == NULL)
         return 1;
 
     if (read(fd,lumps,sizeof(filelump_t) * header.numlumps) != (sizeof(filelump_t) * header.numlumps))
         return 1;
 
+    nent = header.numlumps;
+    for (i=0;i < header.numlumps;i++) {
+        memcpy(tmp,lumps[i].name,8); tmp[8] = 0;
+        if (!strcmp(tmp,"F_START")) need_fstart = 0;
+        if (!need_fstart && !strcmp(tmp,"F_END")) {
+            need_fend = 0;
+            nent = i; /* insert here */
+            break;
+        }
+    }
+
     ofs = lseek(fd,0,SEEK_END);
-    lumps[header.numlumps].filepos = ofs;
-    lumps[header.numlumps].size = 64*64;
+
+    if (need_fstart) {
+        memset(&lumps[header.numlumps],0,sizeof(filelump_t));
+        strcpy(lumps[header.numlumps].name,"F_START");
+        lumps[header.numlumps].filepos = ofs;
+        lumps[header.numlumps].size = 0;
+        header.numlumps++;
+        nent = header.numlumps;
+    }
+
+    lumps[nent].filepos = ofs;
+    lumps[nent].size = 64*64;
+    ofs += 64*64;
+    if (nent == header.numlumps) header.numlumps++;
+
+    if (need_fend) {
+        memset(&lumps[header.numlumps],0,sizeof(filelump_t));
+        strcpy(lumps[header.numlumps].name,"F_END");
+        lumps[header.numlumps].filepos = ofs;
+        lumps[header.numlumps].size = 0;
+        header.numlumps++;
+    }
+
     {
-        char *d = lumps[header.numlumps].name;
+        char *d = lumps[nent].name;
         char *s = argv[2];
         int x = 0;
 
@@ -110,6 +145,9 @@ int main(int argc,char **argv) {
 
         windows_BITMAPFILEHEADER bhdr;
         windows_BITMAPINFOHEADER ihdr;
+
+        if (lseek(fd,lumps[nent].filepos,SEEK_SET) != lumps[nent].filepos)
+            return 1;
 
         if (read(bmp_fd,&bhdr,sizeof(bhdr)) != sizeof(bhdr))
             return 1;
@@ -154,9 +192,6 @@ int main(int argc,char **argv) {
         close(bmp_fd);
         free(flat);
     }
-
-    ofs += lumps[header.numlumps].size;
-    header.numlumps++;
 
     header.infotableofs = ofs;
 
