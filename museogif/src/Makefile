@@ -93,12 +93,15 @@ OBJS =	am_map.o ct_chat.o d_main.o d_net.o f_finale.o g_game.o \
 	tables.o v_video.o w_wad.o z_zone.o in_lude.o \
 	info.o i_net.o i_system.o i_udp.o i_ipx.o i_main.o $(SOUND_OBJS)
 
-all: sdl wadlist waddel wadrepk
+all: sdl wadlist waddel wadrepk wadflat
 
 wadrepk: wadrepk.c
 	gcc $(COPT.arch) -o $@ $<
 
 waddel: waddel.c
+	gcc $(COPT.arch) -o $@ $<
+
+wadflat: wadflat.c
 	gcc $(COPT.arch) -o $@ $<
 
 wadlist: wadlist.c
@@ -107,7 +110,7 @@ wadlist: wadlist.c
 all-targets: x11 fastx11 sdl sndserver
 
 clean:	
-	rm -f $(OBJS) xheretic xaheretic ggiheretic vgaheretic wadlist waddel wadrepk \
+	rm -f $(OBJS) xheretic xaheretic ggiheretic vgaheretic wadlist waddel wadrepk wadflat \
 	sdlheretic graphics/i_x11.o graphics/i_x11_fast.o \
 	graphics/i_ggi.o graphics/i_vga.o graphics/i_sdl.o
 	(cd sndserv; $(MAKE) clean; cd ..) || exit 1
