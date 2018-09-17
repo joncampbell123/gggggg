@@ -41,7 +41,7 @@ int main(int argc,char **argv) {
     if (lseek(fd,header.infotableofs,SEEK_SET) != header.infotableofs)
         return 1;
 
-    for (c=0;c < header.infotableofs;c++) {
+    for (c=0;c < header.numlumps;c++) {
         if (read(fd,&lump,sizeof(lump)) != sizeof(lump))
             break;
 
