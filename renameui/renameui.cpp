@@ -333,7 +333,8 @@ bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
     printf("\x1B[0m");
     printf("\x1B[2J");
     printf("\x1B[H");
-    printf("Edit name:\n\n");
+    printf("Edit name:\n");
+    printf("%s\n",oldname.c_str());
     fflush(stdout);
 
     do {
