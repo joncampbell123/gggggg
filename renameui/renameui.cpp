@@ -483,10 +483,17 @@ int main() {
                 dirlist_entry_t &ent = dirlist[dirlist_sel];
                 std::string nname = ent.first;
 
+try_again:
                 if (prompt_edit_name(/*&*/nname, ent.first)) {
                     if (ent.first != nname) {
                         DIR *dir = opendir(cwd.c_str());
                         if (dir != NULL) {
+                            struct stat st;
+
+			    if (fstatat(dirfd(dir), nname.c_str(), &st, AT_SYMLINK_NOFOLLOW) == 0) {
+                                goto try_again;
+			    }
+
                             renameat(dirfd(dir), ent.first.c_str(), dirfd(dir), nname.c_str());
                             scan_dir();
                             find_file_dir(nname);
