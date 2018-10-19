@@ -423,6 +423,15 @@ int main() {
                 }
             }
         }
+        else if (in == "\x1B[1~") { /* home */
+            size_t adj = screen_rows - TOPLIST_ROW;
+
+            if (dirlist_sel > 0) {
+		dirlist_sel = 0;
+                dirlist_scroll = 0;
+                redraw = 1;
+            }
+        }
         else if (in == "\x1B[5~") { /* page up */
             size_t adj = screen_rows - TOPLIST_ROW;
 
