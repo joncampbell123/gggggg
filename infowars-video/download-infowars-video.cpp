@@ -11,6 +11,7 @@
 #include <string>
 
 using namespace std;
+using namespace json11;
 
 const string api_url = "https://api.infowarsmedia.com/api/channel/5b885d33e6646a0015a6fa2d/videos?limit=99&offset=0";
 
@@ -39,6 +40,32 @@ int main(int argc,char **argv) {
             int status = system(cmd.c_str());
             if (status != 0) return 1;
         }
+    }
+
+    Json json;
+    {
+        int fd = open(js_file.c_str(),O_RDONLY);
+        if (fd < 0) return 1;
+
+        off_t len = lseek(fd,0,SEEK_END);
+        if (len > (16*1024*1024)) return 1;
+        if (lseek(fd,0,SEEK_SET) != 0) return 1;
+
+        char *buf = new char[len+1]; // or throw exception
+        if (read(fd,buf,len) != len) return 1;
+        buf[len] = 0;
+
+        string json_err;
+
+        json = Json::parse(buf,json_err);
+
+        if (json == Json()) {
+            fprintf(stderr,"JSON parse error: %s\n",json_err.c_str());
+            return 1;
+        }
+
+        delete[] buf;
+        close(fd);
     }
 
     return 0;
