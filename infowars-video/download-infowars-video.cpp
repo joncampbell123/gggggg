@@ -17,6 +17,10 @@ const string api_url = "https://api.infowarsmedia.com/api/channel/5b885d33e6646a
 
 bool should_stop = false;
 
+void init_marker(void) {
+    mkdir("marker",0755);
+}
+
 string get_mark_filename(const string &filename) {
     return string("marker/") + filename;
 }
@@ -143,6 +147,8 @@ int main(int argc,char **argv) {
     char timestr[128];
     int download_count = 0;
     int download_limit = 1;
+
+    init_marker();
 
     // Round to half an hour for JS name to avoid hitting their API too often. Be nice.
     sprintf(timestr,"%04u%02u%02u-%02u%02u%02u",
