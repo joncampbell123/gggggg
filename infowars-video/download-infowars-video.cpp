@@ -128,8 +128,11 @@ int main(int argc,char **argv) {
         struct stat st;
 
         if (stat(js_file.c_str(),&st) != 0) {
-            assert(js_file.find_first_of(" ") == string::npos);
-            string cmd = string("wget --show-progress --limit-rate=750K -O ") + js_file + " " + api_url;
+            assert(js_file.find_first_of(' ') == string::npos);
+            assert(js_file.find_first_of('$') == string::npos);
+            assert(js_file.find_first_of('\'') == string::npos);
+            assert(js_file.find_first_of('\"') == string::npos);
+            string cmd = string("wget --show-progress --limit-rate=750K -O ") + js_file + " \"" + api_url + "\"";
             int status = system(cmd.c_str());
             if (status != 0) return 1;
         }
