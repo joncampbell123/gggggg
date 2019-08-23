@@ -124,7 +124,7 @@ bool download_video(const Json &video) {
     }
 
     {
-        string cmd = string("wget --continue --show-progress --limit-rate=250K -O ") + filename + ".part " + direct_url;
+        string cmd = string("wget --timeout=60 --continue --show-progress --limit-rate=250K -O ") + filename + ".part " + direct_url;
         int status = system(cmd.c_str());
         if (status != 0) {
             if (WIFSIGNALED(status)) should_stop = true;
@@ -175,7 +175,7 @@ int main(int argc,char **argv) {
             assert(api_url.find_first_of('\'') == string::npos);
             assert(api_url.find_first_of('\"') == string::npos);
 
-            string cmd = string("wget --show-progress --limit-rate=750K -O ") + js_file + " \"" + api_url + "\"";
+            string cmd = string("wget --timeout=60 --show-progress --limit-rate=750K -O ") + js_file + " \"" + api_url + "\"";
             int status = system(cmd.c_str());
             if (status != 0) return 1;
         }
