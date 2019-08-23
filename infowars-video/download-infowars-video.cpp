@@ -43,6 +43,14 @@ void download_video(const Json &video) {
             fprintf(stderr,"Cannot determine filename\n");
             return;
         }
+
+        /* it's unusual for the filename to contain anything other than hexadecimal, dashes, and ".mp4" */
+        for (const auto &c : filename) {
+            if (!(isalpha(c) || isdigit(c) || c == '.' || c == '-')) {
+                fprintf(stderr,"Unusual filename '%s'\n",filename.c_str());
+                return;
+            }
+        }
     }
 
     string tagname = filename;
