@@ -15,10 +15,43 @@ using namespace json11;
 
 const string api_url = "https://api.infowarsmedia.com/api/channel/5b885d33e6646a0015a6fa2d/videos?limit=99&offset=0";
 
+void download_video(const Json &video) {
+    if (!video.is_object()) {
+        fprintf(stderr,"WARNING: Videos array element not object\n");
+        return;
+    }
+
+    const string title = video["title"].string_value();
+    const string summary = video["summary"].string_value();
+    const string direct_url = video["directUrl"].string_value();
+
+    if (direct_url.empty()) {
+        fprintf(stderr,"WARNING: No direct URL\n");
+        return;
+    }
+
+    string filename;
+    {
+        auto p = direct_url.find_last_of('/');
+        if (p == string::npos) {
+            fprintf(stderr,"Cannot determine filename\n");
+            return;
+        }
+
+        filename = direct_url.substr(p+1);
+        if (filename.empty()) {
+            fprintf(stderr,"Cannot determine filename\n");
+            return;
+        }
+    }
+}
+
 int main(int argc,char **argv) {
     time_t now = time(NULL);
     struct tm tm = *localtime(&now);
     char timestr[128];
+    int download_count = 0;
+    int download_limit = 1;
 
     // Round to half an hour for JS name to avoid hitting their API too often. Be nice.
     sprintf(timestr,"%04u%02u%02u-%02u%02u%02u",
@@ -72,6 +105,19 @@ int main(int argc,char **argv) {
     if (json["id"].string_value() != "5b885d33e6646a0015a6fa2d" ||
         json["title"].string_value() != "The Alex Jones Show") {
         fprintf(stderr,"WARNING: JSON looks different\n");
+    }
+
+    /* look at the videos array */
+    {
+        auto videos = json["videos"];
+        if (videos.is_array()) {
+            for (auto &video : videos.array_items()) {
+                download_video(video);
+            }
+        }
+        else {
+            fprintf(stderr,"No videos array\n");
+        }
     }
 
     return 0;
