@@ -68,6 +68,12 @@ int main(int argc,char **argv) {
         close(fd);
     }
 
+    /* warn if the object looks different */
+    if (json["id"].string_value() != "5b885d33e6646a0015a6fa2d" ||
+        json["title"].string_value() != "The Alex Jones Show") {
+        fprintf(stderr,"WARNING: JSON looks different\n");
+    }
+
     return 0;
 }
 
