@@ -15,10 +15,12 @@ using namespace json11;
 
 const string api_url = "https://api.infowarsmedia.com/api/channel/5b885d33e6646a0015a6fa2d/videos?limit=99&offset=0";
 
-void download_video(const Json &video) {
+bool should_stop = false;
+
+bool download_video(const Json &video) {
     if (!video.is_object()) {
         fprintf(stderr,"WARNING: Videos array element not object\n");
-        return;
+        return false;
     }
 
     const string title = video["title"].string_value();
@@ -27,7 +29,7 @@ void download_video(const Json &video) {
 
     if (direct_url.empty()) {
         fprintf(stderr,"WARNING: No direct URL\n");
-        return;
+        return false;
     }
 
     string filename;
@@ -35,20 +37,20 @@ void download_video(const Json &video) {
         auto p = direct_url.find_last_of('/');
         if (p == string::npos) {
             fprintf(stderr,"Cannot determine filename\n");
-            return;
+            return false;
         }
 
         filename = direct_url.substr(p+1);
         if (filename.empty()) {
             fprintf(stderr,"Cannot determine filename\n");
-            return;
+            return false;
         }
 
         /* it's unusual for the filename to contain anything other than hexadecimal, dashes, and ".mp4" */
         for (const auto &c : filename) {
             if (!(isalpha(c) || isdigit(c) || c == '.' || c == '-')) {
                 fprintf(stderr,"Unusual filename '%s'\n",filename.c_str());
-                return;
+                return false;
             }
         }
     }
@@ -95,8 +97,13 @@ void download_video(const Json &video) {
     {
         string cmd = string("wget --continue --show-progress --limit-rate=1000K -O ") + filename + " " + direct_url;
         int status = system(cmd.c_str());
-        if (status != 0) return;
+        if (status != 0) {
+            if (WIFSIGNALED(status)) should_stop = true;
+            return false;
+        }
     }
+
+    return true;
 }
 
 int main(int argc,char **argv) {
@@ -165,7 +172,13 @@ int main(int argc,char **argv) {
         auto videos = json["videos"];
         if (videos.is_array()) {
             for (auto &video : videos.array_items()) {
-                download_video(video);
+                if (download_video(video)) {
+                    if (++download_count >= download_limit)
+                        break;
+                }
+
+                if (should_stop)
+                    break;
             }
         }
         else {
