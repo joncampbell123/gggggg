@@ -132,6 +132,12 @@ int main(int argc,char **argv) {
             assert(js_file.find_first_of('$') == string::npos);
             assert(js_file.find_first_of('\'') == string::npos);
             assert(js_file.find_first_of('\"') == string::npos);
+
+            assert(api_url.find_first_of(' ') == string::npos);
+            assert(api_url.find_first_of('$') == string::npos);
+            assert(api_url.find_first_of('\'') == string::npos);
+            assert(api_url.find_first_of('\"') == string::npos);
+
             string cmd = string("wget --show-progress --limit-rate=750K -O ") + js_file + " \"" + api_url + "\"";
             int status = system(cmd.c_str());
             if (status != 0) return 1;
