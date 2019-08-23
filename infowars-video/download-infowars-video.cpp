@@ -95,12 +95,24 @@ bool download_video(const Json &video) {
     assert(direct_url.find_first_of('\"') == string::npos);
 
     {
+        struct stat st;
+
+        if (stat(filename.c_str(),&st) == 0)
+            return false; // already exists
+    }
+
+    {
         string cmd = string("wget --continue --show-progress --limit-rate=500K -O ") + filename + ".part " + direct_url;
         int status = system(cmd.c_str());
         if (status != 0) {
             if (WIFSIGNALED(status)) should_stop = true;
             return false;
         }
+    }
+
+    {
+        string alt = filename + ".part";
+        rename(alt.c_str(),filename.c_str());
     }
 
     return true;
