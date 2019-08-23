@@ -44,6 +44,34 @@ void download_video(const Json &video) {
             return;
         }
     }
+
+    string tagname = filename;
+    if (!title.empty()) {
+        tagname += "-";
+        tagname += title;
+        if (!summary.empty()) {
+            tagname += "-";
+            tagname += summary;
+        }
+    }
+    if (tagname != filename) {
+        if (tagname.length() > 128)
+            tagname = tagname.substr(0,128);
+
+        for (auto &c : tagname) {
+            if (c < 32 || c > 126 || c == ':' || c == '\\' || c == '/')
+                c = ' ';
+        }
+
+        tagname += ".txt";
+
+        {
+            FILE *fp = fopen(tagname.c_str(),"w");
+            if (fp) {
+                fclose(fp);
+            }
+        }
+    }
 }
 
 int main(int argc,char **argv) {
