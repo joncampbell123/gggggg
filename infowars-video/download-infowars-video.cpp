@@ -80,6 +80,23 @@ void download_video(const Json &video) {
             }
         }
     }
+
+    assert(filename.find_first_of('/') == string::npos);
+    assert(filename.find_first_of('$') == string::npos);
+    assert(filename.find_first_of('\\') == string::npos);
+    assert(filename.find_first_of('\'') == string::npos);
+    assert(filename.find_first_of('\"') == string::npos);
+
+    assert(direct_url.find_first_of('$') == string::npos);
+    assert(direct_url.find_first_of('\\') == string::npos);
+    assert(direct_url.find_first_of('\'') == string::npos);
+    assert(direct_url.find_first_of('\"') == string::npos);
+
+    {
+        string cmd = string("wget --continue --show-progress --limit-rate=1000K -O ") + filename + " " + direct_url;
+        int status = system(cmd.c_str());
+        if (status != 0) return;
+    }
 }
 
 int main(int argc,char **argv) {
