@@ -95,7 +95,7 @@ bool download_video(const Json &video) {
     assert(direct_url.find_first_of('\"') == string::npos);
 
     {
-        string cmd = string("wget --continue --show-progress --limit-rate=500K -O ") + filename + " " + direct_url;
+        string cmd = string("wget --continue --show-progress --limit-rate=500K -O ") + filename + ".part " + direct_url;
         int status = system(cmd.c_str());
         if (status != 0) {
             if (WIFSIGNALED(status)) should_stop = true;
