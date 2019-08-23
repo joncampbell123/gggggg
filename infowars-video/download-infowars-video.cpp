@@ -17,6 +17,16 @@ const string api_url = "https://api.infowarsmedia.com/api/channel/5b885d33e6646a
 
 bool should_stop = false;
 
+string get_mark_filename(const string &filename) {
+    return string("marker/") + filename;
+}
+
+void mark_file(const string &filename) {
+    const string mark_filename = get_mark_filename(filename);
+    int fd = open(mark_filename.c_str(),O_CREAT|O_EXCL);
+    if (fd >= 0) close(fd);
+}
+
 bool download_video(const Json &video) {
     if (!video.is_object()) {
         fprintf(stderr,"WARNING: Videos array element not object\n");
@@ -97,8 +107,16 @@ bool download_video(const Json &video) {
     {
         struct stat st;
 
-        if (stat(filename.c_str(),&st) == 0)
+        if (stat(filename.c_str(),&st) == 0) {
+            mark_file(filename);
             return false; // already exists
+        }
+
+        string mark_filename = get_mark_filename(filename);
+
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            return false; // already exists
+        }
     }
 
     {
@@ -115,6 +133,7 @@ bool download_video(const Json &video) {
         rename(alt.c_str(),filename.c_str());
     }
 
+    mark_file(filename);
     return true;
 }
 
