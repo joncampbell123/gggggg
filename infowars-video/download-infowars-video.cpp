@@ -102,7 +102,7 @@ bool download_video(const Json &video) {
     }
 
     {
-        string cmd = string("wget --continue --show-progress --limit-rate=1000K -O ") + filename + ".part " + direct_url;
+        string cmd = string("wget --continue --show-progress --limit-rate=250K -O ") + filename + ".part " + direct_url;
         int status = system(cmd.c_str());
         if (status != 0) {
             if (WIFSIGNALED(status)) should_stop = true;
