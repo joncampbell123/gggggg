@@ -69,6 +69,32 @@ bool download_video(const Json &video) {
         }
     }
 
+    assert(filename.find_first_of('/') == string::npos);
+    assert(filename.find_first_of('$') == string::npos);
+    assert(filename.find_first_of('\\') == string::npos);
+    assert(filename.find_first_of('\'') == string::npos);
+    assert(filename.find_first_of('\"') == string::npos);
+
+    assert(direct_url.find_first_of('$') == string::npos);
+    assert(direct_url.find_first_of('\\') == string::npos);
+    assert(direct_url.find_first_of('\'') == string::npos);
+    assert(direct_url.find_first_of('\"') == string::npos);
+
+    {
+        struct stat st;
+
+        if (stat(filename.c_str(),&st) == 0) {
+            mark_file(filename);
+            return false; // already exists
+        }
+
+        string mark_filename = get_mark_filename(filename);
+
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            return false; // already exists
+        }
+    }
+
     string tagname = filename;
     if (!title.empty()) {
         tagname += "-";
@@ -94,32 +120,6 @@ bool download_video(const Json &video) {
             if (fp) {
                 fclose(fp);
             }
-        }
-    }
-
-    assert(filename.find_first_of('/') == string::npos);
-    assert(filename.find_first_of('$') == string::npos);
-    assert(filename.find_first_of('\\') == string::npos);
-    assert(filename.find_first_of('\'') == string::npos);
-    assert(filename.find_first_of('\"') == string::npos);
-
-    assert(direct_url.find_first_of('$') == string::npos);
-    assert(direct_url.find_first_of('\\') == string::npos);
-    assert(direct_url.find_first_of('\'') == string::npos);
-    assert(direct_url.find_first_of('\"') == string::npos);
-
-    {
-        struct stat st;
-
-        if (stat(filename.c_str(),&st) == 0) {
-            mark_file(filename);
-            return false; // already exists
-        }
-
-        string mark_filename = get_mark_filename(filename);
-
-        if (stat(mark_filename.c_str(),&st) == 0) {
-            return false; // already exists
         }
     }
 
