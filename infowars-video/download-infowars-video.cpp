@@ -27,7 +27,7 @@ string get_mark_filename(const string &filename) {
 
 void mark_file(const string &filename) {
     const string mark_filename = get_mark_filename(filename);
-    int fd = open(mark_filename.c_str(),O_CREAT|O_EXCL);
+    int fd = open(mark_filename.c_str(),O_CREAT|O_EXCL,0644);
     if (fd >= 0) close(fd);
 }
 
