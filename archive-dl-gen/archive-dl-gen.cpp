@@ -22,6 +22,37 @@
 
 using namespace std;
 
+map<string,bool>    download_list;
+
+void gather(xmlNodePtr n) {
+    for (;n!=NULL;n=n->next) {
+        if (n->name != NULL) {
+            if (!strcasecmp((char*)n->name,"a")) {
+                string href;
+
+                {
+                    xmlChar *xp;
+                    xp = xmlGetNoNsProp(n,(const xmlChar*)"href");
+                    if (xp != NULL) {
+                        href = (char*)xp;
+                        xmlFree(xp);
+                    }
+                }
+
+                if (href.find_first_of('/') != string::npos)
+                    continue;
+                if (href.find_first_of('#') != string::npos)
+                    continue;
+
+                download_list[href] = true;
+                continue;
+            }
+        }
+
+        gather(n->children);
+    }
+}
+
 int main(int argc,char **argv) {
 	if (argc < 2) {
 		fprintf(stderr,"%s <file>\n",argv[0]);
@@ -57,7 +88,12 @@ int main(int argc,char **argv) {
     html = html->children;
     if (html == NULL) return 1;
 
-    // TODO
+    /* scan and gather download links */
+    gather(html);
+
+    /* show */
+    for (map<string,bool>::iterator i=download_list.begin();i!=download_list.end();i++)
+        printf("%s\n",i->first.c_str());
 
 	xmlFreeDoc(doc);
 	return 0;
