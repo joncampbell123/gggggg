@@ -32,6 +32,33 @@ int main(int argc,char **argv) {
 	doc = htmlParseFile(argv[1],NULL);
 	if (doc == NULL) return 1;
 
+    xmlNodePtr html = xmlDocGetRootElement(doc);
+    if (html == NULL) return 1;
+
+    /* look for <html> */
+    while (html) {
+        if (!strcasecmp((char*)html->name,"html"))
+            break;
+
+        html = html->next;
+    }
+    if (html == NULL) return 1;
+    html = html->children;
+    if (html == NULL) return 1;
+
+    /* look for <body> */
+    while (html) {
+        if (!strcasecmp((char*)html->name,"body"))
+            break;
+
+        html = html->next;
+    }
+    if (html == NULL) return 1;
+    html = html->children;
+    if (html == NULL) return 1;
+
+    // TODO
+
 	xmlFreeDoc(doc);
 	return 0;
 }
