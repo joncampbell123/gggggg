@@ -57,10 +57,8 @@ bool download_video_youtube(const Json &video) {
     {
         string cmd = string("youtube-dl --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
         int status = system(cmd.c_str());
-        if (status != 0) {
-            if (WIFSIGNALED(status)) should_stop = true;
-            return false;
-        }
+        if (WIFSIGNALED(status)) should_stop = true;
+        if (status != 0)  return false;
     }
 
     return false;
@@ -269,6 +267,8 @@ int main(int argc,char **argv) {
 
             if (should_stop)
                 break;
+
+            sleep(1);
         }
 
         fclose(fp);
