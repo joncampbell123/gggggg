@@ -61,7 +61,9 @@ bool download_video_youtube(const Json &video) {
         if (status != 0) return false;
     }
 
-    return false;
+    /* done! */
+    mark_file(id);
+    return true;
 }
 
 bool download_video(const Json &video) {
