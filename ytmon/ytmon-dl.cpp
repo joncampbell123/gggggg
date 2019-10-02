@@ -215,6 +215,8 @@ int main(int argc,char **argv) {
             assert(api_url.find_first_of('\'') == string::npos);
             assert(api_url.find_first_of('\"') == string::npos);
 
+            fprintf(stderr,"Downloading playlist...\n");
+
             /* -j only emits to stdout, sorry.
              * limit the playlist to only monitor RECENT videos.
              * 1-100 ought to keep up fine. */
