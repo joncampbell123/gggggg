@@ -254,9 +254,9 @@ int main(int argc,char **argv) {
                 continue;
             }
 
-                if (should_stop)
-                    break;
- 
+            if (should_stop)
+                break;
+
             /* YouTube example:
              *
              * {"url": "AbH3pJnFgY8", "_type": "url", "ie_key": "Youtube", "id": "AbH3pJnFgY8", "title": "No More Twitter? \ud83d\ude02"} */
