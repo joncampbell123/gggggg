@@ -13,8 +13,6 @@
 using namespace std;
 using namespace json11;
 
-const string api_url = "https://api.infowarsmedia.com/api/channel/5b885d33e6646a0015a6fa2d/videos?limit=99&offset=0";
-
 bool should_stop = false;
 
 void init_marker(void) {
@@ -142,11 +140,18 @@ bool download_video(const Json &video) {
 }
 
 int main(int argc,char **argv) {
+    string api_url;
     time_t now = time(NULL);
     struct tm tm = *localtime(&now);
     char timestr[128];
     int download_count = 0;
     int download_limit = 1;
+
+    if (argc < 2) {
+        fprintf(stderr,"Need channel URL\n");
+        return 1;
+    }
+    api_url = argv[1];
 
     init_marker();
 
@@ -159,7 +164,7 @@ int main(int argc,char **argv) {
         tm.tm_min - (tm.tm_min % 30),
         0);
 
-    string js_file = string("iw-api-") + timestr + ".js";//WARNING: No spaces allowed!
+    string js_file = string("playlist-") + timestr + ".js";//WARNING: No spaces allowed!
 
     {
         struct stat st;
@@ -175,11 +180,17 @@ int main(int argc,char **argv) {
             assert(api_url.find_first_of('\'') == string::npos);
             assert(api_url.find_first_of('\"') == string::npos);
 
-            string cmd = string("wget --timeout=60 --show-progress --limit-rate=750K -O ") + js_file + " \"" + api_url + "\"";
+            /* -j only emits to stdout, sorry.
+             * limit the playlist to only monitor RECENT videos.
+             * 1-100 ought to keep up fine. */
+            string cmd = string("youtube-dl -j --flat-playlist --playlist-items 1-100 ") + " \"" + api_url + "\" >" + js_file;
             int status = system(cmd.c_str());
             if (status != 0) return 1;
         }
     }
+
+    //DEBUG
+    return 1;
 
     Json json;
     {
