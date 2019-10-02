@@ -261,36 +261,6 @@ int main(int argc,char **argv) {
         fclose(fp);
     }
 
-    //DEBUG
-    return 1;
-
-#if 0
-    /* warn if the object looks different */
-    if (json["id"].string_value() != "5b885d33e6646a0015a6fa2d" ||
-        json["title"].string_value() != "The Alex Jones Show") {
-        fprintf(stderr,"WARNING: JSON looks different\n");
-    }
-
-    /* look at the videos array */
-    {
-        auto videos = json["videos"];
-        if (videos.is_array()) {
-            for (auto &video : videos.array_items()) {
-                if (download_video(video)) {
-                    if (++download_count >= download_limit)
-                        break;
-                }
-
-                if (should_stop)
-                    break;
-            }
-        }
-        else {
-            fprintf(stderr,"No videos array\n");
-        }
-    }
-#endif
-
     return 0;
 }
 
