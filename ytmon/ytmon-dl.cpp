@@ -50,6 +50,19 @@ bool download_video_youtube(const Json &video) {
         }
     }
 
+    /* we trust the ID will never need characters that require escaping.
+     * they're alphanumeric base64 so far. */
+    string invoke_url = string("https://www.youtube.com/watch?v=") + id;
+
+    {
+        string cmd = string("youtube-dl --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
+        int status = system(cmd.c_str());
+        if (status != 0) {
+            if (WIFSIGNALED(status)) should_stop = true;
+            return false;
+        }
+    }
+
     return false;
 }
 
