@@ -50,6 +50,30 @@ bool download_video_youtube(const Json &video) {
         }
     }
 
+    string tagname = id;
+    if (!title.empty()) {
+        tagname += "-";
+        tagname += title;
+    }
+    if (tagname != id) {
+        if (tagname.length() > 128)
+            tagname = tagname.substr(0,128);
+
+        for (auto &c : tagname) {
+            if (c < 32 || c > 126 || c == ':' || c == '\\' || c == '/')
+                c = ' ';
+        }
+
+        tagname += ".txt";
+
+        {
+            FILE *fp = fopen(tagname.c_str(),"w");
+            if (fp) {
+                fclose(fp);
+            }
+        }
+    }
+
     /* we trust the ID will never need characters that require escaping.
      * they're alphanumeric base64 so far. */
     string invoke_url = string("https://www.youtube.com/watch?v=") + id;
