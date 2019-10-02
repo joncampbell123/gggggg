@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
@@ -27,6 +28,29 @@ void mark_file(const string &filename) {
     const string mark_filename = get_mark_filename(filename);
     int fd = open(mark_filename.c_str(),O_CREAT|O_EXCL,0644);
     if (fd >= 0) close(fd);
+}
+
+bool download_video_youtube(const Json &video) {
+    string title = video["title"].string_value();
+    string url = video["url"].string_value();
+    string id = video["id"].string_value();
+
+    if (id.empty() || url.empty()) return false;
+    assert(id.find_first_of(' ') == string::npos);
+    assert(id.find_first_of('$') == string::npos);
+    assert(id.find_first_of('\'') == string::npos);
+    assert(id.find_first_of('\"') == string::npos);
+
+    {
+        struct stat st;
+
+        string mark_filename = get_mark_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            return false; // already exists
+        }
+    }
+
+    return false;
 }
 
 bool download_video(const Json &video) {
@@ -189,11 +213,53 @@ int main(int argc,char **argv) {
         }
     }
 
-    //DEBUG
-    return 1;
+    /* the JS file is actually MANY JS objects encoded on a line by line basis */
 
-    Json json;
     {
+        char buf[4096]; /* should be large enough for now */
+        FILE *fp = fopen(js_file.c_str(),"r");
+        if (fp == NULL) return 1;
+
+        memset(buf,0,sizeof(buf));
+        while (!feof(fp) && !ferror(fp)) {
+            /* Linux: fgets() will terminate the buffer with \0 (NULL) */
+            if (fgets(buf,sizeof(buf),fp) == NULL) break;
+
+            /* eat the newline */
+            {
+                char *s = buf + strlen(buf) - 1;
+                while (s > buf && (*s == '\n' || *s == '\r')) *s-- = 0;
+            }
+
+            if (buf[0] == 0) continue;
+
+            string json_err;
+            Json json = Json::parse(buf,json_err);
+
+            if (json == Json()) {
+                fprintf(stderr,"JSON parse error: %s\n",json_err.c_str());
+                continue;
+            }
+
+                if (should_stop)
+                    break;
+ 
+            /* YouTube example:
+             *
+             * {"url": "AbH3pJnFgY8", "_type": "url", "ie_key": "Youtube", "id": "AbH3pJnFgY8", "title": "No More Twitter? \ud83d\ude02"} */
+            if (json["ie_key"].string_value() == "Youtube") { /* FIXME: what if youtube-dl changes that? */
+                if (download_video_youtube(json)) {
+                    if (++download_count >= download_limit)
+                        break;
+                }
+            }
+
+            if (should_stop)
+                break;
+        }
+
+        fclose(fp);
+#if 0
         int fd = open(js_file.c_str(),O_RDONLY);
         if (fd < 0) return 1;
 
@@ -216,8 +282,13 @@ int main(int argc,char **argv) {
 
         delete[] buf;
         close(fd);
+#endif
     }
 
+    //DEBUG
+    return 1;
+
+#if 0
     /* warn if the object looks different */
     if (json["id"].string_value() != "5b885d33e6646a0015a6fa2d" ||
         json["title"].string_value() != "The Alex Jones Show") {
@@ -242,6 +313,7 @@ int main(int argc,char **argv) {
             fprintf(stderr,"No videos array\n");
         }
     }
+#endif
 
     return 0;
 }
