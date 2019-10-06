@@ -79,7 +79,7 @@ bool download_video_youtube(const Json &video) {
     string invoke_url = string("https://www.youtube.com/watch?v=") + id;
 
     {
-        string cmd = string("youtube-dl --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
@@ -136,7 +136,7 @@ int main(int argc,char **argv) {
             /* -j only emits to stdout, sorry.
              * limit the playlist to only monitor RECENT videos.
              * 1-100 ought to keep up fine. */
-            string cmd = string("youtube-dl -j --flat-playlist --playlist-items 1-100 ") + " \"" + api_url + "\" >" + js_file;
+            string cmd = string("youtube-dl --no-mtime -j --flat-playlist --playlist-items 1-100 ") + " \"" + api_url + "\" >" + js_file;
             int status = system(cmd.c_str());
             if (status != 0) return 1;
         }
