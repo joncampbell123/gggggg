@@ -50,6 +50,8 @@ bool download_video_youtube(const Json &video) {
         }
     }
 
+    sleep(1);
+
     string tagname = id;
     if (!title.empty()) {
         tagname += "-";
@@ -185,8 +187,6 @@ int main(int argc,char **argv) {
 
             if (should_stop)
                 break;
-
-            sleep(1);
         }
 
         fclose(fp);
