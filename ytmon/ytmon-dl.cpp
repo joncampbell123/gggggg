@@ -92,6 +92,68 @@ bool download_video_youtube(const Json &video) {
     return true;
 }
 
+bool download_video_bitchute(const Json &video) {
+    string title = video["title"].string_value();
+    string url = video["url"].string_value();
+    string id = video["id"].string_value();
+
+    if (id.empty() || url.empty()) return false;
+    assert(id.find_first_of(' ') == string::npos);
+    assert(id.find_first_of('$') == string::npos);
+    assert(id.find_first_of('\'') == string::npos);
+    assert(id.find_first_of('\"') == string::npos);
+
+    {
+        struct stat st;
+
+        string mark_filename = get_mark_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            return false; // already exists
+        }
+    }
+
+    sleep(1);
+
+    string tagname = id;
+    if (!title.empty()) {
+        tagname += "-";
+        tagname += title;
+    }
+    if (tagname != id) {
+        if (tagname.length() > 128)
+            tagname = tagname.substr(0,128);
+
+        for (auto &c : tagname) {
+            if (c < 32 || c > 126 || c == ':' || c == '\\' || c == '/')
+                c = ' ';
+        }
+
+        tagname += ".txt";
+
+        {
+            FILE *fp = fopen(tagname.c_str(),"w");
+            if (fp) {
+                fclose(fp);
+            }
+        }
+    }
+
+    /* we trust the ID will never need characters that require escaping.
+     * they're alphanumeric base64 so far. */
+    string invoke_url = string("https://www.bitchute.com/video/") + id;
+
+    {
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
+        int status = system(cmd.c_str());
+        if (WIFSIGNALED(status)) should_stop = true;
+        if (status != 0) return false;
+    }
+
+    /* done! */
+    mark_file(id);
+    return true;
+}
+
 int main(int argc,char **argv) {
     string api_url;
     time_t now = time(NULL);
@@ -180,6 +242,15 @@ int main(int argc,char **argv) {
              * {"url": "AbH3pJnFgY8", "_type": "url", "ie_key": "Youtube", "id": "AbH3pJnFgY8", "title": "No More Twitter? \ud83d\ude02"} */
             if (json["ie_key"].string_value() == "Youtube") { /* FIXME: what if youtube-dl changes that? */
                 if (download_video_youtube(json)) {
+                    if (++download_count >= download_limit)
+                        break;
+                }
+            }
+            /* Bitchute example:
+             *
+             * {"url": "https://www.bitchute.com/video/F0yUrwVz9fYV", "_type": "url", "ie_key": "BitChute", "id": "F0yUrwVz9fYV"} */
+            else if (json["ie_key"].string_value() == "BitChute") { /* FIXME: what if youtube-dl changes that? */
+                if (download_video_bitchute(json)) {
                     if (++download_count >= download_limit)
                         break;
                 }
