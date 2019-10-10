@@ -142,8 +142,9 @@ bool download_video_bitchute(const Json &video) {
      * they're alphanumeric base64 so far. */
     string invoke_url = string("https://www.bitchute.com/video/") + id;
 
+    /* All video on BitChute is .mp4, and youtube-dl needs to be given that suffix */
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s.mp4' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
