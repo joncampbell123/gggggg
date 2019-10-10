@@ -171,13 +171,13 @@ int main(int argc,char **argv) {
 
     init_marker();
 
-    // Round to half an hour for JS name to avoid hitting their API too often. Be nice.
+    // once every 3 hours
     sprintf(timestr,"%04u%02u%02u-%02u%02u%02u",
         tm.tm_year+1900,
         tm.tm_mon+1,
         tm.tm_mday,
-        tm.tm_hour,
-        tm.tm_min - (tm.tm_min % 30),
+        tm.tm_hour - (tm.tm_hour % 3),
+        0,
         0);
 
     string js_file = string("playlist-") + timestr + ".js";//WARNING: No spaces allowed!
