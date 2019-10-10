@@ -198,10 +198,8 @@ int main(int argc,char **argv) {
 
             fprintf(stderr,"Downloading playlist...\n");
 
-            /* -j only emits to stdout, sorry.
-             * limit the playlist to only monitor RECENT videos.
-             * 1-100 ought to keep up fine. */
-            string cmd = string("youtube-dl --no-mtime -j --flat-playlist --playlist-items 1-100 ") + " \"" + api_url + "\" >" + js_file;
+            /* -j only emits to stdout, sorry. */
+            string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + " \"" + api_url + "\" >" + js_file;
             int status = system(cmd.c_str());
             if (status != 0) return 1;
         }
