@@ -329,6 +329,15 @@ void find_file_dir(const std::string &name) {
     }
 }
 
+bool allow_op(const dirlist_entry_t &ent) {
+    if (S_ISDIR(ent.second.st_mode)) {
+        if (ent.first.substr(0,2) == "__")
+            return false;
+    }
+
+    return true;
+}
+
 void accept_file(const std::string &name) {
     DIR *dir = opendir(cwd.c_str());
     if (dir != NULL) {
@@ -406,18 +415,20 @@ int main() {
         }
         else if (in == "A") {
             if (dirlist.size() != 0) {
-                printf("\x1B[0m");
-                printf("\x1B[2J");
-                printf("\x1B[H");
-                printf("Accept '%s'?",dirlist[dirlist_sel].first.c_str());
-                fflush(stdout);
+                if (allow_op(dirlist[dirlist_sel])) {
+                    printf("\x1B[0m");
+                    printf("\x1B[2J");
+                    printf("\x1B[H");
+                    printf("Accept '%s'?",dirlist[dirlist_sel].first.c_str());
+                    fflush(stdout);
 
-                in = read_in();
-                if (in == "y" || in == "Y") {
-                    accept_file(dirlist[dirlist_sel].first);
+                    in = read_in();
+                    if (in == "y" || in == "Y") {
+                        accept_file(dirlist[dirlist_sel].first);
+                    }
+
+                    redraw = 1;
                 }
-
-                redraw = 1;
             }
         }
         else if (in == "\x1B[B") { /* down arrow */
