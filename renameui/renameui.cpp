@@ -499,16 +499,16 @@ try_again:
                         if (dir != NULL) {
                             struct stat st;
 
-			    if (fstatat(dirfd(dir), nname.c_str(), &st, AT_SYMLINK_NOFOLLOW) == 0) {
+                            if (fstatat(dirfd(dir), nname.c_str(), &st, AT_SYMLINK_NOFOLLOW) == 0) {
                                 goto try_again;
-			    }
+                            }
 
                             renameat(dirfd(dir), ent.first.c_str(), dirfd(dir), nname.c_str());
                             scan_dir();
                             find_file_dir(nname);
-                        }
 
-                        closedir(dir);
+                            closedir(dir);
+                        }
                     }
                 }
 
