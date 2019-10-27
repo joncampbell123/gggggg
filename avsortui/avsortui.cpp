@@ -553,6 +553,7 @@ int main() {
                     in = read_in();
                     if (in == "y" || in == "Y") {
                         make_excerpt(dirlist[dirlist_sel].first);
+                        scan_dir();
                     }
 
                     redraw = 1;
