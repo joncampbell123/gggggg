@@ -330,7 +330,14 @@ void find_file_dir(const std::string &name) {
 }
 
 void accept_file(const std::string &name) {
-    // TODO
+    DIR *dir = opendir(cwd.c_str());
+    if (dir != NULL) {
+        mkdirat(dirfd(dir), "__ACCEPTED__", 0755);
+        renameat(dirfd(dir), name.c_str(), dirfd(dir), (std::string("__ACCEPTED__") + "/" + name).c_str());
+        scan_dir();
+    }
+
+    closedir(dir);
 }
 
 int main() {
@@ -408,7 +415,6 @@ int main() {
                 in = read_in();
                 if (in == "y" || in == "Y") {
                     accept_file(dirlist[dirlist_sel].first);
-                    scan_dir();
                 }
 
                 redraw = 1;
