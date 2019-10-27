@@ -357,6 +357,10 @@ void reject_file(const std::string &name) {
     rename_marker(name,"__REJECTED__");
 }
 
+void needs_cut_file(const std::string &name) {
+    rename_marker(name,"__NEEDS_CUT__");
+}
+
 int main() {
     std::string in;
 
@@ -458,7 +462,26 @@ int main() {
                 }
             }
         }
-        else if (in == "\x1B[B") { /* down arrow */
+        else if (in == "C") {
+            if (dirlist.size() != 0) {
+                if (allow_op(dirlist[dirlist_sel])) {
+                    printf("\x1B[0m");
+                    printf("\x1B[2J");
+                    printf("\x1B[H");
+                    printf("File '%s' needs to be cut?\n",dirlist[dirlist_sel].first.c_str());
+                    printf("That means the file will accepted once cut into segments to remove sensitive content.\n");
+                    fflush(stdout);
+
+                    in = read_in();
+                    if (in == "y" || in == "Y") {
+                        needs_cut_file(dirlist[dirlist_sel].first);
+                    }
+
+                    redraw = 1;
+                }
+            }
+        }
+       else if (in == "\x1B[B") { /* down arrow */
             if (dirlist.size() != 0) {
                 if (dirlist_sel < (dirlist.size() - 1u)) {
                     dirlist_sel++;
