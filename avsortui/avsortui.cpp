@@ -485,7 +485,7 @@ int main() {
                 }
             }
         }
-         else if (in == "P") {
+        else if (in == "P") {
             if (dirlist.size() != 0) {
                 if (allow_op(dirlist[dirlist_sel])) {
                     printf("\x1B[0m");
@@ -504,7 +504,7 @@ int main() {
                 }
             }
         }
-       else if (in == "\x1B[B") { /* down arrow */
+        else if (in == "\x1B[B") { /* down arrow */
             if (dirlist.size() != 0) {
                 if (dirlist_sel < (dirlist.size() - 1u)) {
                     dirlist_sel++;
