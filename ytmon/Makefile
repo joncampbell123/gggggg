@@ -8,5 +8,5 @@ clean:
 
 install:
 	mkdir -p $(DESTDIR)/usr/bin/
-	cp -v ytmon-dl $(DESTDIR)/usr/bin/
+	cp -vf ytmon-dl $(DESTDIR)/usr/bin/
 

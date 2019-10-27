@@ -161,7 +161,7 @@ int main(int argc,char **argv) {
     struct tm tm = *localtime(&now);
     char timestr[128];
     int download_count = 0;
-    int download_limit = 1;
+    int download_limit = 3;
 
     if (argc < 2) {
         fprintf(stderr,"Need channel URL\n");
@@ -171,12 +171,12 @@ int main(int argc,char **argv) {
 
     init_marker();
 
-    // once every 12 hours
+    // once every 24 hours
     sprintf(timestr,"%04u%02u%02u-%02u%02u%02u",
         tm.tm_year+1900,
         tm.tm_mon+1,
         tm.tm_mday,
-        tm.tm_hour - (tm.tm_hour % 12),
+        0,
         0,
         0);
 
