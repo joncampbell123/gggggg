@@ -361,6 +361,10 @@ void needs_cut_file(const std::string &name) {
     rename_marker(name,"__NEEDS_CUT__");
 }
 
+void play_file(const std::string &name) {
+    // TODO
+}
+
 int main() {
     std::string in;
 
@@ -475,6 +479,25 @@ int main() {
                     in = read_in();
                     if (in == "y" || in == "Y") {
                         needs_cut_file(dirlist[dirlist_sel].first);
+                    }
+
+                    redraw = 1;
+                }
+            }
+        }
+         else if (in == "P") {
+            if (dirlist.size() != 0) {
+                if (allow_op(dirlist[dirlist_sel])) {
+                    printf("\x1B[0m");
+                    printf("\x1B[2J");
+                    printf("\x1B[H");
+                    printf("Play '%s'?\n",dirlist[dirlist_sel].first.c_str());
+                    printf("I will run FFPLAY. Type q to quit or CTRL+C at console to return.\n");
+                    fflush(stdout);
+
+                    in = read_in();
+                    if (in == "y" || in == "Y") {
+                        play_file(dirlist[dirlist_sel].first);
                     }
 
                     redraw = 1;
