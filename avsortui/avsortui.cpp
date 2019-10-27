@@ -338,15 +338,19 @@ bool allow_op(const dirlist_entry_t &ent) {
     return true;
 }
 
-void accept_file(const std::string &name) {
+void rename_marker(const std::string &name,const std::string &marker) {
     DIR *dir = opendir(cwd.c_str());
     if (dir != NULL) {
-        mkdirat(dirfd(dir), "__ACCEPTED__", 0755);
-        renameat(dirfd(dir), name.c_str(), dirfd(dir), (std::string("__ACCEPTED__") + "/" + name).c_str());
+        mkdirat(dirfd(dir), marker.c_str(), 0755);
+        renameat(dirfd(dir), name.c_str(), dirfd(dir), (std::string(marker) + "/" + name).c_str());
         scan_dir();
     }
 
     closedir(dir);
+}
+
+void accept_file(const std::string &name) {
+    rename_marker(name,"__ACCEPTED__");
 }
 
 int main() {
