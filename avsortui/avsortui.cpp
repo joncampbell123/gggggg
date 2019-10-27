@@ -353,6 +353,10 @@ void accept_file(const std::string &name) {
     rename_marker(name,"__ACCEPTED__");
 }
 
+void reject_file(const std::string &name) {
+    rename_marker(name,"__REJECTED__");
+}
+
 int main() {
     std::string in;
 
@@ -429,6 +433,25 @@ int main() {
                     in = read_in();
                     if (in == "y" || in == "Y") {
                         accept_file(dirlist[dirlist_sel].first);
+                    }
+
+                    redraw = 1;
+                }
+            }
+        }
+        else if (in == "R") {
+            if (dirlist.size() != 0) {
+                if (allow_op(dirlist[dirlist_sel])) {
+                    printf("\x1B[0m");
+                    printf("\x1B[2J");
+                    printf("\x1B[H");
+                    printf("Reject '%s'?\n",dirlist[dirlist_sel].first.c_str());
+                    printf("That means the file will not be considered ever.\n");
+                    fflush(stdout);
+
+                    in = read_in();
+                    if (in == "y" || in == "Y") {
+                        reject_file(dirlist[dirlist_sel].first);
                     }
 
                     redraw = 1;
