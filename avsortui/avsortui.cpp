@@ -329,58 +329,6 @@ void find_file_dir(const std::string &name) {
     }
 }
 
-bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
-    printf("\x1B[0m");
-    printf("\x1B[2J");
-    printf("\x1B[H");
-    printf("Edit name:\n");
-    printf("%s\n",oldname.c_str());
-    fflush(stdout);
-
-    do {
-        printf("\x1B[3H");
-        printf("%s",nuname.c_str());
-        printf("\x1B[J");
-        fflush(stdout);
-
-        std::string inkey = read_in();
-
-        if (inkey.empty())
-            return false;
-        else if (inkey == "\x1B" || inkey == "\x1B\x1B")
-            return false;
-        else if (inkey == "\x0A" || inkey == "\x0D")
-            break;
-        else if (inkey == "\x08" || inkey == "\x7F") {
-            if (nuname.length() > 0) {
-                /* UTF-8 erase 0xC0 0x80 */
-                int e = (int)nuname.length() - 1;
-                while (e > 0 && ((unsigned char)nuname[e] >= 0x80 && (unsigned char)nuname[e] < 0xC0)) e--;
-                assert(e >= 0);
-                assert(e <= (int)nuname.length());
-                nuname = nuname.substr(0,e);
-            }
-        }
-        else if (inkey == "\x1B[3~") { /* delete */
-            nuname.clear();
-        }
-        else if (inkey == "/") {
-            /* allow forward slash, by converting to UTF-8 version */
-            nuname += "\xE2\x88\x95";
-        }
-        else if (inkey[0] >= 32 || inkey[0] < 0)
-            nuname += inkey;
-    } while(1);
-
-    if (nuname.empty() || nuname == oldname || nuname.find_first_of('/') != std::string::npos)
-        return false;
-    assert(nuname.length() != 0);
-    if (nuname[0] == '.')
-        return false;
-
-    return true;
-}
-
 int main() {
     std::string in;
 
@@ -483,34 +431,6 @@ int main() {
                 scan_dir();
                 dirlist_sel = 0;
                 dirlist_scroll = 0;
-
-                redraw = 1;
-            }
-        }
-        else if (in == "E") {
-            if (dirlist_sel < dirlist.size()) {
-                dirlist_entry_t &ent = dirlist[dirlist_sel];
-                std::string nname = ent.first;
-
-try_again:
-                if (prompt_edit_name(/*&*/nname, ent.first)) {
-                    if (ent.first != nname) {
-                        DIR *dir = opendir(cwd.c_str());
-                        if (dir != NULL) {
-                            struct stat st;
-
-			    if (fstatat(dirfd(dir), nname.c_str(), &st, AT_SYMLINK_NOFOLLOW) == 0) {
-                                goto try_again;
-			    }
-
-                            renameat(dirfd(dir), ent.first.c_str(), dirfd(dir), nname.c_str());
-                            scan_dir();
-                            find_file_dir(nname);
-                        }
-
-                        closedir(dir);
-                    }
-                }
 
                 redraw = 1;
             }
