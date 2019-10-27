@@ -1,5 +1,6 @@
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 
 #include <termios.h>
@@ -362,7 +363,30 @@ void needs_cut_file(const std::string &name) {
 }
 
 void play_file(const std::string &name) {
-    // TODO
+    char *argv[64];
+    int argc=0;
+
+    argv[argc++] = (char*)"/usr/bin/ffplay";
+    argv[argc++] = (char*)"--";
+    argv[argc++] = (char*)name.c_str();
+    argv[argc  ] = NULL;
+
+    pid_t pid;
+
+    pid = fork();
+    if (pid < 0)
+        return; // failed
+
+    if (pid == 0) {
+        /* child */
+        chdir(cwd.c_str());
+        execv(argv[0],argv);
+        _exit(1);
+    }
+    else {
+        /* parent */
+        while (waitpid(pid,NULL,0) != pid);
+    }
 }
 
 int main() {
