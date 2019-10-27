@@ -389,6 +389,37 @@ void play_file(const std::string &name) {
     }
 }
 
+void make_excerpt(const std::string &name) {
+    char *argv[64];
+    int argc=0;
+
+    std::string excerpts_path = cwd + "/" + "__EXCERPTS__";
+    mkdir(excerpts_path.c_str(), 0755);
+
+    std::string adj_name = std::string("../") + name;
+
+    argv[argc++] = (char*)"/usr/bin/permexcerpt";
+    argv[argc++] = (char*)adj_name.c_str();
+    argv[argc  ] = NULL;
+
+    pid_t pid;
+
+    pid = fork();
+    if (pid < 0)
+        return; // failed
+
+    if (pid == 0) {
+        /* child */
+        chdir(excerpts_path.c_str());
+        execv(argv[0],argv);
+        _exit(1);
+    }
+    else {
+        /* parent */
+        while (waitpid(pid,NULL,0) != pid);
+    }
+}
+
 int main() {
     std::string in;
 
@@ -503,6 +534,25 @@ int main() {
                     in = read_in();
                     if (in == "y" || in == "Y") {
                         needs_cut_file(dirlist[dirlist_sel].first);
+                    }
+
+                    redraw = 1;
+                }
+            }
+        }
+        else if (in == "X") {
+            if (dirlist.size() != 0) {
+                if (allow_op(dirlist[dirlist_sel])) {
+                    printf("\x1B[0m");
+                    printf("\x1B[2J");
+                    printf("\x1B[H");
+                    printf("Make excerpt of '%s'?\n",dirlist[dirlist_sel].first.c_str());
+                    printf("I will invoke permexcerpt.\n");
+                    fflush(stdout);
+
+                    in = read_in();
+                    if (in == "y" || in == "Y") {
+                        make_excerpt(dirlist[dirlist_sel].first);
                     }
 
                     redraw = 1;
