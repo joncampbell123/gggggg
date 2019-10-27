@@ -329,6 +329,10 @@ void find_file_dir(const std::string &name) {
     }
 }
 
+void accept_file(const std::string &name) {
+    // TODO
+}
+
 int main() {
     std::string in;
 
@@ -390,6 +394,23 @@ int main() {
                     dirlist_sel = 0;
 
                 dirlist_scroll = dirlist_sel;
+                redraw = 1;
+            }
+        }
+        else if (in == "A") {
+            if (dirlist.size() != 0) {
+                printf("\x1B[0m");
+                printf("\x1B[2J");
+                printf("\x1B[H");
+                printf("Accept '%s'?",dirlist[dirlist_sel].first.c_str());
+                fflush(stdout);
+
+                in = read_in();
+                if (in == "y" || in == "Y") {
+                    accept_file(dirlist[dirlist_sel].first);
+                    scan_dir();
+                }
+
                 redraw = 1;
             }
         }
