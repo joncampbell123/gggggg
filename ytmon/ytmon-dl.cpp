@@ -81,7 +81,7 @@ bool download_video_youtube(const Json &video) {
     string invoke_url = string("https://www.youtube.com/watch?v=") + id;
 
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=2000K --output '%(id)s' ") + invoke_url;
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
