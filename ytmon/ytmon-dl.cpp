@@ -81,7 +81,7 @@ bool download_video_youtube(const Json &video) {
     string invoke_url = string("https://www.youtube.com/watch?v=") + id;
 
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=2000K --output '%(id)s' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
@@ -144,7 +144,7 @@ bool download_video_bitchute(const Json &video) {
 
     /* All video on BitChute is .mp4, and youtube-dl needs to be given that suffix */
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s.mp4' ") + invoke_url;
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=2000K --output '%(id)s.mp4' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
@@ -161,7 +161,7 @@ int main(int argc,char **argv) {
     struct tm tm = *localtime(&now);
     char timestr[128];
     int download_count = 0;
-    int download_limit = 3;
+    int download_limit = 4;
 
     if (argc < 2) {
         fprintf(stderr,"Need channel URL\n");
