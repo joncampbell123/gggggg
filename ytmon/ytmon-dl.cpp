@@ -81,7 +81,7 @@ bool download_video_youtube(const Json &video) {
     string invoke_url = string("https://www.youtube.com/watch?v=") + id;
 
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=2000K --output '%(id)s' ") + invoke_url;
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=3000K --output '%(id)s' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
@@ -144,7 +144,7 @@ bool download_video_bitchute(const Json &video) {
 
     /* All video on BitChute is .mp4, and youtube-dl needs to be given that suffix */
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=2000K --output '%(id)s.mp4' ") + invoke_url;
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=3000K --output '%(id)s.mp4' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
@@ -170,6 +170,12 @@ int main(int argc,char **argv) {
     api_url = argv[1];
 
     init_marker();
+
+    // look human by stopping downloads between 11PM and 8AM
+    if (tm.tm_hour >= 23/*11PM = 11+24*/ || tm.tm_hour < 8/*8AM = 8+0*/) {
+        fprintf(stderr,"Time for bed.\n");
+        return 1;
+    }
 
     // once every 24 hours
     sprintf(timestr,"%04u%02u%02u-%02u%02u%02u",
