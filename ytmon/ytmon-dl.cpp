@@ -81,7 +81,7 @@ bool download_video_youtube(const Json &video) {
     string invoke_url = string("https://www.youtube.com/watch?v=") + id;
 
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=3000K --output '%(id)s' ") + invoke_url;
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
@@ -144,7 +144,7 @@ bool download_video_bitchute(const Json &video) {
 
     /* All video on BitChute is .mp4, and youtube-dl needs to be given that suffix */
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=3000K --output '%(id)s.mp4' ") + invoke_url;
+        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s.mp4' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
@@ -161,7 +161,7 @@ int main(int argc,char **argv) {
     struct tm tm = *localtime(&now);
     char timestr[128];
     int download_count = 0;
-    int download_limit = 4;
+    int download_limit = 10;
 
     if (argc < 2) {
         fprintf(stderr,"Need channel URL\n");
@@ -171,15 +171,18 @@ int main(int argc,char **argv) {
 
     init_marker();
 
-    // look human by stopping downloads between 11AM and 3PM
-    if (tm.tm_hour >= 11 && tm.tm_hour < 15) {
-        if (tm.tm_wday >= 1/*monday*/ && tm.tm_wday <= 5/*friday*/) {
-            fprintf(stderr,"Time for work.\n");
-            return 1;
-        }
+    // not on weekends
+    if (tm.tm_wday == 0 || tm.tm_wday == 6) {
+        fprintf(stderr,"Weekend.\n");
+        return 1;
     }
-    // look human by stopping downloads between 1AM and 5AM
-    if (tm.tm_hour >= 1 && tm.tm_hour < 5) {
+    // look human by stopping downloads between 9AM and 5PM
+    if (tm.tm_hour >= 9 && tm.tm_hour < (5+12)) {
+        fprintf(stderr,"Time for work.\n");
+        return 1;
+    }
+    // look human by stopping downloads between 12AM and 7AM
+    if (tm.tm_hour >= 0 && tm.tm_hour < 7) {
         fprintf(stderr,"Time for bed.\n");
         return 1;
     }
