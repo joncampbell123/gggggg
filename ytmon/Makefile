@@ -6,7 +6,7 @@ ytmon-dl: ytmon-dl.cpp
 clean:
 	rm -f ytmon-dl
 
-install:
+install: ytmon-dl
 	mkdir -p $(DESTDIR)/usr/bin/
 	cp -vf ytmon-dl $(DESTDIR)/usr/bin/
 
