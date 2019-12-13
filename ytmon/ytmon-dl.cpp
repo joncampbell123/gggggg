@@ -14,6 +14,8 @@
 using namespace std;
 using namespace json11;
 
+std::string                 youtube_user,youtube_pass;
+
 bool should_stop = false;
 
 void init_marker(void) {
@@ -80,8 +82,13 @@ bool download_video_youtube(const Json &video) {
      * they're alphanumeric base64 so far. */
     string invoke_url = string("https://www.youtube.com/watch?v=") + id;
 
+    string creds;
+
+    if (!youtube_user.empty() && !youtube_pass.empty())
+        creds += string("--username '") + youtube_user + "' --password '" + youtube_pass + "' ";
+
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + invoke_url;
+        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + creds + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
@@ -144,7 +151,7 @@ bool download_video_bitchute(const Json &video) {
 
     /* All video on BitChute is .mp4, and youtube-dl needs to be given that suffix */
     {
-        string cmd = string("youtube-dl --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s.mp4' ") + invoke_url;
+        string cmd = string("youtube-dl --no-check-certificate --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s.mp4' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
@@ -155,13 +162,18 @@ bool download_video_bitchute(const Json &video) {
     return true;
 }
 
+void chomp(char *s) {
+    char *e = s + strlen(s) - 1;
+    while (e >= s && (*e == '\n' || *e == '\r')) *e-- = 0;
+}
+
 int main(int argc,char **argv) {
     string api_url;
     time_t now = time(NULL);
     struct tm tm = *localtime(&now);
     char timestr[128];
     int download_count = 0;
-    int download_limit = 10;
+    int download_limit = 5;
 
     if (argc < 2) {
         fprintf(stderr,"Need channel URL\n");
@@ -171,20 +183,44 @@ int main(int argc,char **argv) {
 
     init_marker();
 
-    // not on weekends
-    if (tm.tm_wday == 0 || tm.tm_wday == 6) {
-        fprintf(stderr,"Weekend.\n");
-        return 1;
+    // youtube creds
+    {
+        FILE *fp = fopen("youtube-creds.lst","r");
+        if (fp == NULL) fp = fopen("../youtube-creds.lst","r");
+        if (fp != NULL) {
+            char tmp[512];
+
+            fgets(tmp,sizeof(tmp),fp);
+            chomp(tmp);
+            youtube_user = tmp;
+
+            fgets(tmp,sizeof(tmp),fp);
+            chomp(tmp);
+            youtube_pass = tmp;
+
+            fclose(fp);
+        }
+
+        if (!youtube_user.empty() && !youtube_pass.empty())
+            fprintf(stderr,"Using YouTube credentials for '%s'\n",youtube_user.c_str());
     }
-    // look human by stopping downloads between 9AM and 5PM
-    if (tm.tm_hour >= 9 && tm.tm_hour < (5+12)) {
-        fprintf(stderr,"Time for work.\n");
-        return 1;
-    }
-    // look human by stopping downloads between 12AM and 7AM
-    if (tm.tm_hour >= 0 && tm.tm_hour < 7) {
-        fprintf(stderr,"Time for bed.\n");
-        return 1;
+
+    if (strstr(api_url.c_str(),"youtube") != NULL) {
+        // not on weekends
+        if (tm.tm_wday == 0 || tm.tm_wday == 6) {
+            fprintf(stderr,"Weekend.\n");
+            return 1;
+        }
+        // look human by stopping downloads between 9AM and 5PM
+        if (tm.tm_hour >= 9 && tm.tm_hour < (5+12)) {
+            fprintf(stderr,"Time for work.\n");
+            return 1;
+        }
+        // look human by stopping downloads between 12AM and 7AM
+        if (tm.tm_hour >= 0 && tm.tm_hour < 7) {
+            fprintf(stderr,"Time for bed.\n");
+            return 1;
+        }
     }
 
     // once every 24 hours
@@ -259,6 +295,8 @@ int main(int argc,char **argv) {
                 if (download_video_youtube(json)) {
                     if (++download_count >= download_limit)
                         break;
+
+                    sleep(5 + ((unsigned int)rand() % 5u));
                 }
             }
             /* Bitchute example:
@@ -268,6 +306,8 @@ int main(int argc,char **argv) {
                 if (download_video_bitchute(json)) {
                     if (++download_count >= download_limit)
                         break;
+
+                    sleep(5 + ((unsigned int)rand() % 5u));
                 }
             }
 
