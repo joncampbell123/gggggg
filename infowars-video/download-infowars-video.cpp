@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <string.h>
 #include <fcntl.h>
 
 #include <json11.hpp>
@@ -13,7 +14,15 @@
 using namespace std;
 using namespace json11;
 
-const string api_url = "https://api.infowarsmedia.com/api/channel/5b885d33e6646a0015a6fa2d/videos?limit=99&offset=0";
+//const string api_url = "https://api.infowarsmedia.com/api/channel/5b885d33e6646a0015a6fa2d/videos?limit=99&offset=0";
+const string api_url_pre = "https://api.infowarsmedia.com/api/channel/";
+const string api_url_suf = "/videos?limit=99&offset=0";
+
+const string default_channel = "5b885d33e6646a0015a6fa2d"; /* The Alex Jones Show */
+
+string api_url;
+
+string chosen_channel = default_channel;
 
 bool should_stop = false;
 
@@ -141,12 +150,45 @@ bool download_video(const Json &video) {
     return true;
 }
 
+int parse_argv(int argc,char **argv) {
+    int i = 1;
+    char *a;
+
+    while (i < argc) {
+        a = argv[i++];
+
+        if (*a == '-') {
+            do { a++; } while (*a == '-');
+
+            if (!strcmp(a,"ch")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                chosen_channel = a;
+            }
+            else {
+                return 1;
+            }
+        }
+        else {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 int main(int argc,char **argv) {
     time_t now = time(NULL);
     struct tm tm = *localtime(&now);
     char timestr[128];
     int download_count = 0;
     int download_limit = 1;
+
+    if (parse_argv(argc,argv))
+        return 1;
+
+    api_url = api_url_pre + chosen_channel + api_url_suf;
+    fprintf(stderr,"Using API url: %s\n",api_url.c_str());
 
     init_marker();
 
@@ -207,11 +249,10 @@ int main(int argc,char **argv) {
         close(fd);
     }
 
-    /* warn if the object looks different */
-    if (json["id"].string_value() != "5b885d33e6646a0015a6fa2d" ||
-        json["title"].string_value() != "The Alex Jones Show") {
-        fprintf(stderr,"WARNING: JSON looks different\n");
-    }
+    if (json["id"].string_value() != chosen_channel)
+        fprintf(stderr,"WARNING: JSON is listing the wrong channel id\n");
+    if (json["title"].string_value().empty())
+        fprintf(stderr,"WARNING: JSON is missing some fields\n");
 
     /* look at the videos array */
     {
