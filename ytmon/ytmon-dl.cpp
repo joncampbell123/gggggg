@@ -211,8 +211,8 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Weekend.\n");
             return 1;
         }
-        // look human by stopping downloads between 9AM and 5PM
-        if (tm.tm_hour >= 9 && tm.tm_hour < (5+12)) {
+        // look human by stopping downloads between 10AM and 4PM
+        if (tm.tm_hour >= 10 && tm.tm_hour < (4+12)) {
             fprintf(stderr,"Time for work.\n");
             return 1;
         }
