@@ -6,7 +6,7 @@ download-infowars-video: download-infowars-video.cpp
 clean:
 	rm -f download-infowars-video
 
-install:
+install: download-infowars-video
 	mkdir -p $(DESTDIR)/usr/bin/
-	cp -v download-infowars-video $(DESTDIR)/usr/bin/
+	cp -vf download-infowars-video $(DESTDIR)/usr/bin/
 
