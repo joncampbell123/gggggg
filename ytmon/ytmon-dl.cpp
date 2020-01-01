@@ -173,7 +173,7 @@ int main(int argc,char **argv) {
     struct tm tm = *localtime(&now);
     char timestr[128];
     int download_count = 0;
-    int download_limit = 5;
+    int download_limit = 2;
 
     if (argc < 2) {
         fprintf(stderr,"Need channel URL\n");
