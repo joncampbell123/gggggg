@@ -163,6 +163,37 @@ int main(int argc,char **argv) {
             auto &id = json_vobj["summary"];
             if (id.is_string()) summary = id.string_value();
         }
+
+        /* write title marker */
+        string tagname = _id;
+        if (!title.empty()) {
+            tagname += "-";
+            tagname += title;
+            if (!summary.empty()) {
+                tagname += "-";
+                tagname += summary;
+            }
+        }
+        if (tagname != _id) {
+            if (tagname.length() > 128)
+                tagname = tagname.substr(0,128);
+
+            for (auto &c : tagname) {
+                if (c < 32 || c > 126 || c == ':' || c == '\\' || c == '/')
+                    c = ' ';
+            }
+
+            tagname += ".txt";
+
+            {
+                FILE *fp = fopen(tagname.c_str(),"w");
+                if (fp) {
+                    fclose(fp);
+                }
+            }
+        }
+
+        /* the downloadable MP4 isn't in the JSON, we have to go fetch the embedUrl to get it */
     }
 
     return 0;
