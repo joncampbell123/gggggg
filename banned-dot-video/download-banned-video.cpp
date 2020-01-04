@@ -314,6 +314,9 @@ int main(int argc,char **argv) {
             if (x != 0) return 1;
             if (rename(mp4_file_part.c_str(),mp4_file.c_str())) continue;
         }
+
+        /* done */
+        mark_file(_id);
     }
 
     return 0;
