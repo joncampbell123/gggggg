@@ -9,6 +9,10 @@
 
 #include <json11.hpp>
 
+#include <libxml/parser.h>
+#include <libxml/HTMLtree.h>
+#include <libxml/HTMLparser.h>
+
 #include <string>
 
 using namespace std;
@@ -235,6 +239,80 @@ int main(int argc,char **argv) {
             int x = system(cmd.c_str());
             if (x != 0) return 1;
             if (rename(htmlpart.c_str(),html.c_str())) continue;
+        }
+
+        /* look for the download url in the HTML */
+        string downloadurl;
+        {
+            xmlDocPtr docp;
+            xmlNodePtr htmlp;
+            xmlNodePtr htmln = NULL;
+            xmlNodePtr bodyn = NULL;
+
+            docp = htmlParseFile(html.c_str(),NULL);
+            if (docp == NULL) continue;
+
+            htmlp = xmlDocGetRootElement(docp);
+            if (htmlp != NULL) {
+                for (xmlNodePtr n=htmlp;n;n=n->next) {
+                    if (!strcasecmp((char*)n->name,"html")) {
+                        if (n->children != NULL) {
+                            htmln = n->children;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (htmln != NULL) {
+                for (xmlNodePtr n=htmln;n;n=n->next) {
+                    if (!strcasecmp((char*)n->name,"body")) {
+                        if (n->children != NULL) {
+                            bodyn = n->children;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (bodyn != NULL) {
+                for (xmlNodePtr n=bodyn;n;n=n->next) {
+                    if (!strcasecmp((char*)n->name,"div")) {
+                        {
+                            xmlChar *xp;
+                            xp = xmlGetNoNsProp(n,(const xmlChar*)"downloadurl");
+                            if (xp != NULL) {
+                                if (strstr((char*)xp,".mp4") != NULL) {
+                                    downloadurl = (char*)xp;
+                                }
+
+                                xmlFree(xp);
+                            }
+                        }
+                    }
+                }
+            }
+
+            xmlFreeDoc(docp);
+        }
+
+        if (downloadurl.empty())
+            continue;
+
+        if (downloadurl.find_first_of('$') != string::npos ||
+            downloadurl.find_first_of('\\') != string::npos ||
+            downloadurl.find_first_of('\'') != string::npos ||
+            downloadurl.find_first_of('\"') != string::npos)
+            continue;
+
+        string mp4_file = _id + ".mp4";
+
+        if (stat(mp4_file.c_str(),&st)) {
+            string mp4_file_part = mp4_file + ".part";
+            string cmd = "wget --continue --limit-rate=500K -O '" + mp4_file_part + "' '" + downloadurl + "'";
+            int x = system(cmd.c_str());
+            if (x != 0) return 1;
+            if (rename(mp4_file_part.c_str(),mp4_file.c_str())) continue;
         }
     }
 
