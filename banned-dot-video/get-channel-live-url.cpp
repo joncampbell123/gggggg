@@ -51,6 +51,7 @@ int main(int argc,char **argv) {
     char timestr[128];
     int download_count = 0;
     int download_limit = 1;
+    struct stat st;
 
     if (parse_argv(argc,argv))
         return 1;
@@ -72,6 +73,61 @@ int main(int argc,char **argv) {
         j.dump(channel_query_string);
     }
 
+    string js_file = "iw.js";
+    if (stat(js_file.c_str(),&st)) {
+        /* NTS: We trust the JSON will not have '@' or shell escapable chars */
+        string cmd = "curl -X POST --data '" + channel_query_string + "' --header 'Content-Type:application/json' -o '" + js_file + "' 'https://vod-api.infowars.com/graphql'";
+        int x = system(cmd.c_str());
+        if (x != 0) return 1;
+    }
+
+    Json json;
+    {
+        int fd = open(js_file.c_str(),O_RDONLY);
+        if (fd < 0) return 1;
+
+        off_t len = lseek(fd,0,SEEK_END);
+        if (len > (16*1024*1024)) return 1;
+        if (lseek(fd,0,SEEK_SET) != 0) return 1;
+
+        char *buf = new char[len+1]; // or throw exception
+        if (read(fd,buf,len) != len) return 1;
+        buf[len] = 0;
+
+        string json_err;
+
+        json = Json::parse(buf,json_err);
+
+        if (json == Json()) {
+            fprintf(stderr,"JSON parse error: %s\n",json_err.c_str());
+            return 1;
+        }
+
+        delete[] buf;
+        close(fd);
+    }
+
+    string rurl;
+    auto &json_data = json["data"];
+    if (json_data.is_object()) {
+        auto &json_gc = json_data["getChannel"];
+        if (json_gc.is_object()) {
+            auto &json_lsv = json_gc["liveStreamVideo"];
+            if (json_lsv.is_object()) {
+                auto &url = json_lsv["streamUrl"];
+                if (url.is_string()) {
+                    rurl = url.string_value();
+                }
+            }
+        }
+    }
+
+    if (rurl.empty()) {
+        fprintf(stderr,"No live stream URL found\n");
+        return 1;
+    }
+
+    printf("%s\n",rurl.c_str());
     return 0;
 }
 
