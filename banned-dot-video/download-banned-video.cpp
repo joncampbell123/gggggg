@@ -51,6 +51,7 @@ int main(int argc,char **argv) {
     char timestr[128];
     int download_count = 0;
     int download_limit = 1;
+    struct stat st;
 
     if (parse_argv(argc,argv))
         return 1;
@@ -74,8 +75,18 @@ int main(int argc,char **argv) {
         j.dump(channel_query_string);
     }
 
-    string js_file = "iw.js";
-    {
+    // Round to half an hour for JS name to avoid hitting their API too often. Be nice.
+    sprintf(timestr,"%04u%02u%02u-%02u%02u%02u",
+        tm.tm_year+1900,
+        tm.tm_mon+1,
+        tm.tm_mday,
+        tm.tm_hour,
+        tm.tm_min - (tm.tm_min % 30),
+        0);
+
+    string js_file = string("iw-api-") + timestr + ".js";//WARNING: No spaces allowed!
+
+    if (stat(js_file.c_str(),&st) || !S_ISREG(st.st_mode) || st.st_size == 0) {
         /* NTS: We trust the JSON will not have '@' or shell escapable chars */
         string cmd = "curl -X POST --data '" + channel_query_string + "' --header 'Content-Type:application/json' -o '" + js_file + "' 'https://vod-api.infowars.com/graphql'";
         int x = system(cmd.c_str());
