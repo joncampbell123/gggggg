@@ -51,7 +51,6 @@ int main(int argc,char **argv) {
     char timestr[128];
     int download_count = 0;
     int download_limit = 1;
-    struct stat st;
 
     if (parse_argv(argc,argv))
         return 1;
@@ -74,7 +73,7 @@ int main(int argc,char **argv) {
     }
 
     string js_file = "iw.js";
-    if (stat(js_file.c_str(),&st)) {
+    {
         /* NTS: We trust the JSON will not have '@' or shell escapable chars */
         string cmd = "curl -X POST --data '" + channel_query_string + "' --header 'Content-Type:application/json' -o '" + js_file + "' 'https://vod-api.infowars.com/graphql'";
         int x = system(cmd.c_str());
