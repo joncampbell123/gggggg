@@ -136,6 +136,13 @@ int main(int argc,char **argv) {
         }
         if (_id.empty()) continue;
 
+        if (_id.find_first_of('/') != string::npos ||
+            _id.find_first_of('$') != string::npos ||
+            _id.find_first_of('\\') != string::npos ||
+            _id.find_first_of('\'') != string::npos ||
+            _id.find_first_of('\"') != string::npos)
+            continue;
+
         /* NTS: embedUrl contains the value _id at the end */
         string embedUrl;
         {
@@ -151,6 +158,12 @@ int main(int argc,char **argv) {
             r++;
             if (_id != r) continue;
         }
+
+        if (embedUrl.find_first_of('$') != string::npos ||
+            embedUrl.find_first_of('\\') != string::npos ||
+            embedUrl.find_first_of('\'') != string::npos ||
+            embedUrl.find_first_of('\"') != string::npos)
+            continue;
 
         string title;
         {
@@ -194,6 +207,14 @@ int main(int argc,char **argv) {
         }
 
         /* the downloadable MP4 isn't in the JSON, we have to go fetch the embedUrl to get it */
+        string html = _id + ".html";
+        if (stat(html.c_str(),&st)) {
+            string htmlpart = html + ".part";
+            string cmd = "wget -O '" + htmlpart + "' '" + embedUrl + "'";
+            int x = system(cmd.c_str());
+            if (x != 0) return 1;
+            if (rename(htmlpart.c_str(),html.c_str())) continue;
+        }
     }
 
     return 0;
