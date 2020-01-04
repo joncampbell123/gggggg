@@ -119,6 +119,52 @@ int main(int argc,char **argv) {
         close(fd);
     }
 
+    auto &json_data = json["data"];
+    if (!json_data.is_object()) return 1;
+    auto &json_getChannel = json_data["getChannel"];
+    if (!json_getChannel.is_object()) return 1;
+    auto &json_videos = json_getChannel["videos"];
+    if (!json_videos.is_array()) return 1;
+
+    for (auto &json_vobj : json_videos.array_items()) {
+        if (!json_vobj.is_object()) continue;
+
+        string _id;
+        {
+            auto &id = json_vobj["_id"];
+            if (id.is_string()) _id = id.string_value();
+        }
+        if (_id.empty()) continue;
+
+        /* NTS: embedUrl contains the value _id at the end */
+        string embedUrl;
+        {
+            auto &id = json_vobj["embedUrl"];
+            if (id.is_string()) embedUrl = id.string_value();
+        }
+        if (embedUrl.empty()) continue;
+        {
+            const char *s = embedUrl.c_str();
+            const char *r = strrchr(s,'/');
+            if (r == NULL) continue;
+            assert(*r == '/');
+            r++;
+            if (_id != r) continue;
+        }
+
+        string title;
+        {
+            auto &id = json_vobj["title"];
+            if (id.is_string()) title = id.string_value();
+        }
+
+        string summary;
+        {
+            auto &id = json_vobj["summary"];
+            if (id.is_string()) summary = id.string_value();
+        }
+    }
+
     return 0;
 }
 
