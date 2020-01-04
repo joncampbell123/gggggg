@@ -159,6 +159,11 @@ int main(int argc,char **argv) {
             _id.find_first_of('\"') != string::npos)
             continue;
 
+        /* do not download if downloaded already */
+        string marker_file = get_mark_filename(_id);
+        if (stat(marker_file.c_str(),&st) == 0 && S_ISREG(st.st_mode))
+            continue;
+
         /* NTS: embedUrl contains the value _id at the end */
         string embedUrl;
         {
