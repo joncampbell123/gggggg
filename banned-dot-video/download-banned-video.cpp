@@ -18,6 +18,20 @@ const string default_channel = "5b885d33e6646a0015a6fa2d"; /* The Alex Jones Sho
 
 string chosen_channel = default_channel;
 
+void init_marker(void) {
+    mkdir("marker",0755);
+}
+
+string get_mark_filename(const string &filename) {
+    return string("marker/") + filename;
+}
+
+void mark_file(const string &filename) {
+    const string mark_filename = get_mark_filename(filename);
+    int fd = open(mark_filename.c_str(),O_CREAT|O_EXCL,0644);
+    if (fd >= 0) close(fd);
+}
+
 int parse_argv(int argc,char **argv) {
     int i = 1;
     char *a;
@@ -55,6 +69,8 @@ int main(int argc,char **argv) {
 
     if (parse_argv(argc,argv))
         return 1;
+
+    init_marker();
 
     /* construct the query JSON for the POST request */
     string channel_query_string;
