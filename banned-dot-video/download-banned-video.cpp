@@ -68,7 +68,7 @@ int main(int argc,char **argv) {
     struct tm tm = *localtime(&now);
     char timestr[128];
     int download_count = 0;
-    int download_limit = 1;
+    int download_limit = 2;
     struct stat st;
 
     if (parse_argv(argc,argv))
@@ -317,6 +317,10 @@ int main(int argc,char **argv) {
 
         /* done */
         mark_file(_id);
+
+        /* count */
+        if (++download_limit >= download_count)
+            break;
     }
 
     return 0;
