@@ -88,7 +88,7 @@ bool download_video_youtube(const Json &video) {
         creds += string("--username '") + youtube_user + "' --password '" + youtube_pass + "' ";
 
     {
-        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s' ") + creds + invoke_url;
+        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --all-subs --limit-rate=1500K --output '%(id)s' ") + creds + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
