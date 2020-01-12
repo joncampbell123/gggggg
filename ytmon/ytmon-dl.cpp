@@ -206,17 +206,15 @@ int main(int argc,char **argv) {
     }
 
     if (strstr(api_url.c_str(),"youtube") != NULL) {
-        // not on sunday
-        if (tm.tm_wday == 0) {
+        // not on sunday or saturday
+        if (tm.tm_wday == 0 || tm.tm_wday == 6) {
             fprintf(stderr,"Sunday.\n");
             return 1;
         }
-        if (tm.tm_wday != 6) { // except on saturday
-            // look human by stopping downloads between 12AM and 3PM
-            if (tm.tm_hour >= 12 && tm.tm_hour < (3+12)) {
-                fprintf(stderr,"Time for work.\n");
-                return 1;
-            }
+        // look human by stopping downloads between 10AM and 2PM
+        if (tm.tm_hour >= 10 && tm.tm_hour < (2+12)) {
+            fprintf(stderr,"Time for work.\n");
+            return 1;
         }
         // look human by stopping downloads between 12AM and 6AM
         if (tm.tm_hour >= 0 && tm.tm_hour < 6) {
