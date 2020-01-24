@@ -67,6 +67,9 @@ void __interrupt __far tick_timer_irq() {
 }
 
 void schedule_timer_irq_event(volatile struct timer_event_t *ev,uint32_t time) {
+    if (ev->next != NULL)
+        return; /* ev->next if already scheduled */
+
     ev->time = time + tick_irq_count;
 
     SAVE_CPUFLAGS( _cli() ) {
