@@ -57,12 +57,17 @@ static inline void add_fired_nonirq(volatile struct timer_event_t *ev) {
 void callback_nonirq_event(void) {
     volatile struct timer_event_t* p;
 
-    SAVE_CPUFLAGS( _cli() ) {
-        p = timer_fired_nonirq;
-        if (p != NULL) timer_fired_nonirq = p->next;
-    } RESTORE_CPUFLAGS();
+    do {
+        SAVE_CPUFLAGS( _cli() ) {
+            p = timer_fired_nonirq;
+            if (p != NULL) timer_fired_nonirq = p->next;
+        } RESTORE_CPUFLAGS();
 
-    if (p != NULL) p->callback(p->user);
+        if (p != NULL)
+            p->callback(p->user);
+        else
+            break;
+    } while (1);
 }
 
 void __interrupt __far tick_timer_irq() {
