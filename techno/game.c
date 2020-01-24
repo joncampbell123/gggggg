@@ -30,18 +30,18 @@
 
 struct timer_event_t {
     unsigned int                        flags;
-    uint32_t                            time;
+    unsigned int                        time;
     uint32_t                            user;
     void                                (*callback)(uint32_t user);
     volatile struct timer_event_t*      next;
 };
 
-#define                         TIMER_IRQ_COUNT_RESET_AT (100000UL)
-#define                         TIMER_IRQ_COUNT_RESET_SUB (50000UL)
-#define                         TIMER_TICK_RATE (300UL)
+#define                         TIMER_IRQ_COUNT_RESET_AT (10000U)
+#define                         TIMER_IRQ_COUNT_RESET_SUB (5000U)
+#define                         TIMER_TICK_RATE (300U)
 
 volatile uint32_t               tick_count = 0;     /* tick counter for use with game engine in general */
-volatile uint32_t               tick_irq_count = 0; /* tick counter used for scheduling events, which may reset from time to time */
+volatile unsigned int           tick_irq_count = 0; /* tick counter used for scheduling events, which may reset from time to time */
 unsigned int                    tick_calldown = 0;
 unsigned int                    tick_calldown_add = 0;
 void                            (__interrupt __far *old_tick_irq)() = NULL;
