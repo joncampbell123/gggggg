@@ -219,6 +219,7 @@ int main(int argc,char **argv,char **envp) {
             }
         }
 
+#if 1
         {
             uint32_t t,ti;
             SAVE_CPUFLAGS( _cli() ) {
@@ -231,6 +232,7 @@ int main(int argc,char **argv,char **envp) {
                 fflush(stdout);
             }
         }
+#endif
     }
 
     /* timer unsetup */
