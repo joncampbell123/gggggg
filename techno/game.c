@@ -95,10 +95,7 @@ void schedule_timer_irq_event(volatile struct timer_event_t *ev,uint32_t time) {
         return; /* ev->next if already scheduled */
 
     SAVE_CPUFLAGS( _cli() ) {
-        if (ev->flags & TIMER_EVENT_FLAG_IRQ)
-            ev->time = time + tick_irq_count;
-        else
-            ev->time = time + tick_count;
+        ev->time = time + tick_irq_count;
 
         if (timer_next_irq == NULL) {
             /* list is empty */
