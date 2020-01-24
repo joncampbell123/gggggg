@@ -40,8 +40,8 @@ struct timer_event_t {
 #define                         TIMER_IRQ_COUNT_RESET_SUB (50000UL)
 #define                         TIMER_TICK_RATE (300UL)
 
-volatile uint32_t               tick_count = 0;
-volatile uint32_t               tick_irq_count = 0;
+volatile uint32_t               tick_count = 0;     /* tick counter for use with game engine in general */
+volatile uint32_t               tick_irq_count = 0; /* tick counter used for scheduling events, which may reset from time to time */
 void                            (__interrupt __far *old_tick_irq)() = NULL;
 
 volatile struct timer_event_t*  timer_next_irq = NULL;
