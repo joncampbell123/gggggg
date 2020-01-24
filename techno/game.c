@@ -52,6 +52,17 @@ static inline void add_fired_nonirq(volatile struct timer_event_t *ev) {
     timer_fired_nonirq = ev;
 }
 
+void callback_nonirq_event(void) {
+    volatile struct timer_event_t* p;
+
+    SAVE_CPUFLAGS( _cli() ) {
+        p = timer_fired_nonirq;
+        if (p != NULL) timer_fired_nonirq = p->next;
+    } RESTORE_CPUFLAGS();
+
+    if (p != NULL) p->callback(p->user);
+}
+
 void __interrupt __far tick_timer_irq() {
     while (timer_next_irq != NULL && tick_irq_count >= timer_next_irq->time) {
         volatile struct timer_event_t *current = timer_next_irq;
@@ -131,7 +142,7 @@ void blah2_cb(uint32_t t);
 void blah_cb(uint32_t t);
 
 struct timer_event_t blah = {
-    TIMER_EVENT_FLAG_IRQ,//flags
+    0,//flags
     0,//delay
     0,//user
     blah_cb,//callback
@@ -237,6 +248,8 @@ int main(int argc,char **argv,char **envp) {
                 p8259_unmask(T8254_IRQ);
             }
         }
+
+        callback_nonirq_event();
 
 #if 1
         {
