@@ -42,6 +42,8 @@ struct timer_event_t {
 
 volatile uint32_t               tick_count = 0;     /* tick counter for use with game engine in general */
 volatile uint32_t               tick_irq_count = 0; /* tick counter used for scheduling events, which may reset from time to time */
+unsigned int                    tick_calldown = 0;
+unsigned int                    tick_calldown_add = 0;
 void                            (__interrupt __far *old_tick_irq)() = NULL;
 
 volatile struct timer_event_t*  timer_next_irq = NULL;
@@ -87,7 +89,17 @@ void __interrupt __far tick_timer_irq() {
     tick_irq_count++;
     tick_count++;
 
-    p8259_OCW2(0,P8259_OCW2_NON_SPECIFIC_EOI);
+    {
+        uint32_t ncnt = (uint32_t)tick_calldown + (uint32_t)tick_calldown_add;
+        if (ncnt == (uint32_t)0/*add==0*/ || (ncnt & 0x10000ul)/*overflow*/) {
+            ( *((unsigned char far*)MK_FP(0xB800,0x000A)) )++;
+            old_tick_irq();
+        }
+        else
+            p8259_OCW2(0,P8259_OCW2_NON_SPECIFIC_EOI);
+
+        tick_calldown = (uint16_t)ncnt;
+    }
 }
 
 void schedule_timer_irq_event(volatile struct timer_event_t *ev,uint32_t time) {
@@ -217,7 +229,9 @@ int main(int argc,char **argv,char **envp) {
 
     /* timer setup */
 	p8259_mask(T8254_IRQ);
-    write_8254_system_timer((t8254_time_t)(T8254_REF_CLOCK_HZ / (unsigned long)TIMER_TICK_RATE));
+    tick_calldown = 0;
+    tick_calldown_add = (unsigned int)(T8254_REF_CLOCK_HZ / (unsigned long)TIMER_TICK_RATE);
+    write_8254_system_timer((t8254_time_t)tick_calldown_add);
     old_tick_irq = _dos_getvect(irq2int(0));
     _dos_setvect(irq2int(0),tick_timer_irq);
     p8259_unmask(T8254_IRQ);
