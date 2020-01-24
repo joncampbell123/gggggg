@@ -95,7 +95,7 @@ void __interrupt __far tick_timer_irq() {
     tick_count++;
 
     {
-        uint32_t ncnt = (uint32_t)tick_calldown + (uint32_t)tick_calldown_add;
+        const uint32_t ncnt = (uint32_t)tick_calldown + (uint32_t)tick_calldown_add;
         if (ncnt == (uint32_t)0/*add==0*/ || (ncnt & 0x10000ul)/*overflow*/)
             old_tick_irq();
         else
