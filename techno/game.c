@@ -91,10 +91,8 @@ void __interrupt __far tick_timer_irq() {
 
     {
         uint32_t ncnt = (uint32_t)tick_calldown + (uint32_t)tick_calldown_add;
-        if (ncnt == (uint32_t)0/*add==0*/ || (ncnt & 0x10000ul)/*overflow*/) {
-            ( *((unsigned char far*)MK_FP(0xB800,0x000A)) )++;
+        if (ncnt == (uint32_t)0/*add==0*/ || (ncnt & 0x10000ul)/*overflow*/)
             old_tick_irq();
-        }
         else
             p8259_OCW2(0,P8259_OCW2_NON_SPECIFIC_EOI);
 
