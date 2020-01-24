@@ -105,6 +105,30 @@ void __interrupt __far tick_timer_irq() {
     }
 }
 
+void remove_timer_event(volatile struct timer_event_t *ev) {
+    if (ev != NULL) {
+        SAVE_CPUFLAGS( _cli() ) {
+            if (timer_next == ev) {
+                timer_next = timer_next->next;
+                ev->next = NULL;
+            }
+            else {
+                volatile struct timer_event_t *s = timer_next;
+
+                while (s != NULL) {
+                    if (s->next == ev) {
+                        s->next = s->next->next;
+                        ev->next = NULL;
+                        break;
+                    }
+
+                    s = s->next;
+                }
+            }
+        } RESTORE_CPUFLAGS();
+    }
+}
+
 void schedule_timer_event(volatile struct timer_event_t *ev,uint32_t time) {
     if (ev->next != NULL)
         return; /* ev->next if already scheduled */
@@ -260,6 +284,15 @@ int main(int argc,char **argv,char **envp) {
                     fprintf(stderr,"\n");
                 }
                 p8259_unmask(T8254_IRQ);
+            }
+            else if (c == 'x') {
+                remove_timer_event(&beeper);
+            }
+            else if (c == 'y') {
+                remove_timer_event(&blah);
+            }
+            else if (c == 'z') {
+                remove_timer_event(&blah2);
             }
         }
 
