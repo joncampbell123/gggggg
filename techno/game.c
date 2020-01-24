@@ -54,6 +54,36 @@ static inline void add_fired_nonirq(volatile struct timer_event_t *ev) {
     timer_fired_nonirq = ev;
 }
 
+void timer_flush_events(void) {
+    volatile struct timer_event_t* p;
+
+    SAVE_CPUFLAGS( _cli() ) {
+        p = timer_next;
+        timer_next = NULL;
+    } RESTORE_CPUFLAGS();
+
+    while (p != NULL) {
+        volatile struct timer_event_t* n = p->next;
+        p->next = NULL;
+        p = n;
+    }
+}
+
+void callback_flush_events(void) {
+    volatile struct timer_event_t* p;
+
+    SAVE_CPUFLAGS( _cli() ) {
+        p = timer_fired_nonirq;
+        timer_fired_nonirq = NULL;
+    } RESTORE_CPUFLAGS();
+
+    while (p != NULL) {
+        volatile struct timer_event_t* n = p->next;
+        p->next = NULL;
+        p = n;
+    }
+}
+
 void callback_nonirq_event(void) {
     volatile struct timer_event_t* p;
 
@@ -315,6 +345,8 @@ int main(int argc,char **argv,char **envp) {
     }
 
     /* timer unsetup */
+	timer_flush_events();
+	callback_flush_events();
 	p8259_mask(T8254_IRQ);
     write_8254_system_timer(0x10000ul); /* restore normal timer */
     _dos_setvect(irq2int(0),old_tick_irq);
