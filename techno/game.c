@@ -26,28 +26,13 @@
 #include <hw/vga/vgatty.h>
 #include <hw/dos/doswin.h>
 
-static inline void write_8254_system_timer_timeout(t8254_time_t max) {
-    write_8254(T8254_TIMER_INTERRUPT_TICK,max,T8254_MODE_0_INT_ON_TERMINAL_COUNT);
-}
+unsigned long           TIMER_TICK_DELAY = (unsigned long)10000ul; /* 10ms aka 100Hz */
 
 volatile uint32_t       tick_count = 0;
-t8254_time_t            tick_schedule_delay = 0;
 void                    (__interrupt __far *old_tick_irq)() = NULL;
-
-void schedule_tick(unsigned long count) {
-	p8259_mask(T8254_IRQ);
-
-    if (count > tick_schedule_delay) {
-        write_8254_system_timer_timeout((t8254_time_t)count - tick_schedule_delay);
-        p8259_unmask(T8254_IRQ);
-    }
-}
 
 void __interrupt __far tick_timer_irq() {
     tick_count++;
-
-    schedule_tick(t8254_us2ticks(10000ul));
-
     p8259_OCW2(0,P8259_OCW2_NON_SPECIFIC_EOI);
 }
 
@@ -76,23 +61,10 @@ int main(int argc,char **argv,char **envp) {
 
     /* timer setup */
 	p8259_mask(T8254_IRQ);
-
-    /* setup delay detect */
-    {
-        SAVE_CPUFLAGS( _cli() ) {
-            write_8254_system_timer_timeout(0ul);
-            tick_schedule_delay = (t8254_time_t)(0x10000ul) - read_8254_ncli(T8254_TIMER_INTERRUPT_TICK);
-        } RESTORE_CPUFLAGS();
-#if 1
-        printf("8254 schedule delay: %lu ticks\n",(unsigned long)tick_schedule_delay);
-#endif
-    }
-
-    /* start tick event handling */
+    write_8254_system_timer(t8254_us2ticks(TIMER_TICK_DELAY));
     old_tick_irq = _dos_getvect(irq2int(0));
     _dos_setvect(irq2int(0),tick_timer_irq);
-    write_8254_system_timer_timeout(1ul);
-    schedule_tick(t8254_us2ticks(10000ul));
+    p8259_unmask(T8254_IRQ);
 
     for (;;) {
         if (kbhit()) {
