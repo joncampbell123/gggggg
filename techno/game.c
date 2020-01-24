@@ -33,7 +33,9 @@ struct timer_event_t {
     volatile struct timer_event_t*      next;
 };
 
-unsigned int                    TIMER_TICK_RATE = 300;
+#define                         TIMER_IRQ_COUNT_RESET_AT (100000UL)
+#define                         TIMER_IRQ_COUNT_RESET_SUB (50000UL)
+#define                         TIMER_TICK_RATE (300UL)
 
 volatile uint32_t               tick_count = 0;
 volatile uint32_t               tick_irq_count = 0;
@@ -51,8 +53,12 @@ void __interrupt __far tick_timer_irq() {
         current->callback(current->user);
     }
 
-    if (timer_next_irq == NULL)
-        tick_irq_count = 0;
+    if (tick_irq_count >= TIMER_IRQ_COUNT_RESET_AT) {
+        volatile struct timer_event_t *e = timer_next_irq;
+
+        tick_irq_count -= TIMER_IRQ_COUNT_RESET_SUB;
+        for (;e != NULL;e=e->next) e->time -= TIMER_IRQ_COUNT_RESET_SUB;
+    }
 
     tick_irq_count++;
     tick_count++;
