@@ -26,7 +26,7 @@
 #include <hw/vga/vgatty.h>
 #include <hw/dos/doswin.h>
 
-unsigned long           TIMER_TICK_DELAY = (unsigned long)10000ul; /* 10ms aka 100Hz */
+unsigned int            TIMER_TICK_RATE = 300;
 
 volatile uint32_t       tick_count = 0;
 void                    (__interrupt __far *old_tick_irq)() = NULL;
@@ -61,7 +61,7 @@ int main(int argc,char **argv,char **envp) {
 
     /* timer setup */
 	p8259_mask(T8254_IRQ);
-    write_8254_system_timer(t8254_us2ticks(TIMER_TICK_DELAY));
+    write_8254_system_timer((t8254_time_t)(T8254_REF_CLOCK_HZ / (unsigned long)TIMER_TICK_RATE));
     old_tick_irq = _dos_getvect(irq2int(0));
     _dos_setvect(irq2int(0),tick_timer_irq);
     p8259_unmask(T8254_IRQ);
