@@ -113,12 +113,12 @@ void schedule_timer_event(volatile struct timer_event_t *ev,uint32_t time) {
         ev->time = time + tick_irq_count;
 
         if (timer_next == NULL) {
-            /* list is empty */
+            /* list is empty, add event to top */
             ev->next = NULL;
             timer_next = ev;
         }
         else if (ev->time < timer_next->time) {
-            /* new event is newer than top of list */
+            /* new event is newer than top of list, add to top */
             ev->next = timer_next;
             timer_next = ev;
         }
