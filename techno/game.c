@@ -46,7 +46,7 @@ unsigned int                    tick_calldown = 0;
 unsigned int                    tick_calldown_add = 0;
 void                            (__interrupt __far *old_tick_irq)() = NULL;
 
-volatile struct timer_event_t*  timer_next_irq = NULL;
+volatile struct timer_event_t*  timer_next = NULL;
 volatile struct timer_event_t*  timer_fired_nonirq = NULL;
 
 static inline void add_fired_nonirq(volatile struct timer_event_t *ev) {
@@ -66,11 +66,11 @@ void callback_nonirq_event(void) {
 }
 
 void __interrupt __far tick_timer_irq() {
-    while (timer_next_irq != NULL && tick_irq_count >= timer_next_irq->time) {
-        volatile struct timer_event_t *current = timer_next_irq;
+    while (timer_next != NULL && tick_irq_count >= timer_next->time) {
+        volatile struct timer_event_t *current = timer_next;
         volatile struct timer_event_t *next = current->next;
 
-        timer_next_irq = next;
+        timer_next = next;
         current->next = NULL;
 
         if (current->flags & TIMER_EVENT_FLAG_IRQ)
@@ -80,7 +80,7 @@ void __interrupt __far tick_timer_irq() {
     }
 
     if (tick_irq_count >= TIMER_IRQ_COUNT_RESET_AT) {
-        volatile struct timer_event_t *e = timer_next_irq;
+        volatile struct timer_event_t *e = timer_next;
 
         tick_irq_count -= TIMER_IRQ_COUNT_RESET_SUB;
         for (;e != NULL;e=e->next) e->time -= TIMER_IRQ_COUNT_RESET_SUB;
@@ -102,25 +102,25 @@ void __interrupt __far tick_timer_irq() {
     }
 }
 
-void schedule_timer_irq_event(volatile struct timer_event_t *ev,uint32_t time) {
+void schedule_timer_event(volatile struct timer_event_t *ev,uint32_t time) {
     if (ev->next != NULL)
         return; /* ev->next if already scheduled */
 
     SAVE_CPUFLAGS( _cli() ) {
         ev->time = time + tick_irq_count;
 
-        if (timer_next_irq == NULL) {
+        if (timer_next == NULL) {
             /* list is empty */
             ev->next = NULL;
-            timer_next_irq = ev;
+            timer_next = ev;
         }
-        else if (ev->time < timer_next_irq->time) {
+        else if (ev->time < timer_next->time) {
             /* new event is newer than top of list */
-            ev->next = timer_next_irq;
-            timer_next_irq = ev;
+            ev->next = timer_next;
+            timer_next = ev;
         }
         else {
-            volatile struct timer_event_t *s = timer_next_irq;
+            volatile struct timer_event_t *s = timer_next;
 
             while (s != NULL) {
                 if (s->next != NULL) {
@@ -179,7 +179,7 @@ void blah_cb(uint32_t t) {
 
     ( *((uint16_t far*)MK_FP(0xB800,0x0000)) )++;
 
-    schedule_timer_irq_event(&blah,100);
+    schedule_timer_event(&blah,100);
 }
 
 void blah2_cb(uint32_t t) {
@@ -187,7 +187,7 @@ void blah2_cb(uint32_t t) {
 
     ( *((uint16_t far*)MK_FP(0xB800,0x0002)) )++;
 
-    schedule_timer_irq_event(&blah2,3);
+    schedule_timer_event(&blah2,3);
 }
 
 void beeper_cb(uint32_t t) {
@@ -201,7 +201,7 @@ void beeper_cb(uint32_t t) {
         pop     ax
     }
 
-    schedule_timer_irq_event(&beeper,300);
+    schedule_timer_event(&beeper,300);
 }
 
 int main(int argc,char **argv,char **envp) {
@@ -236,9 +236,9 @@ int main(int argc,char **argv,char **envp) {
     _dos_setvect(irq2int(0),tick_timer_irq);
     p8259_unmask(T8254_IRQ);
 
-    schedule_timer_irq_event(&beeper,300);
-    schedule_timer_irq_event(&blah,100);
-    schedule_timer_irq_event(&blah2,3);
+    schedule_timer_event(&beeper,300);
+    schedule_timer_event(&blah,100);
+    schedule_timer_event(&blah2,3);
 
     for (;;) {
         if (kbhit()) {
@@ -248,7 +248,7 @@ int main(int argc,char **argv,char **envp) {
             if (c == ' ') {
                 p8259_mask(T8254_IRQ);
                 {
-                    volatile struct timer_event_t *t = timer_next_irq;
+                    volatile struct timer_event_t *t = timer_next;
                     fprintf(stderr,"\n");
                     while (t != NULL) {
                         fprintf(stderr,"t=%lu p=%p\n",(unsigned long)t->time,(void*)t);
