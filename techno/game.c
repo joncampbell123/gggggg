@@ -26,7 +26,10 @@
 #include <hw/vga/vgatty.h>
 #include <hw/dos/doswin.h>
 
+#define TIMER_EVENT_FLAG_IRQ            (1u << 0u)
+
 struct timer_event_t {
+    unsigned int                        flags;
     uint32_t                            time;
     uint32_t                            user;
     void                                (*callback)(uint32_t user);
@@ -42,6 +45,12 @@ volatile uint32_t               tick_irq_count = 0;
 void                            (__interrupt __far *old_tick_irq)() = NULL;
 
 volatile struct timer_event_t*  timer_next_irq = NULL;
+volatile struct timer_event_t*  timer_fired_nonirq = NULL;
+
+static inline void add_fired_nonirq(volatile struct timer_event_t *ev) {
+    ev->next = timer_fired_nonirq;
+    timer_fired_nonirq = ev;
+}
 
 void __interrupt __far tick_timer_irq() {
     while (timer_next_irq != NULL && tick_irq_count >= timer_next_irq->time) {
@@ -50,7 +59,11 @@ void __interrupt __far tick_timer_irq() {
 
         timer_next_irq = next;
         current->next = NULL;
-        current->callback(current->user);
+
+        if (current->flags & TIMER_EVENT_FLAG_IRQ)
+            current->callback(current->user);
+        else
+            add_fired_nonirq(current);
     }
 
     if (tick_irq_count >= TIMER_IRQ_COUNT_RESET_AT) {
@@ -115,6 +128,7 @@ void blah2_cb(uint32_t t);
 void blah_cb(uint32_t t);
 
 struct timer_event_t blah = {
+    TIMER_EVENT_FLAG_IRQ,//flags
     0,//delay
     0,//user
     blah_cb,//callback
@@ -122,6 +136,7 @@ struct timer_event_t blah = {
 };
 
 struct timer_event_t blah2 = {
+    TIMER_EVENT_FLAG_IRQ,//flags
     0,//delay
     0,//user
     blah2_cb,//callback
@@ -129,6 +144,7 @@ struct timer_event_t blah2 = {
 };
 
 struct timer_event_t beeper = {
+    TIMER_EVENT_FLAG_IRQ,//flags
     0,//delay
     0,//user
     beeper_cb,//callback
