@@ -26,6 +26,7 @@
 #include <hw/vga/vgatty.h>
 #include <hw/dos/doswin.h>
 
+/*============================= timer/event =================================*/
 #define                                 TIMER_EVENT_FLAG_IRQ                    (1u << 0u)
 
 struct timer_event_t {
@@ -210,72 +211,12 @@ void schedule_timer_event(volatile struct timer_event_t *ev,uint32_t time) {
     } RESTORE_CPUFLAGS();
 }
 
-void beeper_cb(uint32_t t);
-void blah2_cb(uint32_t t);
-void blah_cb(uint32_t t);
-
-struct timer_event_t blah = {
-    "blah",//blah
-    0,//flags
-    0,//delay
-    0,//user
-    blah_cb,//callback
-    NULL//next
-};
-
-struct timer_event_t blah2 = {
-    "blah2",//blah
-    TIMER_EVENT_FLAG_IRQ,//flags
-    0,//delay
-    0,//user
-    blah2_cb,//callback
-    NULL//next
-};
-
-struct timer_event_t beeper = {
-    "beeper",//blah
-    TIMER_EVENT_FLAG_IRQ,//flags
-    0,//delay
-    0,//user
-    beeper_cb,//callback
-    NULL//next
-};
-
-void blah_cb(uint32_t t) {
-    (void)t;
-
-    ( *((uint16_t far*)MK_FP(0xB800,0x0000)) )++;
-
-    schedule_timer_event(&blah,100);
+/*=================================game loop===========================*/
+void game_main(void) {
 }
 
-void blah2_cb(uint32_t t) {
-    (void)t;
-
-    ( *((uint16_t far*)MK_FP(0xB800,0x0002)) )++;
-
-    schedule_timer_event(&blah2,3);
-}
-
-void beeper_cb(uint32_t t) {
-    (void)t;
-
-    __asm {
-        push    ax
-        in      al,61h
-        xor     al,3h
-        out     61h,al
-        pop     ax
-    }
-
-    schedule_timer_event(&beeper,300);
-}
-
+/*=================================program entry point=================================*/
 int main(int argc,char **argv,char **envp) {
-#if 1
-    uint32_t ptick_count = 0;
-#endif
-
     probe_dos();
     cpu_probe();
     detect_windows();
@@ -289,7 +230,7 @@ int main(int argc,char **argv,char **envp) {
         return 1;
     }
 	probe_vga2();
-    if ((vga2_flags & (VGA2_FLAG_CGA|VGA2_FLAG_EGA|VGA2_FLAG_VGA)) == 0) {
+    if ((vga2_flags & (VGA2_FLAG_CGA|VGA2_FLAG_EGA|VGA2_FLAG_VGA|VGA2_FLAG_MCGA)) == 0) {
         printf("This game requires support for CGA graphics\n");
         return 1;
     }
@@ -303,56 +244,8 @@ int main(int argc,char **argv,char **envp) {
     _dos_setvect(irq2int(0),tick_timer_irq);
     p8259_unmask(T8254_IRQ);
 
-    schedule_timer_event(&beeper,300);
-    schedule_timer_event(&blah,100);
-    schedule_timer_event(&blah2,3);
-
-    for (;;) {
-        if (kbhit()) {
-            int c = getch();
-            if (c == 27) break;
-
-            if (c == ' ') {
-                p8259_mask(T8254_IRQ);
-                {
-                    volatile struct timer_event_t *t = timer_next;
-                    fprintf(stderr,"\n");
-                    while (t != NULL) {
-                        fprintf(stderr,"t=%lu p=%p name=%s\n",(unsigned long)t->time,(void*)t,t->name);
-                        t = t->next;
-                    }
-                    fprintf(stderr,"\n");
-                }
-                p8259_unmask(T8254_IRQ);
-            }
-            else if (c == 'x') {
-                remove_timer_event(&beeper);
-            }
-            else if (c == 'y') {
-                remove_timer_event(&blah);
-            }
-            else if (c == 'z') {
-                remove_timer_event(&blah2);
-            }
-        }
-
-        callback_nonirq_event();
-
-#if 1
-        {
-            uint32_t t,ti;
-            SAVE_CPUFLAGS( _cli() ) {
-                t = tick_count;
-                ti = tick_irq_count;
-            } RESTORE_CPUFLAGS();
-            if (ptick_count != t) {
-                ptick_count = t;
-                printf("\x0D" "%lu/IRQ=%lu  ",(unsigned long)t,(unsigned long)ti);
-                fflush(stdout);
-            }
-        }
-#endif
-    }
+    /* game main */
+    game_main();
 
     /* timer unsetup */
 	timer_flush_events();
