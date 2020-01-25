@@ -55,6 +55,12 @@ static inline void add_fired_nonirq(volatile struct timer_event_t *ev) {
     timer_fired_nonirq = ev;
 }
 
+void timer_count_reset(void) {
+    SAVE_CPUFLAGS( _cli() ) {
+        tick_count = 0;
+    } RESTORE_CPUFLAGS();
+}
+
 void timer_flush_events(void) {
     volatile struct timer_event_t* p;
 
