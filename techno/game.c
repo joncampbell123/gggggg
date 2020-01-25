@@ -26,7 +26,7 @@
 #include <hw/vga/vgatty.h>
 #include <hw/dos/doswin.h>
 
-#define TIMER_EVENT_FLAG_IRQ            (1u << 0u)
+#define                                 TIMER_EVENT_FLAG_IRQ                    (1u << 0u)
 
 struct timer_event_t {
     const char*                         name;
