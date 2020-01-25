@@ -29,6 +29,7 @@
 #define TIMER_EVENT_FLAG_IRQ            (1u << 0u)
 
 struct timer_event_t {
+    const char*                         name;
     unsigned int                        flags;
     unsigned int                        time;
     uint32_t                            user;
@@ -208,6 +209,7 @@ void blah2_cb(uint32_t t);
 void blah_cb(uint32_t t);
 
 struct timer_event_t blah = {
+    "blah",//blah
     0,//flags
     0,//delay
     0,//user
@@ -216,6 +218,7 @@ struct timer_event_t blah = {
 };
 
 struct timer_event_t blah2 = {
+    "blah2",//blah
     TIMER_EVENT_FLAG_IRQ,//flags
     0,//delay
     0,//user
@@ -224,6 +227,7 @@ struct timer_event_t blah2 = {
 };
 
 struct timer_event_t beeper = {
+    "beeper",//blah
     TIMER_EVENT_FLAG_IRQ,//flags
     0,//delay
     0,//user
@@ -308,7 +312,7 @@ int main(int argc,char **argv,char **envp) {
                     volatile struct timer_event_t *t = timer_next;
                     fprintf(stderr,"\n");
                     while (t != NULL) {
-                        fprintf(stderr,"t=%lu p=%p\n",(unsigned long)t->time,(void*)t);
+                        fprintf(stderr,"t=%lu p=%p name=%s\n",(unsigned long)t->time,(void*)t,t->name);
                         t = t->next;
                     }
                     fprintf(stderr,"\n");
