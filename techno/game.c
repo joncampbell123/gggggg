@@ -154,7 +154,7 @@ void video_vline(unsigned int y1,unsigned int y2,unsigned int x,unsigned int col
     if (y1 <= y2) {
         unsigned int yc = y2 + 1u - y1;
 
-        do {
+        do { /* initial case cannot have yc == 0 */
             video_wrmaskv(vp,mask,wb);
             vp = video_scanlineadv(vp);
         } while (--yc != 0u);
