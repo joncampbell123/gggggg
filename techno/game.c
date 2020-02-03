@@ -171,8 +171,9 @@ void video_solidbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int
             } while (--yc != 0u);
         }
         else {
+            const unsigned char mask = cga4leftmask(x1) & cga4rightmask(x2);
             do { /* yc cannot == 0 */
-                video_hline_inner_span1(x1,x2,(unsigned char)wbm,vp);
+                video_hline_inner_span1_precomp_mask(mask,(unsigned char)wbm,vp);
                 vp = video_scanlineadv(vp);
             } while (--yc != 0u);
         }
