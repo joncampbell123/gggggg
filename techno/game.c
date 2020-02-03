@@ -180,9 +180,9 @@ void video_print8x8(unsigned int x,unsigned int y,unsigned char color,unsigned c
 
 void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200 */
     const unsigned int box_left = 0u;
-    const unsigned int box_right = 319u;
+    const unsigned int box_right = video_width - 1u;
     unsigned int lines = 1u/*title*/ + 1u/*space*/ + 1u/*msg*/ + strnewlinecount(msg)/*additional lines*/;
-    unsigned int y = (200 - ((lines * 8) + 2u)) / 2; /* center */
+    unsigned int y = (video_height - ((lines * 8u) + 2u)) / 2; /* center */
     unsigned int lmargin = 1;
     unsigned int x;
     char c;
