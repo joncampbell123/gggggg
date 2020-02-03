@@ -107,24 +107,24 @@ void video_hline(unsigned int x1,unsigned int x2,unsigned int y,unsigned int col
     if (x1 <= x2) {
         const unsigned char wbm = cga4dup(color);
         unsigned int vp = video_ptrofs(x1,y);
-        unsigned char x1b = x1 >> 2u;
-        unsigned char x2b = x2 >> 2u;
+        unsigned char xc = (x2 >> 2u) - (x1 >> 2u);
 
-        if (x1b != x2b) {
-            if (x1 & 3u) {
+        if (xc != 0u) { /* hline covers at least two vmem bytes */
+            if (x1 & 3u) { /* leftmost edge does not quite cover the byte */
                 const unsigned char mask = cga4leftmask(x1);
                 video_wrvmaskv(vp++,mask,wbm);
-                x1b++;
+                xc--;
             }
-            while (x1b < x2b) {
+            /* middle part that completely covers the byte */
+            while (xc > 0) {
                 video_wr(vp++,wbm);
-                x1b++;
+                xc--;
             }
-            /* assume x1b == x2b */
-            video_wrvmaskv(vp++,cga4rightmask(x2),wbm);
+            /* rightmost edge that may or may not cover the entire byte */
+            video_wrvmaskv(vp,cga4rightmask(x2),wbm);
         }
-        else {
-            video_wrvmaskv(vp++,cga4leftmask(x1) & cga4rightmask(x2),wbm);
+        else { /* one byte only */
+            video_wrvmaskv(vp,cga4leftmask(x1) & cga4rightmask(x2),wbm);
         }
     }
 }
