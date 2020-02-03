@@ -26,6 +26,13 @@
 #include <hw/vga/vgatty.h>
 #include <hw/dos/doswin.h>
 
+/*============================= util ===========================*/
+void set_int10_mode(const unsigned int c);
+#pragma aux set_int10_mode = \
+    "int 10h" \
+    parm [ax] \
+    modify [ax];
+
 /*============================= timer/event =================================*/
 #define                                 TIMER_EVENT_FLAG_IRQ                    (1u << 0u)
 
@@ -244,8 +251,14 @@ int main(int argc,char **argv,char **envp) {
     _dos_setvect(irq2int(0),tick_timer_irq);
     p8259_unmask(T8254_IRQ);
 
+    /* setup graphics */
+    set_int10_mode(4); /* CGA 320x200 4-color */
+
     /* game main */
     game_main();
+
+    /* unsetup graphics */
+    set_int10_mode(3);
 
     /* timer unsetup */
 	timer_flush_events();
