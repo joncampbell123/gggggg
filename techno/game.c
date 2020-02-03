@@ -40,6 +40,11 @@ unsigned int                    video_height = 0;
 unsigned int                    video_width = 0;
 void                            (*video_sysmsgbox)(const char *title,const char *msg) = NULL;
 
+/* Open Watcom allows __segment types and void based variables to represent far ptrs, so why not use it
+ * to avoid constant reloading segment registers involved with unsigned char far *
+ * This works because CGA video memory is 16KB total, in a 32KB region. */
+static const __segment          vmseg = 0xB800u;
+
 unsigned char far*              video_font_8x8_p1 = NULL;
 unsigned char far*              video_font_8x8_p2 = NULL;
 
@@ -58,15 +63,11 @@ static inline unsigned int video_ptrofs(unsigned int x,unsigned int y) {
     return ((y >> 1u) * 80) + (x >> 2u) + ((y & 1u) << 13u);
 }
 
-static inline unsigned char far *video_ptr(unsigned int x,unsigned int y) {
-    return MK_FP(0xB800,video_ptrofs(x,y));
-}
-
-static inline unsigned char far *video_scanlineadv(const unsigned char far *p) {
-    if (FP_OFF(p) & 0x2000u)
-        return (unsigned char far*)(((unsigned long)p ^ 0x2000ul) + 80ul);
+static inline unsigned int video_scanlineadv(const unsigned int p) {
+    if (p & 0x2000u)
+        return (p + 80ul - 0x2000ul);
     else
-        return (unsigned char far*)((unsigned long)p + 0x2000ul);
+        return (p + 0x2000ul);
 }
 
 static inline unsigned char cga4dup(const unsigned int color) {
@@ -84,33 +85,46 @@ static inline unsigned char cga4rightmask(const unsigned int x) {
     return 0xFF << shf;
 }
 
+static inline unsigned char far *video_vp2ptr(const unsigned int vp) {
+    return (unsigned char far*)(vmseg:>((unsigned char __based(void) *)(vp)));
+}
+
+static inline void video_wrvmaskv(const unsigned int vp,const unsigned char mask,const unsigned char v) {
+    unsigned char far * const p = video_vp2ptr(vp);
+    *p = (*p & (~mask)) + (v & mask);
+}
+
+static inline void video_wrmaskv(const unsigned int vp,const unsigned char mask,const unsigned char v) {
+    unsigned char far * const p = video_vp2ptr(vp);
+    *p = (*p & mask) + v;
+}
+
+static inline void video_wr(const unsigned int vp,const unsigned char v) {
+    *video_vp2ptr(vp) = v;
+}
+
 void video_hline(unsigned int x1,unsigned int x2,unsigned int y,unsigned int color) {
     if (x1 <= x2) {
         const unsigned char wbm = cga4dup(color);
-        unsigned char far *vp = video_ptr(x1,y);
+        unsigned int vp = video_ptrofs(x1,y);
         unsigned char x1b = x1 >> 2u;
         unsigned char x2b = x2 >> 2u;
 
         if (x1b != x2b) {
             if (x1 & 3u) {
                 const unsigned char mask = cga4leftmask(x1);
-                *vp = (*vp & (~mask)) + (wbm & mask);
-                vp++;
+                video_wrvmaskv(vp++,mask,wbm);
                 x1b++;
             }
             while (x1b < x2b) {
-                *vp++ = wbm;
+                video_wr(vp++,wbm);
                 x1b++;
             }
             /* assume x1b == x2b */
-            {
-                const unsigned char mask = cga4rightmask(x2);
-                *vp = (*vp & (~mask)) + (wbm & mask);
-            }
+            video_wrvmaskv(vp++,cga4rightmask(x2),wbm);
         }
         else {
-            const unsigned char mask = cga4leftmask(x1) & cga4rightmask(x2);
-            *vp = (*vp & (~mask)) + (wbm & mask);
+            video_wrvmaskv(vp++,cga4leftmask(x1) & cga4rightmask(x2),wbm);
         }
     }
 }
@@ -119,10 +133,10 @@ void video_vline(unsigned int y1,unsigned int y2,unsigned int x,unsigned int col
     const unsigned char shf = ((~x) & 3u) << 1u;
     const unsigned char mask = ~(3u << shf);
     const unsigned char wb = color << shf;
-    unsigned char far *vp = video_ptr(x,y1);
+    unsigned int vp = video_ptrofs(x,y1);
 
     while (y1 <= y2) {
-        *vp = ((*vp) & mask) | wb;
+        video_wrmaskv(vp,mask,wb);
         vp = video_scanlineadv(vp);
         y1++;
     }
@@ -157,6 +171,7 @@ static inline unsigned char video_mask_fb4_u12(unsigned char vm,unsigned char wb
 }
 
 void video_print8x8(unsigned int x,unsigned int y,unsigned char color,unsigned char far *fbmp) {
+#if 0
     const unsigned char wbm = cga4dup(color);
     unsigned char far *vp = video_ptr(x,y);
     unsigned char bitmshf = 8u - (x & 3u);
@@ -177,6 +192,7 @@ void video_print8x8(unsigned int x,unsigned int y,unsigned char color,unsigned c
 
         vp = video_scanlineadv(vp);
     } while (--h != 0u);
+#endif
 }
 
 unsigned char far *video8x8fontlookup(const unsigned char c) {
