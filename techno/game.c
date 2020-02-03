@@ -151,10 +151,13 @@ void video_vline(unsigned int y1,unsigned int y2,unsigned int x,unsigned int col
     const unsigned char wb = color << shf;
     unsigned int vp = video_ptrofs(x,y1);
 
-    while (y1 <= y2) {
-        video_wrmaskv(vp,mask,wb);
-        vp = video_scanlineadv(vp);
-        y1++;
+    if (y1 <= y2) {
+        unsigned int yc = y2 + 1u - y1;
+
+        do {
+            video_wrmaskv(vp,mask,wb);
+            vp = video_scanlineadv(vp);
+        } while (--yc != 0u);
     }
 }
 
