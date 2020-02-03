@@ -561,6 +561,8 @@ int main(int argc,char **argv,char **envp) {
     getch();
     game_error("Hello world there\nHi hi\nNew lines");
     getch();
+    game_error("Blah blah blah blah blah blah\nblah blah blah yadda daadadadad\niokwqroiuwqieouwq\nweuiryqwoeuiyqwuiey\nwqiueyqwewqeqwuieyqwui\nqwiueqwuieywqiueyw\nqweiuywqeiuyqwuieyqwuie\nqwiueryqwe\nuiyqweuiyqwuie\nuiyqweuiqwe\nioqwueiouqwe\niowqueiouqweioewq\nwqeroiqweiowq\nwerwqe");
+    getch();
 
     /* game main */
     game_main();
