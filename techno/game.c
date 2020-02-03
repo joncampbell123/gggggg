@@ -44,7 +44,7 @@ unsigned int strnewlinecount(const char *s) {
     unsigned int c = 0;
 
     while (*s != 0) {
-        if (*s == '\n') s++;
+        if (*s == '\n') c++;
         s++;
     }
 
