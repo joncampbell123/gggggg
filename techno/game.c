@@ -275,6 +275,7 @@ int video_setup(void) {
 }
 
 int game_init(void) {
+    /* only if the game has not been initialized, is not already starting up, and is not shutting down */
     if ((game_flags & (GAME_FLAG_STARTUP|GAME_FLAG_INIT|GAME_FLAG_SHUTDOWN)) == 0) {
         game_flags |= GAME_FLAG_STARTUP;
 
@@ -317,8 +318,9 @@ void video_shutdown(void) {
 }
 
 void game_shutdown(void) {
+    /* only if the game is not already shutting down and is either starting up or inited */
     if ((game_flags & (GAME_FLAG_SHUTDOWN)) == 0 &&
-        (game_flags & (GAME_FLAG_INIT)) != 0) {
+        (game_flags & (GAME_FLAG_INIT|GAME_FLAG_STARTUP)) != 0) {
         game_flags |=  GAME_FLAG_SHUTDOWN;
         game_flags &= ~GAME_FLAG_INIT;
 
