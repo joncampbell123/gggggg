@@ -41,6 +41,7 @@ unsigned int                    video_width = 0;
 void                            (*video_sysmsgbox)(const char *title,const char *msg) = NULL;
 
 unsigned char far*              video_font_8x8_p1 = NULL;
+unsigned char far*              video_font_8x8_p2 = NULL;
 
 unsigned int strnewlinecount(const char *s) {
     unsigned int c = 0;
@@ -178,6 +179,13 @@ void video_print8x8(unsigned int x,unsigned int y,unsigned char color,unsigned c
     } while (--h != 0u);
 }
 
+unsigned char far *video8x8fontlookup(const unsigned char c) {
+    if (c & 0x80u)
+        return video_font_8x8_p2 + (((unsigned int)((unsigned char)(c - 0x80u))) * 8u);
+    else
+        return video_font_8x8_p1 + (((unsigned int)((unsigned char)c)) * 8u);
+}
+
 void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200 */
     const unsigned int box_left = 0u;
     const unsigned int box_right = video_width - 1u;
@@ -196,7 +204,7 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
     /* title */
     x = lmargin;
     while ((c = (*title++)) != 0) {
-        video_print8x8(x,y,2,video_font_8x8_p1 + (((unsigned int)((unsigned char)c)) * 8u));
+        video_print8x8(x,y,2,video8x8fontlookup(c));
         x += 8;
     }
 
@@ -211,7 +219,7 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
             y += 8;
         }
         else {
-            video_print8x8(x,y,2,video_font_8x8_p1 + (((unsigned int)((unsigned char)c)) * 8u));
+            video_print8x8(x,y,2,video8x8fontlookup(c));
             x += 8;
         }
     }
@@ -461,6 +469,7 @@ int video_setup(void) {
         video_height = 200;
         video_sysmsgbox = video_sysmsgbox_cga4;
         video_font_8x8_p1 = MK_FP(0xF000,0xFA6E);
+        video_font_8x8_p2 = (unsigned char far*)_dos_getvect(0x1F);
 
         video_init_state |= VIDEO_INIT_MODE;
     }
