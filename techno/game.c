@@ -36,6 +36,8 @@ void set_int10_mode(const unsigned int c);
 #define VIDEO_INIT_MODE         (1u << 0u)
 
 unsigned char                   video_init_state = 0;
+unsigned int                    video_height = 0;
+unsigned int                    video_width = 0;
 void                            (*video_sysmsgbox)(const char *title,const char *msg) = NULL;
 
 unsigned char far*              video_font_8x8_p1 = NULL;
@@ -455,6 +457,8 @@ int video_setup(void) {
         /* TODO: Does INT 10h AH=0Fh (get current video mode) exist on PC/XT systems from 1984? */
         set_int10_mode(4); /* CGA 320x200 4-color */
 
+        video_width = 320;
+        video_height = 200;
         video_sysmsgbox = video_sysmsgbox_cga4;
         video_font_8x8_p1 = MK_FP(0xF000,0xFA6E);
 
