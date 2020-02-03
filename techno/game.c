@@ -152,6 +152,29 @@ void video_hline(const unsigned int x1,const unsigned int x2,const unsigned int 
     }
 }
 
+void video_solidbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int y2,unsigned int color) {
+    /* copy-pasta of outer video_hline with optimization to step per scanline */
+    if (x1 <= x2 && y1 <= y2) {
+        const uint16_t wbm = cga4dup16(color);
+        unsigned int vp = video_ptrofs(x1,y1);
+        unsigned char xc = (x2 >> 2u) - (x1 >> 2u);
+        unsigned int yc = y2 + 1u - y1;
+
+        if (xc != 0u) {
+            do { /* yc cannot == 0 */
+                video_hline_inner_span2m(x1,x2,wbm,vp,xc);
+                vp = video_scanlineadv(vp);
+            } while (--yc != 0u);
+        }
+        else {
+            do { /* yc cannot == 0 */
+                video_hline_inner_span1(x1,x2,wbm,vp);
+                vp = video_scanlineadv(vp);
+            } while (--yc != 0u);
+        }
+    }
+}
+
 void video_vline(unsigned int y1,unsigned int y2,unsigned int x,unsigned int color) {
     const unsigned char shf = ((~x) & 3u) << 1u;
     const unsigned char mask = ~(3u << shf);
@@ -166,11 +189,6 @@ void video_vline(unsigned int y1,unsigned int y2,unsigned int x,unsigned int col
             vp = video_scanlineadv(vp);
         } while (--yc != 0u);
     }
-}
-
-void video_solidbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int y2,unsigned int color) {
-    for (;y1 <= y2;y1++)
-        video_hline(x1,x2,y1,color);
 }
 
 void video_rectbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int y2,unsigned int color) {
