@@ -33,6 +33,10 @@ void set_int10_mode(const unsigned int c);
     parm [ax] \
     modify [ax];
 
+#define VIDEO_INIT_MODE         (1u << 0u)
+
+unsigned char                   video_init_state = 0;
+
 /*============================= timer/event =================================*/
 #define                                 TIMER_EVENT_FLAG_IRQ                    (1u << 0u)
 
@@ -218,56 +222,100 @@ void schedule_timer_event(volatile struct timer_event_t *ev,uint32_t time) {
     } RESTORE_CPUFLAGS();
 }
 
+void timer_setup(void) {
+    if (old_tick_irq == NULL) {
+        /* timer setup */
+        p8259_mask(T8254_IRQ);
+        tick_calldown = 0;
+        tick_calldown_add = (unsigned int)(T8254_REF_CLOCK_HZ / (unsigned long)TIMER_TICK_RATE);
+        write_8254_system_timer((t8254_time_t)tick_calldown_add);
+        old_tick_irq = _dos_getvect(irq2int(0)); /* NTS: It's unlikely IRQ0 is NULL, or else the system is one timer tick away from crashing! */
+        _dos_setvect(irq2int(0),tick_timer_irq);
+        p8259_unmask(T8254_IRQ);
+    }
+}
+
+void timer_shutdown(void) {
+    if (old_tick_irq != NULL) {
+        /* timer unsetup */
+        timer_flush_events();
+        callback_flush_events();
+        p8259_mask(T8254_IRQ);
+        write_8254_system_timer(0x10000ul); /* restore normal timer */
+        _dos_setvect(irq2int(0),old_tick_irq);
+        p8259_unmask(T8254_IRQ);
+    }
+}
+
 /*=================================game loop===========================*/
 void game_main(void) {
 }
 
-/*=================================program entry point=================================*/
-int main(int argc,char **argv,char **envp) {
+int video_setup(void) {
+    if (!(video_init_state & VIDEO_INIT_MODE)) {
+        if ((vga2_flags & (VGA2_FLAG_CGA|VGA2_FLAG_EGA|VGA2_FLAG_VGA|VGA2_FLAG_MCGA)) == 0) {
+            printf("This game requires support for CGA graphics\n");
+            return -1;
+        }
+
+        /* setup graphics */
+        /* TODO: Does INT 10h AH=0Fh (get current video mode) exist on PC/XT systems from 1984? */
+        set_int10_mode(4); /* CGA 320x200 4-color */
+
+        video_init_state |= VIDEO_INIT_MODE;
+    }
+
+    return 0;
+}
+
+int game_init(void) {
     probe_dos();
     cpu_probe();
     detect_windows();
-    probe_8237();
+    probe_8237(); // DMA
+    probe_vga2();
+
     if (!probe_8259()) {
         printf("Cannot init 8259 PIC\n");
-        return 1;
+        return -1;
     }
     if (!probe_8254()) {
         printf("Cannot init 8254 timer\n");
-        return 1;
-    }
-	probe_vga2();
-    if ((vga2_flags & (VGA2_FLAG_CGA|VGA2_FLAG_EGA|VGA2_FLAG_VGA|VGA2_FLAG_MCGA)) == 0) {
-        printf("This game requires support for CGA graphics\n");
-        return 1;
+        return -1;
     }
 
-    /* timer setup */
-	p8259_mask(T8254_IRQ);
-    tick_calldown = 0;
-    tick_calldown_add = (unsigned int)(T8254_REF_CLOCK_HZ / (unsigned long)TIMER_TICK_RATE);
-    write_8254_system_timer((t8254_time_t)tick_calldown_add);
-    old_tick_irq = _dos_getvect(irq2int(0));
-    _dos_setvect(irq2int(0),tick_timer_irq);
-    p8259_unmask(T8254_IRQ);
+    timer_setup();
+    if (video_setup() < 0) {
+        printf("Unable to initialize video\n");
+        return -1;
+    }
 
-    /* setup graphics */
-    /* TODO: Does INT 10h AH=0Fh (get current video mode) exist on PC/XT systems from 1984? */
-    set_int10_mode(4); /* CGA 320x200 4-color */
+    return 0;
+}
+
+void video_shutdown(void) {
+    if (video_init_state & VIDEO_INIT_MODE) {
+        set_int10_mode(3);
+        video_init_state &= ~VIDEO_INIT_MODE;
+    }
+}
+
+void game_shutdown(void) {
+    timer_shutdown();
+    video_shutdown();
+}
+
+/*=================================program entry point=================================*/
+int main(int argc,char **argv,char **envp) {
+    if (game_init() < 0) {
+        game_shutdown();
+        return 1;
+    }
 
     /* game main */
     game_main();
 
-    /* unsetup graphics */
-    set_int10_mode(3);
-
-    /* timer unsetup */
-	timer_flush_events();
-	callback_flush_events();
-	p8259_mask(T8254_IRQ);
-    write_8254_system_timer(0x10000ul); /* restore normal timer */
-    _dos_setvect(irq2int(0),old_tick_irq);
-	p8259_unmask(T8254_IRQ);
+    game_shutdown();
     return 0;
 }
 
