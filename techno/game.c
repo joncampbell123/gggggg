@@ -319,7 +319,7 @@ void video_shutdown(void) {
 void game_shutdown(void) {
     if ((game_flags & (GAME_FLAG_SHUTDOWN)) == 0 &&
         (game_flags & (GAME_FLAG_INIT)) != 0) {
-        game_flags |= GAME_FLAG_SHUTDOWN;
+        game_flags |=  GAME_FLAG_SHUTDOWN;
         game_flags &= ~GAME_FLAG_INIT;
 
         timer_shutdown();
