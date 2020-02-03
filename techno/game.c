@@ -116,32 +116,39 @@ static inline void video_wr16(const unsigned int vp,const uint16_t v) {
     *video_vp2ptr16(vp) = v;
 }
 
+static void video_hline_inner_span2m(const unsigned int x1,const unsigned int x2,const uint16_t wbm,unsigned int vp,unsigned char xc) {
+    /* assume xc != 0u */
+    if (x1 & 3u) { /* leftmost edge does not quite cover the byte */
+        video_wrvmaskv(vp++,cga4leftmask(x1),(unsigned char)wbm);
+        xc--;
+    }
+    /* middle part that completely covers the byte */
+    while (xc >= 2u) {
+        video_wr16(vp,wbm);
+        vp += 2u;
+        xc -= 2u;
+    }
+    if (xc != 0u) {
+        video_wr(vp++,(unsigned char)wbm);
+    }
+    /* rightmost edge that may or may not cover the entire byte */
+    video_wrvmaskv(vp,cga4rightmask(x2),(unsigned char)wbm);
+}
+
+static inline void video_hline_inner_span1(const unsigned int x1,const unsigned int x2,const uint16_t wbm,unsigned int vp) {
+    video_wrvmaskv(vp,cga4leftmask(x1) & cga4rightmask(x2),(unsigned char)wbm);
+}
+
 void video_hline(const unsigned int x1,const unsigned int x2,const unsigned int y,const unsigned int color) {
     if (x1 <= x2) {
         const uint16_t wbm = cga4dup16(color);
         unsigned int vp = video_ptrofs(x1,y);
         unsigned char xc = (x2 >> 2u) - (x1 >> 2u);
 
-        if (xc != 0u) { /* hline covers at least two vmem bytes */
-            if (x1 & 3u) { /* leftmost edge does not quite cover the byte */
-                video_wrvmaskv(vp++,cga4leftmask(x1),(unsigned char)wbm);
-                xc--;
-            }
-            /* middle part that completely covers the byte */
-            while (xc >= 2u) {
-                video_wr16(vp,wbm);
-                vp += 2u;
-                xc -= 2u;
-            }
-            if (xc != 0u) {
-                video_wr(vp++,(unsigned char)wbm);
-            }
-            /* rightmost edge that may or may not cover the entire byte */
-            video_wrvmaskv(vp,cga4rightmask(x2),(unsigned char)wbm);
-        }
-        else { /* one byte only */
-            video_wrvmaskv(vp,cga4leftmask(x1) & cga4rightmask(x2),(unsigned char)wbm);
-        }
+        if (xc != 0u)
+            video_hline_inner_span2m(x1,x2,wbm,vp,xc);
+        else
+            video_hline_inner_span1(x1,x2,wbm,vp);
     }
 }
 
