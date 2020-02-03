@@ -71,6 +71,16 @@ static inline unsigned char cga4dup(const unsigned int color) {
     return s1 + (s1 << 2u);
 }
 
+static inline unsigned char cga4leftmask(const unsigned int x) {
+    const unsigned char shf = (x & 3u) << 1u;
+    return 0xFFu >> shf;
+}
+
+static inline unsigned char cga4rightmask(const unsigned int x) {
+    const unsigned char shf = ((~x) & 3u) << 1u;
+    return 0xFF << shf;
+}
+
 void video_hline(unsigned int x1,unsigned int x2,unsigned int y,unsigned int color) {
     if (x1 <= x2) {
         const unsigned char wbm = cga4dup(color);
@@ -80,8 +90,7 @@ void video_hline(unsigned int x1,unsigned int x2,unsigned int y,unsigned int col
 
         if (x1b != x2b) {
             if (x1 & 3u) {
-                const unsigned char shf = (x1 & 3u) << 1u;
-                const unsigned char mask = 0xFF >> shf;
+                const unsigned char mask = cga4leftmask(x1);
                 *vp = (*vp & (~mask)) + (wbm & mask);
                 vp++;
                 x1b++;
@@ -92,15 +101,12 @@ void video_hline(unsigned int x1,unsigned int x2,unsigned int y,unsigned int col
             }
             /* assume x1b == x2b */
             {
-                const unsigned char shf = ((~x2) & 3u) << 1u;
-                const unsigned char mask = 0xFF << shf;
+                const unsigned char mask = cga4rightmask(x2);
                 *vp = (*vp & (~mask)) + (wbm & mask);
             }
         }
         else {
-            const unsigned char shf1 = (x1 & 3u) << 1u;
-            const unsigned char shf2 = ((~x2) & 3) << 1u;
-            const unsigned char mask = (0xFF >> shf1) & (0xFF << shf2);
+            const unsigned char mask = cga4leftmask(x1) & cga4rightmask(x2);
             *vp = (*vp & (~mask)) + (wbm & mask);
         }
     }
@@ -171,14 +177,16 @@ void video_print8x8(unsigned int x,unsigned int y,unsigned char color,unsigned c
 }
 
 void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200 */
-    int lines = 1u/*title*/ + 1u/*space*/ + 1u/*msg*/ + strnewlinecount(msg)/*additional lines*/;
-    int y = (200 - ((lines * 8) + 2u)) / 2; /* center */
-    int lmargin = 1;
-    int x = lmargin;
+    const unsigned int box_left = 0u;
+    const unsigned int box_right = 319u;
+    unsigned int lines = 1u/*title*/ + 1u/*space*/ + 1u/*msg*/ + strnewlinecount(msg)/*additional lines*/;
+    unsigned int y = (200 - ((lines * 8) + 2u)) / 2; /* center */
+    unsigned int lmargin = 1;
+    unsigned int x;
     char c;
 
-    video_solidbox(1,y+1,318u,y+(lines*8u)+2u-2u,3/*yellow/white*/); /* coords inclusive */
-    video_rectbox(0,y,319u,y+(lines*8u)+2u-1u,1/*red/magenta*/); /* coords inclusive */
+    video_rectbox(box_left,y,box_right,y+(lines*8u)+2u-1u,1/*red/magenta*/); /* coords inclusive */
+    video_solidbox(box_left+1u,y+1u,box_right-1u,y+(lines*8u)+2u-2u,3/*yellow/white*/); /* coords inclusive */
 
     /* step past border */
     y++;
@@ -189,6 +197,8 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
         video_print8x8(x,y,2,video_font_8x8_p1 + (((unsigned int)((unsigned char)c)) * 8u));
         x += 8;
     }
+
+    /* title + gap */
     y += 8 * 2;
 
     /* message */
