@@ -103,7 +103,7 @@ static inline void video_wr(const unsigned int vp,const unsigned char v) {
     *video_vp2ptr(vp) = v;
 }
 
-void video_hline(unsigned int x1,unsigned int x2,unsigned int y,unsigned int color) {
+void video_hline(const unsigned int x1,const unsigned int x2,const unsigned int y,const unsigned int color) {
     if (x1 <= x2) {
         const unsigned char wbm = cga4dup(color);
         unsigned int vp = video_ptrofs(x1,y);
