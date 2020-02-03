@@ -36,6 +36,133 @@ void set_int10_mode(const unsigned int c);
 #define VIDEO_INIT_MODE         (1u << 0u)
 
 unsigned char                   video_init_state = 0;
+void                            (*video_sysmsgbox)(const char *title,const char *msg) = NULL;
+
+unsigned char far*              video_font_8x8_p1 = NULL;
+
+unsigned int strnewlinecount(const char *s) {
+    unsigned int c = 0;
+
+    while (*s != 0) {
+        if (*s == '\n') s++;
+        s++;
+    }
+
+    return c;
+}
+
+static inline unsigned int video_ptrofs(unsigned int x,unsigned int y) {
+    return ((y >> 1u) * 80) + (x >> 2u) + ((y & 1u) << 13u);
+}
+
+static inline unsigned char far *video_ptr(unsigned int x,unsigned int y) {
+    return MK_FP(0xB800,video_ptrofs(x,y));
+}
+
+static inline unsigned char far *video_scanlineadv(const unsigned char far *p) {
+    if (FP_OFF(p) & 0x2000u)
+        return (unsigned char far*)(((unsigned long)p ^ 0x2000ul) + 80ul);
+    else
+        return (unsigned char far*)((unsigned long)p + 0x2000ul);
+}
+
+static inline unsigned char cga4dup(const unsigned int color) {
+    const unsigned char s1 = color + (color << 4u);
+    return s1 + (s1 << 2u);
+}
+
+void video_hline(unsigned int x1,unsigned int x2,unsigned int y,unsigned int color) {
+    if (x1 <= x2) {
+        const unsigned char wbm = cga4dup(color);
+        unsigned char far *vp = video_ptr(x1,y);
+        unsigned char x1b = x1 >> 2u;
+        unsigned char x2b = x2 >> 2u;
+
+        if (x1b != x2b) {
+            if (x1 & 3u) {
+                const unsigned char shf = (x1 & 3u) << 1u;
+                const unsigned char mask = 0xFF >> shf;
+                *vp = (*vp & (~mask)) + (wbm & mask);
+                vp++;
+                x1b++;
+            }
+            while (x1b < x2b) {
+                *vp++ = wbm;
+                x1b++;
+            }
+            /* assume x1b == x2b */
+            {
+                const unsigned char shf = ((~x2) & 3u) << 1u;
+                const unsigned char mask = 0xFF << shf;
+                *vp = (*vp & (~mask)) + (wbm & mask);
+            }
+        }
+        else {
+            const unsigned char shf1 = (x1 & 3u) << 1u;
+            const unsigned char shf2 = ((~x2) & 3) << 1u;
+            const unsigned char mask = (0xFF >> shf1) & (0xFF << shf2);
+            *vp = (*vp & (~mask)) + (wbm & mask);
+        }
+    }
+}
+
+void video_vline(unsigned int y1,unsigned int y2,unsigned int x,unsigned int color) {
+    const unsigned char shf = ((~x) & 3u) << 1u;
+    const unsigned char mask = ~(3u << shf);
+    const unsigned char wb = color << shf;
+    unsigned char far *vp = video_ptr(x,y1);
+
+    while (y1 <= y2) {
+        *vp = ((*vp) & mask) | wb;
+        vp = video_scanlineadv(vp);
+        y1++;
+    }
+}
+
+void video_solidbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int y2,unsigned int color) {
+    for (;y1 <= y2;y1++)
+        video_hline(x1,x2,y1,color);
+}
+
+void video_rectbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int y2,unsigned int color) {
+    if (y1 < y2) {
+        video_hline(x1,x2,y1,color);
+        video_hline(x1,x2,y2,color);
+        if (x1 < x2) {
+            video_vline(y1+1u,y2-1u,x1,color);
+            video_vline(y1+1u,y2-1u,x2,color);
+        }
+    }
+    else if (y1 == y2) {
+        video_hline(x1,x2,y1,color);
+    }
+}
+
+void video_print8x8(unsigned int x,unsigned int y,unsigned char color,unsigned char far *fbmp) {
+    // TODO
+}
+
+void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200 */
+    int lines = 1u/*title*/ + 1u/*space*/ + 1u/*msg*/ + strnewlinecount(msg)/*additional lines*/;
+    int y = (200 - ((lines * 8) + 2u)) / 2; /* center */
+    int lmargin = 1;
+    int x = lmargin;
+    char c;
+
+    video_solidbox(1,y+1,318u,y+(lines*8u)+2u-2u,3/*yellow/white*/); /* coords inclusive */
+    video_rectbox(0,y,319u,y+(lines*8u)+2u-1u,1/*red/magenta*/); /* coords inclusive */
+
+    while ((c = (*msg++)) != 0) {
+        if (c == '\n') {
+            x = lmargin;
+            y += 8;
+        }
+        else {
+            video_print8x8(x,y,2,video_font_8x8_p1 + (((unsigned int)((unsigned char)c)) * 8u));
+            x += 8;
+        }
+    }
+}
 
 /*============================= timer/event =================================*/
 #define                                 TIMER_EVENT_FLAG_IRQ                    (1u << 0u)
@@ -259,7 +386,7 @@ void game_main(void) {
 
 void game_error(const char *msg) {
     if (video_init_state & VIDEO_INIT_MODE) {
-        // TODO
+        (*video_sysmsgbox)("ERROR",msg);
     }
     else {
         printf("ERROR: %s\n",msg);
@@ -276,6 +403,9 @@ int video_setup(void) {
         /* setup graphics */
         /* TODO: Does INT 10h AH=0Fh (get current video mode) exist on PC/XT systems from 1984? */
         set_int10_mode(4); /* CGA 320x200 4-color */
+
+        video_sysmsgbox = video_sysmsgbox_cga4;
+        video_font_8x8_p1 = MK_FP(0xF000,0xFA6E);
 
         video_init_state |= VIDEO_INIT_MODE;
     }
@@ -346,6 +476,9 @@ int main(int argc,char **argv,char **envp) {
         game_shutdown();
         return 1;
     }
+
+    game_error("Hello world");
+    getch();
 
     /* game main */
     game_main();
