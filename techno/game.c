@@ -135,8 +135,12 @@ static void video_hline_inner_span2m(const unsigned int x1,const unsigned int x2
     video_wrvmaskv(vp,cga4rightmask(x2),(unsigned char)wbm);
 }
 
-static inline void video_hline_inner_span1(const unsigned int x1,const unsigned int x2,const uint16_t wbm,unsigned int vp) {
-    video_wrvmaskv(vp,cga4leftmask(x1) & cga4rightmask(x2),(unsigned char)wbm);
+static inline void video_hline_inner_span1(const unsigned int x1,const unsigned int x2,const char wbm,unsigned int vp) {
+    video_wrvmaskv(vp,cga4leftmask(x1) & cga4rightmask(x2),wbm);
+}
+
+static inline void video_hline_inner_span1_precomp_mask(const unsigned char mask,const char wbm,unsigned int vp) {
+    video_wrvmaskv(vp,mask,wbm);
 }
 
 void video_hline(const unsigned int x1,const unsigned int x2,const unsigned int y,const unsigned int color) {
@@ -148,7 +152,7 @@ void video_hline(const unsigned int x1,const unsigned int x2,const unsigned int 
         if (xc != 0u)
             video_hline_inner_span2m(x1,x2,wbm,vp,xc);
         else
-            video_hline_inner_span1(x1,x2,wbm,vp);
+            video_hline_inner_span1(x1,x2,(unsigned char)wbm,vp);
     }
 }
 
@@ -168,7 +172,7 @@ void video_solidbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int
         }
         else {
             do { /* yc cannot == 0 */
-                video_hline_inner_span1(x1,x2,wbm,vp);
+                video_hline_inner_span1(x1,x2,(unsigned char)wbm,vp);
                 vp = video_scanlineadv(vp);
             } while (--yc != 0u);
         }
