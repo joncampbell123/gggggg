@@ -138,8 +138,36 @@ void video_rectbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int 
     }
 }
 
+static inline unsigned char video_mask_fb4_u12(unsigned char vm,unsigned char wbm,unsigned int bitm) {
+    /* I had a normal loop here but Open Watcom optimizes it into an infinite loop >:( */
+    if (bitm & 0x8000u) vm = (vm & (~0xC0u)) + (wbm & 0xC0u);
+    if (bitm & 0x4000u) vm = (vm & (~0x30u)) + (wbm & 0x30u);
+    if (bitm & 0x2000u) vm = (vm & (~0x0Cu)) + (wbm & 0x0Cu);
+    if (bitm & 0x1000u) vm = (vm & (~0x03u)) + (wbm & 0x03u);
+    return vm;
+}
+
 void video_print8x8(unsigned int x,unsigned int y,unsigned char color,unsigned char far *fbmp) {
-    // TODO
+    const unsigned char wbm = cga4dup(color);
+    unsigned char far *vp = video_ptr(x,y);
+    unsigned char bitmshf = 8u - (x & 3u);
+    unsigned int bitm;
+    unsigned char h = 8;
+
+    do {
+        bitm = ((unsigned int)(*fbmp++)) << bitmshf;
+
+        {
+            unsigned char far *vp2 = vp;
+            while (bitm != 0u) {
+                *vp2 = video_mask_fb4_u12(*vp2,wbm,bitm);
+                bitm = (bitm << 4u) & 0xFFFFu;
+                vp2++;
+            }
+        }
+
+        vp = video_scanlineadv(vp);
+    } while (--h != 0u);
 }
 
 void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200 */
@@ -152,6 +180,7 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
     video_solidbox(1,y+1,318u,y+(lines*8u)+2u-2u,3/*yellow/white*/); /* coords inclusive */
     video_rectbox(0,y,319u,y+(lines*8u)+2u-1u,1/*red/magenta*/); /* coords inclusive */
 
+    y++;
     while ((c = (*msg++)) != 0) {
         if (c == '\n') {
             x = lmargin;
@@ -478,6 +507,10 @@ int main(int argc,char **argv,char **envp) {
     }
 
     game_error("Hello world");
+    getch();
+    game_error("Hello, yes?");
+    getch();
+    game_error("Hello world there\nHi hi\nNew lines");
     getch();
 
     /* game main */
