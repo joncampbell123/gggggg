@@ -205,7 +205,7 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
     const unsigned int box_right = video_width - 1u;
     unsigned int lines = 1u/*title*/ + 1u/*space*/ + 1u/*msg*/ + strnewlinecount(msg)/*additional lines*/;
     unsigned int y = (video_height - ((lines * 8u) + 2u)) / 2; /* center */
-    unsigned int lmargin = 1;
+    unsigned int lmargin = 1u;
     unsigned int x;
     char c;
 
@@ -218,23 +218,23 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
     /* title */
     x = lmargin;
     while ((c = (*title++)) != 0) {
-        video_print8x8(x,y,2,video8x8fontlookup(c));
-        x += 8;
+        video_print8x8(x,y,2u,video8x8fontlookup(c));
+        x += 8u;
     }
 
     /* title + gap */
-    y += 8 * 2;
+    y += 8u * 2u;
 
     /* message */
     x = lmargin;
     while ((c = (*msg++)) != 0) {
         if (c == '\n') {
             x = lmargin;
-            y += 8;
+            y += 8u;
         }
         else {
-            video_print8x8(x,y,0,video8x8fontlookup(c));
-            x += 8;
+            video_print8x8(x,y,0u,video8x8fontlookup(c));
+            x += 8u;
         }
     }
 }
