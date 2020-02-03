@@ -180,7 +180,19 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
     video_solidbox(1,y+1,318u,y+(lines*8u)+2u-2u,3/*yellow/white*/); /* coords inclusive */
     video_rectbox(0,y,319u,y+(lines*8u)+2u-1u,1/*red/magenta*/); /* coords inclusive */
 
+    /* step past border */
     y++;
+
+    /* title */
+    x = lmargin;
+    while ((c = (*title++)) != 0) {
+        video_print8x8(x,y,2,video_font_8x8_p1 + (((unsigned int)((unsigned char)c)) * 8u));
+        x += 8;
+    }
+    y += 8 * 2;
+
+    /* message */
+    x = lmargin;
     while ((c = (*msg++)) != 0) {
         if (c == '\n') {
             x = lmargin;
