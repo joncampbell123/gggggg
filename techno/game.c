@@ -252,6 +252,7 @@ int main(int argc,char **argv,char **envp) {
     p8259_unmask(T8254_IRQ);
 
     /* setup graphics */
+    /* TODO: Does INT 10h AH=0Fh (get current video mode) exist on PC/XT systems from 1984? */
     set_int10_mode(4); /* CGA 320x200 4-color */
 
     /* game main */
