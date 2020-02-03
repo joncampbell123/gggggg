@@ -161,38 +161,36 @@ void video_rectbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int 
     }
 }
 
-static inline unsigned char video_mask_fb4_u12(unsigned char vm,unsigned char wbm,unsigned int bitm) {
-    /* I had a normal loop here but Open Watcom optimizes it into an infinite loop >:( */
-    if (bitm & 0x8000u) vm = (vm & (~0xC0u)) + (wbm & 0xC0u);
-    if (bitm & 0x4000u) vm = (vm & (~0x30u)) + (wbm & 0x30u);
-    if (bitm & 0x2000u) vm = (vm & (~0x0Cu)) + (wbm & 0x0Cu);
-    if (bitm & 0x1000u) vm = (vm & (~0x03u)) + (wbm & 0x03u);
-    return vm;
+static inline unsigned char video_mask_fb4_u12(const uint16_t bitm) {
+    unsigned char mask = 0;
+
+    if (bitm & 0x8000u) mask |= 0xC0;
+    if (bitm & 0x4000u) mask |= 0x30;
+    if (bitm & 0x2000u) mask |= 0x0C;
+    if (bitm & 0x1000u) mask |= 0x03;
+
+    return mask;
 }
 
 void video_print8x8(unsigned int x,unsigned int y,unsigned char color,unsigned char far *fbmp) {
-#if 0
     const unsigned char wbm = cga4dup(color);
-    unsigned char far *vp = video_ptr(x,y);
+    unsigned int vp = video_ptrofs(x,y);
     unsigned char bitmshf = 8u - (x & 3u);
-    unsigned int bitm;
     unsigned char h = 8;
+    uint16_t bitm;
 
     do {
-        bitm = ((unsigned int)(*fbmp++)) << bitmshf;
+        bitm = ((uint16_t)(*fbmp++)) << bitmshf;
 
-        {
-            unsigned char far *vp2 = vp;
-            while (bitm != 0u) {
-                *vp2 = video_mask_fb4_u12(*vp2,wbm,bitm);
-                bitm = (bitm << 4u) & 0xFFFFu;
-                vp2++;
-            }
+        { /* will draw at minimum 8 pixels, maximum 12 */
+            unsigned int vp2 = vp;
+            video_wrvmaskv(vp2++,video_mask_fb4_u12(bitm),wbm); bitm <<= 4u;
+            video_wrvmaskv(vp2++,video_mask_fb4_u12(bitm),wbm); bitm <<= 4u;
+            if (bitm != 0u) video_wrvmaskv(vp2++,video_mask_fb4_u12(bitm),wbm);
         }
 
         vp = video_scanlineadv(vp);
     } while (--h != 0u);
-#endif
 }
 
 unsigned char far *video8x8fontlookup(const unsigned char c) {
@@ -235,7 +233,7 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
             y += 8;
         }
         else {
-            video_print8x8(x,y,2,video8x8fontlookup(c));
+            video_print8x8(x,y,0,video8x8fontlookup(c));
             x += 8;
         }
     }
