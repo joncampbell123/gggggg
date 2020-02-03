@@ -248,6 +248,12 @@ void timer_shutdown(void) {
 }
 
 /*=================================game loop===========================*/
+#define GAME_FLAG_STARTUP   (1u << 0u)
+#define GAME_FLAG_INIT      (1u << 1u)
+#define GAME_FLAG_SHUTDOWN  (1u << 2u)
+
+unsigned char               game_flags = 0;
+
 void game_main(void) {
 }
 
@@ -269,28 +275,38 @@ int video_setup(void) {
 }
 
 int game_init(void) {
-    probe_dos();
-    cpu_probe();
-    detect_windows();
-    probe_8237(); // DMA
-    probe_vga2();
+    if ((game_flags & (GAME_FLAG_STARTUP|GAME_FLAG_INIT|GAME_FLAG_SHUTDOWN)) == 0) {
+        game_flags |= GAME_FLAG_STARTUP;
 
-    if (!probe_8259()) {
-        printf("Cannot init 8259 PIC\n");
-        return -1;
-    }
-    if (!probe_8254()) {
-        printf("Cannot init 8254 timer\n");
-        return -1;
-    }
+        probe_dos();
+        cpu_probe();
+        detect_windows();
+        probe_8237(); // DMA
+        probe_vga2();
 
-    timer_setup();
-    if (video_setup() < 0) {
-        printf("Unable to initialize video\n");
-        return -1;
+        if (!probe_8259()) {
+            printf("Cannot init 8259 PIC\n");
+            goto fail;
+        }
+        if (!probe_8254()) {
+            printf("Cannot init 8254 timer\n");
+            goto fail;
+        }
+
+        timer_setup();
+        if (video_setup() < 0) {
+            printf("Unable to initialize video\n");
+            goto fail;
+        }
+
+        game_flags &= ~GAME_FLAG_STARTUP;
+        game_flags |=  GAME_FLAG_INIT;
     }
 
     return 0;
+fail:
+    game_flags &= ~(GAME_FLAG_STARTUP|GAME_FLAG_INIT);
+    return -1;
 }
 
 void video_shutdown(void) {
@@ -301,8 +317,16 @@ void video_shutdown(void) {
 }
 
 void game_shutdown(void) {
-    timer_shutdown();
-    video_shutdown();
+    if ((game_flags & (GAME_FLAG_SHUTDOWN)) == 0 &&
+        (game_flags & (GAME_FLAG_INIT)) != 0) {
+        game_flags |= GAME_FLAG_SHUTDOWN;
+        game_flags &= ~GAME_FLAG_INIT;
+
+        timer_shutdown();
+        video_shutdown();
+
+        game_flags &= ~(GAME_FLAG_STARTUP|GAME_FLAG_SHUTDOWN);
+    }
 }
 
 /*=================================program entry point=================================*/
