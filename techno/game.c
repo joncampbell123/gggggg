@@ -257,10 +257,19 @@ unsigned char               game_flags = 0;
 void game_main(void) {
 }
 
+void game_error(const char *msg) {
+    if (video_init_state & VIDEO_INIT_MODE) {
+        // TODO
+    }
+    else {
+        printf("ERROR: %s\n",msg);
+    }
+}
+
 int video_setup(void) {
     if (!(video_init_state & VIDEO_INIT_MODE)) {
         if ((vga2_flags & (VGA2_FLAG_CGA|VGA2_FLAG_EGA|VGA2_FLAG_VGA|VGA2_FLAG_MCGA)) == 0) {
-            printf("This game requires support for CGA graphics\n");
+            game_error("This game requires support for CGA graphics");
             return -1;
         }
 
@@ -286,17 +295,17 @@ int game_init(void) {
         probe_vga2();
 
         if (!probe_8259()) {
-            printf("Cannot init 8259 PIC\n");
+            game_error("Cannot init 8259 PIC");
             goto fail;
         }
         if (!probe_8254()) {
-            printf("Cannot init 8254 timer\n");
+            game_error("Cannot init 8254 timer");
             goto fail;
         }
 
         timer_setup();
         if (video_setup() < 0) {
-            printf("Unable to initialize video\n");
+            game_error("Unable to initialize video");
             goto fail;
         }
 
