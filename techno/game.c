@@ -87,7 +87,7 @@ static inline unsigned char cga4leftmask(const unsigned int x) {
 
 static inline unsigned char cga4rightmask(const unsigned int x) {
     const unsigned char shf = ((~x) & 3u) << 1u;
-    return 0xFF << shf;
+    return 0xFFu << shf;
 }
 
 static inline unsigned char far *video_vp2ptr(const unsigned int vp) {
