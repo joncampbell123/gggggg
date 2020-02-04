@@ -116,20 +116,27 @@ static inline void video_wr16(const unsigned int vp,const uint16_t v) {
     *video_vp2ptr16(vp) = v;
 }
 
-static void video_hline_inner_span2m(const unsigned int x1,const unsigned int x2,const uint16_t wbm,unsigned int vp,unsigned char xc) {
+static unsigned int video_wr16mset_asm(const uint16_t far * const vp,const uint16_t v,const unsigned int wc);
+#pragma aux video_wr16mset_asm = \
+    "rep stosw" \
+    parm [es di] [ax] [cx] \
+    modify [di cx] \
+    value [di];
+
+static inline unsigned int video_wr16mset(const unsigned int vp,const uint16_t v,const unsigned int wc) {
+    return video_wr16mset_asm(video_vp2ptr16(vp),v,wc);
+}
+
+static void video_hline_inner_span2m(const unsigned int x1,const unsigned int x2,const uint16_t wbm,unsigned int vp,unsigned int xc) {
     /* assume xc != 0u */
     /* leftmost edge that may or may not cover the entire byte */
     video_wrvmaskv(vp++,cga4leftmask(x1),(unsigned char)wbm);
     if ((--xc) != 0u) { /* leftmost edge counts. there may be middle to fill. */
         /* middle part that completely covers the byte */
-        while (xc >= 2u) {
-            video_wr16(vp,wbm);
-            vp += 2u;
-            xc -= 2u;
-        }
-        if (xc != 0u) {
+        if (xc != 0u)
+            vp = video_wr16mset(vp,wbm,xc>>1u);
+        if (xc & 1u)
             video_wr(vp++,(unsigned char)wbm);
-        }
     }
     /* rightmost edge that may or may not cover the entire byte */
     video_wrvmaskv(vp,cga4rightmask(x2),(unsigned char)wbm);
@@ -147,7 +154,7 @@ void video_hline(const unsigned int x1,const unsigned int x2,const unsigned int 
     if (x1 <= x2) {
         const uint16_t wbm = cga4dup16(color);
         unsigned int vp = video_ptrofs(x1,y);
-        unsigned char xc = (x2 >> 2u) - (x1 >> 2u);
+        unsigned int xc = (x2 >> 2u) - (x1 >> 2u);
 
         if (xc != 0u)
             video_hline_inner_span2m(x1,x2,wbm,vp,xc);
