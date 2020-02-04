@@ -228,6 +228,10 @@ static uint16_t video_bswap16(const uint16_t v);
     modify [ax] \
     value [ax];
 
+static inline uint8_t video_bgfg_cbw(const uint8_t mask,const uint8_t fg,const uint8_t bg) {
+    return (mask & fg) + ((~mask) & bg);
+}
+
 static inline uint16_t video_bgfg_cbw16(const uint16_t mask,const uint16_t fg,const uint16_t bg) {
     return (mask & fg) + ((~mask) & bg);
 }
@@ -238,10 +242,27 @@ void video_print8x8_opaque(unsigned int x,unsigned int y,unsigned char fcolor,un
     unsigned int vp = video_ptrofs(x,y);
     unsigned char h = 8;
 
-    do {
-        video_wr16(vp,video_bgfg_cbw16(video_bswap16(*fbmp++),wbmf,wbmb));
-        vp = video_scanlineadv(vp);
-    } while (--h != 0u);
+    if ((x & 3u) == 0u) {
+        do {
+            video_wr16(vp,video_bgfg_cbw16(video_bswap16(*fbmp++),wbmf,wbmb));
+            vp = video_scanlineadv(vp);
+        } while (--h != 0u);
+    }
+    else {
+        const unsigned char shfr = (x & 3u) * 2u;
+        const uint16_t lmask = video_bswap16(0xFFFFu >> shfr);
+        const uint8_t rmask = 0xFFu << (8u - shfr);
+
+        do {
+            const uint16_t vr = *fbmp++;
+            const uint16_t v1 = (uint16_t)(vr >> shfr);
+            const uint8_t  v2 = (uint8_t) (vr << (8u - shfr));
+
+            video_wrvmaskv16(vp,   lmask,video_bswap16(video_bgfg_cbw16(v1,               wbmf,               wbmb)));
+            video_wrvmaskv  (vp+2u,rmask,              video_bgfg_cbw  (v2,(unsigned char)wbmf,(unsigned char)wbmb));
+            vp = video_scanlineadv(vp);
+        } while (--h != 0u);
+    }
 }
 
 void video_print8x8_transparent(unsigned int x,unsigned int y,unsigned char color,uint16_t *fbmp) {
