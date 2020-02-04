@@ -98,6 +98,11 @@ static inline uint16_t far *video_vp2ptr16(const unsigned int vp) {
     return (uint16_t far*)(vmseg:>((unsigned char __based(void) *)(vp)));
 }
 
+static inline void video_wrvmaskv16(const unsigned int vp,const uint16_t mask,const uint16_t v) {
+    uint16_t far * const p = video_vp2ptr16(vp);
+    *p = (*p & (~mask)) + (v & mask);
+}
+
 static inline void video_wrvmaskv(const unsigned int vp,const unsigned char mask,const unsigned char v) {
     unsigned char far * const p = video_vp2ptr(vp);
     *p = (*p & (~mask)) + (v & mask);
@@ -216,18 +221,20 @@ void video_rectbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int 
     }
 }
 
+static uint16_t video_bswap16(const uint16_t v);
+#pragma aux video_bswap16 = \
+    "xchg al,ah" \
+    parm [ax] \
+    modify [ax] \
+    value [ax];
+
 void video_print8x8(unsigned int x,unsigned int y,unsigned char color,uint16_t *fbmp) {
     const uint16_t wbm = cga4dup16(color);
     unsigned int vp = video_ptrofs(x,y);
     unsigned char h = 8;
-    uint16_t bitm;
 
     do {
-        bitm = *fbmp++;
-
-        video_wrvmaskv(vp+0,bitm >> 8u,wbm);
-        video_wrvmaskv(vp+1,bitm,      wbm);
-
+        video_wrvmaskv16(vp,video_bswap16(*fbmp++),wbm);
         vp = video_scanlineadv(vp);
     } while (--h != 0u);
 }
