@@ -118,18 +118,18 @@ static inline void video_wr16(const unsigned int vp,const uint16_t v) {
 
 static void video_hline_inner_span2m(const unsigned int x1,const unsigned int x2,const uint16_t wbm,unsigned int vp,unsigned char xc) {
     /* assume xc != 0u */
-    if (x1 & 3u) { /* leftmost edge does not quite cover the byte */
-        video_wrvmaskv(vp++,cga4leftmask(x1),(unsigned char)wbm);
-        xc--;
-    }
-    /* middle part that completely covers the byte */
-    while (xc >= 2u) {
-        video_wr16(vp,wbm);
-        vp += 2u;
-        xc -= 2u;
-    }
-    if (xc != 0u) {
-        video_wr(vp++,(unsigned char)wbm);
+    /* leftmost edge that may or may not cover the entire byte */
+    video_wrvmaskv(vp++,cga4leftmask(x1),(unsigned char)wbm);
+    if ((--xc) != 0u) { /* leftmost edge counts. there may be middle to fill. */
+        /* middle part that completely covers the byte */
+        while (xc >= 2u) {
+            video_wr16(vp,wbm);
+            vp += 2u;
+            xc -= 2u;
+        }
+        if (xc != 0u) {
+            video_wr(vp++,(unsigned char)wbm);
+        }
     }
     /* rightmost edge that may or may not cover the entire byte */
     video_wrvmaskv(vp,cga4rightmask(x2),(unsigned char)wbm);
