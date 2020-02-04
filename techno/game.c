@@ -133,6 +133,7 @@ static void video_hline_inner_span2m(const unsigned int x1,const unsigned int x2
     video_wrvmaskv(vp++,cga4leftmask(x1),(unsigned char)wbm);
     if ((--xc) != 0u) { /* leftmost edge counts. there may be middle to fill. */
         /* middle part that completely covers the byte */
+        /* NTS: adding if (xc != 0u) here causes Open Watcom to emit a (harmless) double JE instruction? */
         vp = video_wr16mset(vp,wbm,xc>>1u); /* REP MOVSW with CX == 0 does nothing, safe */
         if (xc & 1u) video_wr(vp++,(unsigned char)wbm);
     }
