@@ -228,6 +228,22 @@ static uint16_t video_bswap16(const uint16_t v);
     modify [ax] \
     value [ax];
 
+static inline uint16_t video_bgfg_cbw16(const uint16_t mask,const uint16_t fg,const uint16_t bg) {
+    return (mask & fg) + ((~mask) & bg);
+}
+
+void video_print8x8_opaque(unsigned int x,unsigned int y,unsigned char fcolor,unsigned char bcolor,uint16_t *fbmp) {
+    const uint16_t wbmf = cga4dup16(fcolor);
+    const uint16_t wbmb = cga4dup16(bcolor);
+    unsigned int vp = video_ptrofs(x,y);
+    unsigned char h = 8;
+
+    do {
+        video_wr16(vp,video_bgfg_cbw16(video_bswap16(*fbmp++),wbmf,wbmb));
+        vp = video_scanlineadv(vp);
+    } while (--h != 0u);
+}
+
 void video_print8x8_transparent(unsigned int x,unsigned int y,unsigned char color,uint16_t *fbmp) {
     const uint16_t wbm = cga4dup16(color);
     unsigned int vp = video_ptrofs(x,y);
@@ -276,7 +292,7 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
     /* title */
     x = lmargin;
     while ((c = (*title++)) != 0) {
-        video_print8x8_transparent(x,y,2u,video8x8fontlookup(c));
+        video_print8x8_opaque(x,y,2u,3u,video8x8fontlookup(c));
         x += 8u;
     }
 
@@ -291,7 +307,7 @@ void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200
             y += 8u;
         }
         else {
-            video_print8x8_transparent(x,y,0u,video8x8fontlookup(c));
+            video_print8x8_opaque(x,y,0u,3u,video8x8fontlookup(c));
             x += 8u;
         }
     }
