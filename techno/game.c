@@ -45,8 +45,8 @@ void                            (*video_sysmsgbox)(const char *title,const char 
  * This works because CGA video memory is 16KB total, in a 32KB region. */
 static const __segment          vmseg = 0xB800u;
 
-unsigned char far*              video_font_8x8_p1 = NULL;
-unsigned char far*              video_font_8x8_p2 = NULL;
+/* 256-char font preformatted for 320x200 4-color */
+uint16_t*                       video_font_8x8_4c = NULL;
 
 unsigned int strnewlinecount(const char *s) {
     unsigned int c = 0;
@@ -216,43 +216,24 @@ void video_rectbox(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int 
     }
 }
 
-static inline unsigned char video_mask_fb4_u12(const uint16_t bitm) {
-    unsigned char mask = 0;
-
-    if (bitm & 0x8000u) mask |= 0xC0;
-    if (bitm & 0x4000u) mask |= 0x30;
-    if (bitm & 0x2000u) mask |= 0x0C;
-    if (bitm & 0x1000u) mask |= 0x03;
-
-    return mask;
-}
-
-void video_print8x8(unsigned int x,unsigned int y,unsigned char color,unsigned char far *fbmp) {
-    const unsigned char wbm = cga4dup(color);
+void video_print8x8(unsigned int x,unsigned int y,unsigned char color,uint16_t *fbmp) {
+    const uint16_t wbm = cga4dup16(color);
     unsigned int vp = video_ptrofs(x,y);
-    unsigned char bitmshf = 8u - (x & 3u);
     unsigned char h = 8;
     uint16_t bitm;
 
     do {
-        bitm = ((uint16_t)(*fbmp++)) << bitmshf;
+        bitm = *fbmp++;
 
-        { /* will draw at minimum 8 pixels, maximum 12 */
-            unsigned int vp2 = vp;
-            video_wrvmaskv(vp2++,video_mask_fb4_u12(bitm),wbm); bitm <<= 4u;
-            video_wrvmaskv(vp2++,video_mask_fb4_u12(bitm),wbm); bitm <<= 4u;
-            if (bitm != 0u) video_wrvmaskv(vp2++,video_mask_fb4_u12(bitm),wbm);
-        }
+        video_wrvmaskv(vp+0,bitm >> 8u,wbm);
+        video_wrvmaskv(vp+1,bitm,      wbm);
 
         vp = video_scanlineadv(vp);
     } while (--h != 0u);
 }
 
-unsigned char far *video8x8fontlookup(const unsigned char c) {
-    if (c & 0x80u)
-        return video_font_8x8_p2 + (((unsigned int)((unsigned char)(c - 0x80u))) * 8u);
-    else
-        return video_font_8x8_p1 + (((unsigned int)((unsigned char)c)) * 8u);
+static inline uint16_t *video8x8fontlookup(const unsigned char c) {
+    return &video_font_8x8_4c[(unsigned char)c * 8u];
 }
 
 void video_sysmsgbox_cga4(const char *title,const char *msg) { /* assume 320x200 */
@@ -523,6 +504,32 @@ void game_error(const char *msg) {
     }
 }
 
+void video_shutdown(void);
+
+static uint16_t video_mbit_to_4cga_8xrow(unsigned char s) {
+    uint16_t r = 0;
+
+    /* use macros to avoid copy pasta */
+#define BT(x) if (s & (1u << (x))) r |= (3u << (x * 2u))
+    BT(7);
+    BT(6);
+    BT(5);
+    BT(4);
+    BT(3);
+    BT(2);
+    BT(1);
+    BT(0);
+#undef BT
+
+    return r;
+}
+
+void video_mbit_to_4cga(uint16_t *d,unsigned char far *s,unsigned int cb) {
+    do {
+        *d++ = video_mbit_to_4cga_8xrow(*s++);
+    } while ((--cb) != 0u);
+}
+
 int video_setup(void) {
     if (!(video_init_state & VIDEO_INIT_MODE)) {
         if ((vga2_flags & (VGA2_FLAG_CGA|VGA2_FLAG_EGA|VGA2_FLAG_VGA|VGA2_FLAG_MCGA)) == 0) {
@@ -537,10 +544,18 @@ int video_setup(void) {
         video_width = 320;
         video_height = 200;
         video_sysmsgbox = video_sysmsgbox_cga4;
-        video_font_8x8_p1 = MK_FP(0xF000,0xFA6E);
-        video_font_8x8_p2 = (unsigned char far*)_dos_getvect(0x1F);
-
         video_init_state |= VIDEO_INIT_MODE;
+
+        video_font_8x8_4c = (uint16_t*)malloc(sizeof(uint16_t) * 8 * 256); /* 16 bits per char (8x8 4-color) */
+        if (video_font_8x8_4c == NULL) {
+            video_shutdown(); // no font, no error dialog in graphics mode
+            game_error("Cannot allocate CGA font");
+            return -1;
+        }
+
+        /* TODO: If EGA/VGA/MCGA BIOS that provides 8x8 font bitmap pointers, use that. */
+        video_mbit_to_4cga(video_font_8x8_4c,          (unsigned char far*)MK_FP(0xF000,0xFA6E),128u*8u);
+        video_mbit_to_4cga(video_font_8x8_4c+(128u*8u),(unsigned char far*)_dos_getvect(0x1F),  128u*8u);
     }
 
     return 0;
