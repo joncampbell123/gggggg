@@ -133,7 +133,7 @@ static void video_hline_inner_span2m(const unsigned int x1,const unsigned int x2
     video_wrvmaskv(vp++,cga4leftmask(x1),(unsigned char)wbm);
     if ((--xc) != 0u) { /* leftmost edge counts. there may be middle to fill. */
         /* middle part that completely covers the byte */
-        if (xc != 0u)
+        if (xc & (~1u))
             vp = video_wr16mset(vp,wbm,xc>>1u);
         if (xc & 1u)
             video_wr(vp++,(unsigned char)wbm);
