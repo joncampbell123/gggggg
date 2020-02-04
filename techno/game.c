@@ -233,10 +233,25 @@ void video_print8x8(unsigned int x,unsigned int y,unsigned char color,uint16_t *
     unsigned int vp = video_ptrofs(x,y);
     unsigned char h = 8;
 
-    do {
-        video_wrvmaskv16(vp,video_bswap16(*fbmp++),wbm);
-        vp = video_scanlineadv(vp);
-    } while (--h != 0u);
+    if ((x & 3u) == 0u) {
+        do {
+            video_wrvmaskv16(vp,video_bswap16(*fbmp++),wbm);
+            vp = video_scanlineadv(vp);
+        } while (--h != 0u);
+    }
+    else {
+        const unsigned char shfr = (x & 3u) * 2u;
+
+        do {
+            const uint16_t vr = *fbmp++;
+            const uint16_t v1 = (uint16_t)(vr >> shfr);
+            const uint8_t  v2 = (uint8_t) (vr << (8u - shfr));
+
+            video_wrvmaskv16(vp,   video_bswap16(v1),wbm);
+            video_wrvmaskv  (vp+2u,v2,               wbm);
+            vp = video_scanlineadv(vp);
+        } while (--h != 0u);
+    }
 }
 
 static inline uint16_t *video8x8fontlookup(const unsigned char c) {
