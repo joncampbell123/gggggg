@@ -100,8 +100,8 @@ int main(int argc,char **argv) {
         tm.tm_year+1900,
         tm.tm_mon+1,
         tm.tm_mday,
-        tm.tm_hour,
-        tm.tm_min - (tm.tm_min % 30),
+        tm.tm_hour - (tm.tm_hour % 6), /* every six hours */
+        0,
         0);
 
     string js_file = string("iw-api-") + timestr + ".js";//WARNING: No spaces allowed!
