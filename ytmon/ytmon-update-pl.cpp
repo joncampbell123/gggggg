@@ -201,8 +201,8 @@ int main(int argc,char **argv) {
             }
 
             {
-                // NTS: playlist indices are 1-based. Let it go ahead and overlap by 1, it's OK.
-                playlist_range = string("--playlist-start=") + to_string(jsl.next_part) + " --playlist-end=" + to_string(jsl.next_part + part_size);
+                // NTS: playlist indices are 1-based. Let it go ahead and overlap by 10, it's OK.
+                playlist_range = string("--playlist-start=") + to_string(jsl.next_part) + " --playlist-end=" + to_string(jsl.next_part + part_size + 9);
                 if (jsl.next_part < initial_parts) jsl.next_part = initial_parts;
 
                 fprintf(stderr,"Downloading playlist (part at %ld)...\n",jsl.next_part);
