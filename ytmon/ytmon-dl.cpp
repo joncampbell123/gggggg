@@ -208,7 +208,6 @@ int main(int argc,char **argv) {
     string api_url;
     time_t now = time(NULL);
     struct tm tm = *localtime(&now);
-//  char timestr[128];
     int download_count = 0;
     int download_limit = 3;
 
@@ -260,17 +259,6 @@ int main(int argc,char **argv) {
         }
     }
 
-#if 0
-    // once every 24 hours
-    sprintf(timestr,"%04u%02u%02u-%02u%02u%02u",
-        tm.tm_year+1900,
-        tm.tm_mon+1,
-        tm.tm_mday,
-        0,
-        0,
-        0);
-#endif
-
     // new rule: we no longer download the playlist ourself.
     //           you must run a playlist downloading tool to generate the list this
     //           tool downloads by. The playlist downloading tool can combine the
@@ -278,47 +266,6 @@ int main(int argc,char **argv) {
     //           piecemeal to gather the entire channel list without hitting YouTube's
     //           "Too many requests" condition.
     string js_file = "playlist-combined.json"; // use .json not .js so the archive-off script does not touch it
-
-#if 0
-    {
-        struct stat st;
-
-        memset(&st,0,sizeof(st));
-        if (stat(js_file.c_str(),&st) != 0 || st.st_size < 32) {
-            assert(js_file.find_first_of(' ') == string::npos);
-            assert(js_file.find_first_of('$') == string::npos);
-            assert(js_file.find_first_of('\'') == string::npos);
-            assert(js_file.find_first_of('\"') == string::npos);
-
-            assert(api_url.find_first_of(' ') == string::npos);
-            assert(api_url.find_first_of('$') == string::npos);
-            assert(api_url.find_first_of('\'') == string::npos);
-            assert(api_url.find_first_of('\"') == string::npos);
-
-            fprintf(stderr,"Downloading playlist...\n");
-
-            /* -j only emits to stdout, sorry. */
-            /* FIXME: Limit to the first 99. Some channels have so many entries that merely querying them causes YouTube
-             *        to hit back with "Too many requests". That will allow this program to continue gathering the latest
-             *        videos, but don't forget the purpose of this program is to eventually collect everything on the
-             *        channel. Limiting to the first 99 won't allow that.
-             *
-             *        Perhaps the way to do things instead is to ask youtube-dl to write to a temp .js file, and then the
-             *        temp .js file is merged into the actual js_file (dedup).
-             *
-             *        Also in the same directory, we should maintain a range counter so that each invocation we also query
-             *        the next range of 100 entries which are then also merged into the .js file. In this way, we eventually
-             *        gather the entire channel's video list without triggering the Too many requests case. Counter resets
-             *        every time the temp .js file comes back empty.
-             *
-             *        Speaking of gradual playlist building... the same logic should be implemented into the banned.video
-             *        downloader as well. */
-            string cmd = string("youtube-dl --no-mtime -j --flat-playlist --playlist-end=99 ") + " \"" + api_url + "\" >" + js_file;
-            int status = system(cmd.c_str());
-            if (status != 0) return 1;
-        }
-    }
-#endif
 
     /* the JS file is actually MANY JS objects encoded on a line by line basis */
 
