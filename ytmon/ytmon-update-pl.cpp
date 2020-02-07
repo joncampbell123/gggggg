@@ -15,6 +15,9 @@
 using namespace std;
 using namespace json11;
 
+int                         initial_parts = 50;
+int                         part_size = 50;
+
 struct js_entry {
     string      json;
 
@@ -28,7 +31,7 @@ struct js_entry {
 
 struct jslist {
     vector<js_entry>        playlist;
-    int                     next_part = 0;
+    long                    next_part = 0;
 
     void clear() {
         next_part = 0;
@@ -54,9 +57,29 @@ int load_js_list(jslist &jsl,const string &jsfile) {
 
     while (!feof(fp) && !ferror(fp)) {
         if (fgets(line_tmp,sizeof(line_tmp),fp) == NULL) break;
-        if (line_tmp[0] == 0) continue;
-        if (line_tmp[0] == '#') continue;
         chomp(line_tmp);
+
+        if (line_tmp[0] == 0) continue;
+        if (line_tmp[0] == '#') {
+            const char *s = line_tmp+1; while (*s == ' ') s++;
+            string name,value;
+            {
+                const char *base = s;
+                while (*s && *s != ':') s++;
+                name = string(base,(size_t)(s-base));
+                if (*s == ':') {
+                    s++;
+                    base = s;
+                    while (*s) s++;
+                    value = string(base,(size_t)(s-base));
+                }
+            }
+
+            if (name == "next-part")
+                jsl.next_part = atol(value.c_str());
+
+            continue;
+        }
 
         // JSON
         cur.json = line_tmp;
@@ -84,6 +107,9 @@ int load_js_list(jslist &jsl,const string &jsfile) {
 int write_js_list(const string &jsfile,jslist &jsl) {
     FILE *fp = fopen(jsfile.c_str(),"w");
     if (fp == NULL) return -1; // sets errno
+
+    if (jsl.next_part != 0)
+        fprintf(fp,"# next-part:%ld\n",jsl.next_part);
 
     for (auto jsi=jsl.playlist.begin();jsi!=jsl.playlist.end();jsi++) {
         auto &jsent = *jsi;
