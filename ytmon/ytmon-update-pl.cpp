@@ -157,8 +157,8 @@ int main(int argc,char **argv) {
             tm.tm_mon+1,
             tm.tm_mday,
             tm.tm_hour,
-            tm.tm_min,
-            tm.tm_sec - (tm.tm_sec % 60)); // TODO: reduce to 15 seconds if confident
+            tm.tm_min - (tm.tm_min % 15), /* every 15 min */
+            0);
     }
     string js_tmp_file = string("playlist-tmp-") + timestr + ".js";
     string js_tmp2_file = string("playlist-tmp2-") + timestr + ".js";
