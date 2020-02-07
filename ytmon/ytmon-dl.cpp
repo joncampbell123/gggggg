@@ -252,7 +252,19 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Downloading playlist...\n");
 
             /* -j only emits to stdout, sorry. */
-            string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + " \"" + api_url + "\" >" + js_file;
+            /* FIXME: Limit to the first 99. Some channels have so many entries that merely querying them causes YouTube
+             *        to hit back with "Too many requests". That will allow this program to continue gathering the latest
+             *        videos, but don't forget the purpose of this program is to eventually collect everything on the
+             *        channel. Limiting to the first 99 won't allow that.
+             *
+             *        Perhaps the way to do things instead is to ask youtube-dl to write to a temp .js file, and then the
+             *        temp .js file is merged into the actual js_file (dedup).
+             *
+             *        Also in the same directory, we should maintain a range counter so that each invocation we also query
+             *        the next range of 100 entries which are then also merged into the .js file. In this way, we eventually
+             *        gather the entire channel's video list without triggering the Too many requests case. Counter resets
+             *        every time the temp .js file comes back empty. */
+            string cmd = string("youtube-dl --no-mtime -j --flat-playlist --playlist-end=99 ") + " \"" + api_url + "\" >" + js_file;
             int status = system(cmd.c_str());
             if (status != 0) return 1;
         }
