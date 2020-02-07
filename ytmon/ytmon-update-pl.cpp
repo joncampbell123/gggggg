@@ -189,14 +189,11 @@ int main(int argc,char **argv) {
                 int status = system(cmd.c_str());
                 if (status != 0) return 1;
 
-                if (load_js_list(jslnew,js_tmp_file)) {
-                    fprintf(stderr,"Failed to load new JS\n");
-                    return 1;
-                }
-
-                for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
-                    if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
-                        jsl.playlist.push_back(*jslnewi);
+                if (load_js_list(jslnew,js_tmp_file) == 0) {
+                    for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
+                        if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
+                            jsl.playlist.push_back(*jslnewi);
+                    }
                 }
             }
 
@@ -217,20 +214,17 @@ int main(int argc,char **argv) {
                 int status = system(cmd.c_str());
                 if (status != 0) return 1;
 
-                if (load_js_list(jslnew,js_tmp_file)) {
-                    fprintf(stderr,"Failed to load new JS\n");
-                    return 1;
-                }
-
-                if (!jslnew.playlist.empty()) {
-                    jsl.next_part += part_size;
-                    for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
-                        if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
-                            jsl.playlist.push_back(*jslnewi);
+                if (load_js_list(jslnew,js_tmp_file) == 0) {
+                    if (!jslnew.playlist.empty()) {
+                        jsl.next_part += part_size;
+                        for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
+                            if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
+                                jsl.playlist.push_back(*jslnewi);
+                        }
                     }
-                }
-                else {
-                    jsl.next_part = 0;
+                    else {
+                        jsl.next_part = 0;
+                    }
                 }
             }
         }
