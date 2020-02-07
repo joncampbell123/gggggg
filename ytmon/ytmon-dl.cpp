@@ -237,7 +237,8 @@ int main(int argc,char **argv) {
     {
         struct stat st;
 
-        if (stat(js_file.c_str(),&st) != 0) {
+        memset(&st,0,sizeof(st));
+        if (stat(js_file.c_str(),&st) != 0 || st.st_size < 32) {
             assert(js_file.find_first_of(' ') == string::npos);
             assert(js_file.find_first_of('$') == string::npos);
             assert(js_file.find_first_of('\'') == string::npos);
