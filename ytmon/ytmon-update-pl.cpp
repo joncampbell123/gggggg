@@ -149,7 +149,12 @@ int main(int argc,char **argv) {
     jslist jsl;
     jslist jslnew;
 
-    load_js_list(jsl,js_file);
+    if (load_js_list(jsl,js_file)) {
+        if (errno != ENOENT) {
+            fprintf(stderr,"Failed to load JS\n");
+            return 1;
+        }
+    }
 
     {
         struct stat st;
@@ -180,7 +185,10 @@ int main(int argc,char **argv) {
         }
     }
 
-    load_js_list(jslnew,js_tmp_file);
+    if (load_js_list(jslnew,js_tmp_file)) {
+        fprintf(stderr,"Failed to load new JS\n");
+        return 1;
+    }
 
     for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
         if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
