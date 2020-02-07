@@ -263,7 +263,10 @@ int main(int argc,char **argv) {
              *        Also in the same directory, we should maintain a range counter so that each invocation we also query
              *        the next range of 100 entries which are then also merged into the .js file. In this way, we eventually
              *        gather the entire channel's video list without triggering the Too many requests case. Counter resets
-             *        every time the temp .js file comes back empty. */
+             *        every time the temp .js file comes back empty.
+             *
+             *        Speaking of gradual playlist building... the same logic should be implemented into the banned.video
+             *        downloader as well. */
             string cmd = string("youtube-dl --no-mtime -j --flat-playlist --playlist-end=99 ") + " \"" + api_url + "\" >" + js_file;
             int status = system(cmd.c_str());
             if (status != 0) return 1;
