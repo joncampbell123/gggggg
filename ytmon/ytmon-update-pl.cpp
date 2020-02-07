@@ -144,6 +144,7 @@ int main(int argc,char **argv) {
             tm.tm_sec - (tm.tm_sec % 60)); // TODO: reduce to 15 seconds if confident
     }
     string js_tmp_file = string("playlist-tmp-") + timestr + ".js";
+    string js_tmp2_file = string("playlist-tmp2-") + timestr + ".js";
     string js_mix_tmp = "playlist-tmp-combine.js";
 
     jslist jsl;
@@ -173,8 +174,8 @@ int main(int argc,char **argv) {
             assert(api_url.find_first_of('\"') == string::npos);
 
             {
-                // NTS: playlist indices are 1-based
-                playlist_range = string("--playlist-start=1 --playlist-end=") + to_string(initial_parts);
+                // NTS: playlist indices are 1-based, end is inclusive, let it overlap by 10
+                playlist_range = string("--playlist-start=1 --playlist-end=") + to_string(initial_parts + 9);
                 if (jsl.next_part < initial_parts) jsl.next_part = initial_parts;
 
                 fprintf(stderr,"Downloading playlist...\n");
@@ -210,11 +211,11 @@ int main(int argc,char **argv) {
                  *
                  *        Speaking of gradual playlist building... the same logic should be implemented into the banned.video
                  *        downloader as well. */
-                string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp_file;
+                string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp2_file;
                 int status = system(cmd.c_str());
                 if (status != 0) return 1;
 
-                if (load_js_list(jslnew,js_tmp_file) == 0) {
+                if (load_js_list(jslnew,js_tmp2_file) == 0) {
                     if (!jslnew.playlist.empty()) {
                         jsl.next_part += part_size;
                         for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
