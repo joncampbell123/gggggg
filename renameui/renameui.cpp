@@ -1,5 +1,6 @@
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 
 #include <termios.h>
@@ -381,6 +382,32 @@ bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
     return true;
 }
 
+void pdfless(const std::string &name) {
+    char *argv[64];
+    int argc=0;
+
+    argv[argc++] = (char*)"/usr/bin/pdfless";
+    argv[argc++] = (char*)name.c_str();
+    argv[argc  ] = NULL;
+
+    pid_t pid;
+
+    pid = fork();
+    if (pid < 0)
+        return; // failed
+
+    if (pid == 0) {
+        /* child */
+        chdir(cwd.c_str());
+        execv(argv[0],argv);
+        _exit(1);
+    }
+    else {
+        /* parent */
+        while (waitpid(pid,NULL,0) != pid);
+    }
+}
+
 int main() {
     std::string in;
 
@@ -485,6 +512,19 @@ int main() {
                 dirlist_scroll = 0;
 
                 redraw = 1;
+            }
+        }
+        else if (in == "P") {
+            if (dirlist_sel < dirlist.size()) {
+                dirlist_entry_t &ent = dirlist[dirlist_sel];
+                std::string nname = ent.first;
+                const char *ext = strrchr(nname.c_str(),'.');
+                if (ext != NULL) {
+                    if (!strcasecmp(ext,".pdf")) {
+                        pdfless(nname);
+                        redraw = 1;
+                    }
+                }
             }
         }
         else if (in == "E") {
