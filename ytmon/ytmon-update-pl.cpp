@@ -157,6 +157,7 @@ int main(int argc,char **argv) {
     }
 
     {
+        string playlist_range;
         struct stat st;
 
         memset(&st,0,sizeof(st));
@@ -171,6 +172,10 @@ int main(int argc,char **argv) {
             assert(api_url.find_first_of('\'') == string::npos);
             assert(api_url.find_first_of('\"') == string::npos);
 
+            // NTS: playlist indices are 1-based
+            playlist_range = string("--playlist-start=1 --playlist-end=") + to_string(initial_parts);
+            if (jsl.next_part < initial_parts) jsl.next_part = initial_parts;
+
             fprintf(stderr,"Downloading playlist...\n");
 
             /* -j only emits to stdout, sorry. */
@@ -179,7 +184,7 @@ int main(int argc,char **argv) {
              *
              *        Speaking of gradual playlist building... the same logic should be implemented into the banned.video
              *        downloader as well. */
-            string cmd = string("youtube-dl --no-mtime -j --flat-playlist --playlist-end=99 ") + " \"" + api_url + "\" >" + js_tmp_file;
+            string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp_file;
             int status = system(cmd.c_str());
             if (status != 0) return 1;
         }
