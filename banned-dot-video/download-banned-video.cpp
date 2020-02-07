@@ -131,6 +131,11 @@ int main(int argc,char **argv) {
         json = Json::parse(buf,json_err);
 
         if (json == Json()) {
+            /* move it aside, don't try to re-use it */
+            string newname = js_file + ".reject.js";
+
+            rename(js_file.c_str(), newname.c_str());
+
             fprintf(stderr,"JSON parse error: %s\n",json_err.c_str());
             return 1;
         }
