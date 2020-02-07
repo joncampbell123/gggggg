@@ -208,7 +208,7 @@ int main(int argc,char **argv) {
     string api_url;
     time_t now = time(NULL);
     struct tm tm = *localtime(&now);
-    char timestr[128];
+//  char timestr[128];
     int download_count = 0;
     int download_limit = 3;
 
@@ -260,6 +260,7 @@ int main(int argc,char **argv) {
         }
     }
 
+#if 0
     // once every 24 hours
     sprintf(timestr,"%04u%02u%02u-%02u%02u%02u",
         tm.tm_year+1900,
@@ -268,9 +269,17 @@ int main(int argc,char **argv) {
         0,
         0,
         0);
+#endif
 
-    string js_file = string("playlist-") + timestr + ".js";//WARNING: No spaces allowed!
+    // new rule: we no longer download the playlist ourself.
+    //           you must run a playlist downloading tool to generate the list this
+    //           tool downloads by. The playlist downloading tool can combine the
+    //           URLs from the first N videos as well as gradually query the playlist
+    //           piecemeal to gather the entire channel list without hitting YouTube's
+    //           "Too many requests" condition.
+    string js_file = "playlist-combined.json"; // use .json not .js so the archive-off script does not touch it
 
+#if 0
     {
         struct stat st;
 
@@ -309,13 +318,17 @@ int main(int argc,char **argv) {
             if (status != 0) return 1;
         }
     }
+#endif
 
     /* the JS file is actually MANY JS objects encoded on a line by line basis */
 
     {
         char buf[4096]; /* should be large enough for now */
         FILE *fp = fopen(js_file.c_str(),"r");
-        if (fp == NULL) return 1;
+        if (fp == NULL) {
+            fprintf(stderr,"Unable to open %s. Please run playlist downloader tool to generate/update it.\n",js_file.c_str());
+            return 1;
+        }
 
         memset(buf,0,sizeof(buf));
         while (!feof(fp) && !ferror(fp)) {
@@ -329,6 +342,7 @@ int main(int argc,char **argv) {
             }
 
             if (buf[0] == 0) continue;
+            if (buf[0] == '#') continue; // download aggregator will use # lines for comments and status
 
             string json_err;
             Json json = Json::parse(buf,json_err);
