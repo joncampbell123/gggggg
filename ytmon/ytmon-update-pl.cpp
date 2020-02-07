@@ -21,6 +21,19 @@ struct js_entry {
     bool operator==(const struct js_entry &e) const {
         return  json == e.json;
     }
+    void clear() {
+        json.clear();
+    }
+};
+
+struct jslist {
+    vector<js_entry>        playlist;
+    int                     next_part = 0;
+
+    void clear() {
+        next_part = 0;
+        playlist.clear();
+    }
 };
 
 char line_tmp[4096];
@@ -30,8 +43,8 @@ void chomp(char *s) {
 	while (e >= s && (*e == '\n' || *e == '\r')) *e-- = 0;
 }
 
-int load_js_list(vector<js_entry> &js,const string &jsfile) {
-    js.clear();
+int load_js_list(jslist &jsl,const string &jsfile) {
+    jsl.clear();
 
     FILE *fp = fopen(jsfile.c_str(),"r");
     if (fp == NULL) return -1; // sets errno
@@ -51,7 +64,7 @@ int load_js_list(vector<js_entry> &js,const string &jsfile) {
 
         // emit
         if (cur_set) {
-            js.push_back(cur);
+            jsl.playlist.push_back(cur);
             cur_set = false;
             cur = js_entry();
         }
@@ -59,7 +72,7 @@ int load_js_list(vector<js_entry> &js,const string &jsfile) {
 
     // emit
     if (cur_set) {
-        js.push_back(cur);
+        jsl.playlist.push_back(cur);
         cur_set = false;
         cur = js_entry();
     }
@@ -68,11 +81,11 @@ int load_js_list(vector<js_entry> &js,const string &jsfile) {
     return 0;
 }
 
-int write_js_list(const string &jsfile,vector<js_entry> &js) {
+int write_js_list(const string &jsfile,jslist &jsl) {
     FILE *fp = fopen(jsfile.c_str(),"w");
     if (fp == NULL) return -1; // sets errno
 
-    for (auto jsi=js.begin();jsi!=js.end();jsi++) {
+    for (auto jsi=jsl.playlist.begin();jsi!=jsl.playlist.end();jsi++) {
         auto &jsent = *jsi;
         if (jsent.json.empty()) continue;
         fprintf(fp,"%s\n",jsent.json.c_str());
@@ -83,7 +96,7 @@ int write_js_list(const string &jsfile,vector<js_entry> &js) {
 }
 
 int combine_js(const string &dst,const string &js1,const string &js2) {
-    vector<js_entry> j1,j2;
+    jslist j1,j2;
 
     if (load_js_list(j1,js1) < 0) {
         if (errno != ENOENT) { // it's OK if it doesn't exist
@@ -97,9 +110,9 @@ int combine_js(const string &dst,const string &js1,const string &js2) {
         return -1;
     }
 
-    for (auto j2i=j2.begin();j2i!=j2.end();j2i++) {
-        if (find(j1.begin(),j1.end(),*j2i) == j1.end())
-            j1.push_back(*j2i);
+    for (auto j2i=j2.playlist.begin();j2i!=j2.playlist.end();j2i++) {
+        if (find(j1.playlist.begin(),j1.playlist.end(),*j2i) == j1.playlist.end())
+            j1.playlist.push_back(*j2i);
     }
 
     if (write_js_list(dst,j1) < 0) {
