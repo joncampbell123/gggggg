@@ -14,12 +14,24 @@
 using namespace std;
 using namespace json11;
 
+time_t                      failignore_timeout = 24 * 60 * 60; // 1 day
+
 std::string                 youtube_user,youtube_pass;
 
 bool should_stop = false;
 
 void init_marker(void) {
     mkdir("marker",0755);
+}
+
+string get_mark_failignore_filename(const string &filename) {
+    return string("marker/") + filename + ".fail-ignore";
+}
+
+void mark_failignore_file(const string &filename) {
+    const string mark_filename = get_mark_failignore_filename(filename);
+    int fd = open(mark_filename.c_str(),O_CREAT|O_TRUNC,0644); /* create file, truncate if exists, which updates mtime */
+    if (fd >= 0) close(fd);
 }
 
 string get_mark_filename(const string &filename) {
@@ -49,6 +61,19 @@ bool download_video_youtube(const Json &video) {
         string mark_filename = get_mark_filename(id);
         if (stat(mark_filename.c_str(),&st) == 0) {
             return false; // already exists
+        }
+    }
+
+    {
+        time_t now = time(NULL);
+        struct stat st;
+
+        string mark_filename = get_mark_failignore_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            if ((st.st_mtime + failignore_timeout) >= now) {
+                fprintf(stderr,"Ignoring '%s', failignore\n",id.c_str());
+                return false; // failignore
+            }
         }
     }
 
@@ -87,11 +112,23 @@ bool download_video_youtube(const Json &video) {
     if (!youtube_user.empty() && !youtube_pass.empty())
         creds += string("--username '") + youtube_user + "' --password '" + youtube_pass + "' ";
 
+    time_t dl_begin = time(NULL);
+
     {
         string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --all-subs --limit-rate=1500K --output '%(id)s' ") + creds + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
-        if (status != 0) return false;
+
+        if (status != 0) {
+            time_t dl_duration = time(NULL) - dl_begin;
+
+            if (dl_duration < 10) {
+                fprintf(stderr,"Failed too quickly, marking\n");
+                mark_failignore_file(id);
+            }
+
+            return false;
+        }
     }
 
     /* done! */
