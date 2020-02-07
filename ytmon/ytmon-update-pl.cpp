@@ -121,6 +121,23 @@ int write_js_list(const string &jsfile,jslist &jsl) {
     return 0;
 }
 
+string get_mark_filename(const string &filename) {
+    return string("marker/") + filename;
+}
+
+bool filename_marked(const string &id) {
+    {
+        struct stat st;
+
+        string mark_filename = get_mark_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 int main(int argc,char **argv) {
     string api_url;
     time_t now = time(NULL);
@@ -226,6 +243,35 @@ int main(int argc,char **argv) {
                     else {
                         jsl.next_part = 0;
                     }
+                }
+            }
+        }
+    }
+
+    /* remove anything that has been marked done */
+    for (auto jsli=jsl.playlist.begin();jsli!=jsl.playlist.end();jsli++) {
+        if ((*jsli).json.empty()) continue;
+
+        string json_err;
+        Json json = Json::parse((*jsli).json,json_err);
+
+        if (json == Json()) {
+            fprintf(stderr,"JSON parse error: %s\n",json_err.c_str());
+            continue;
+        }
+
+        {
+            string id = json["id"].string_value();
+
+            if (!id.empty()) {
+                assert(id.find_first_of(' ') == string::npos);
+                assert(id.find_first_of('$') == string::npos);
+                assert(id.find_first_of('\'') == string::npos);
+                assert(id.find_first_of('\"') == string::npos);
+
+                if (filename_marked(id)) {
+//                  fprintf(stderr,"'%s' has already been downloaded\n",id.c_str());
+                    (*jsli).clear();
                 }
             }
         }
