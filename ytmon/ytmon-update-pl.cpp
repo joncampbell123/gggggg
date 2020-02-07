@@ -121,34 +121,6 @@ int write_js_list(const string &jsfile,jslist &jsl) {
     return 0;
 }
 
-int combine_js(const string &dst,const string &js1,const string &js2) {
-    jslist j1,j2;
-
-    if (load_js_list(j1,js1) < 0) {
-        if (errno != ENOENT) { // it's OK if it doesn't exist
-            fprintf(stderr,"Cannot load %s\n",js1.c_str());
-            return -1;
-        }
-    }
-
-    if (load_js_list(j2,js2) < 0) {
-        fprintf(stderr,"Cannot load %s\n",js2.c_str());
-        return -1;
-    }
-
-    for (auto j2i=j2.playlist.begin();j2i!=j2.playlist.end();j2i++) {
-        if (find(j1.playlist.begin(),j1.playlist.end(),*j2i) == j1.playlist.end())
-            j1.playlist.push_back(*j2i);
-    }
-
-    if (write_js_list(dst,j1) < 0) {
-        fprintf(stderr,"Cannot write %s\n",dst.c_str());
-        return -1;
-    }
-
-    return 0;
-}
-
 int main(int argc,char **argv) {
     string api_url;
     time_t now = time(NULL);
@@ -173,6 +145,11 @@ int main(int argc,char **argv) {
     }
     string js_tmp_file = string("playlist-tmp-") + timestr + ".js";
     string js_mix_tmp = "playlist-tmp-combine.js";
+
+    jslist jsl;
+    jslist jslnew;
+
+    load_js_list(jsl,js_file);
 
     {
         struct stat st;
@@ -203,8 +180,15 @@ int main(int argc,char **argv) {
         }
     }
 
-    if (combine_js(js_mix_tmp,js_file,js_tmp_file)) {
-        fprintf(stderr,"Failed to combine JS\n");
+    load_js_list(jslnew,js_tmp_file);
+
+    for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
+        if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
+            jsl.playlist.push_back(*jslnewi);
+    }
+
+    if (write_js_list(js_mix_tmp,jsl)) {
+        fprintf(stderr,"Failed to write JS\n");
         return 1;
     }
     rename(js_mix_tmp.c_str(),js_file.c_str());
