@@ -172,32 +172,68 @@ int main(int argc,char **argv) {
             assert(api_url.find_first_of('\'') == string::npos);
             assert(api_url.find_first_of('\"') == string::npos);
 
-            // NTS: playlist indices are 1-based
-            playlist_range = string("--playlist-start=1 --playlist-end=") + to_string(initial_parts);
-            if (jsl.next_part < initial_parts) jsl.next_part = initial_parts;
+            {
+                // NTS: playlist indices are 1-based
+                playlist_range = string("--playlist-start=1 --playlist-end=") + to_string(initial_parts);
+                if (jsl.next_part < initial_parts) jsl.next_part = initial_parts;
 
-            fprintf(stderr,"Downloading playlist...\n");
+                fprintf(stderr,"Downloading playlist...\n");
 
-            /* -j only emits to stdout, sorry. */
-            /* FIXME: Limit to the first 99. Some channels have so many entries that merely querying them causes YouTube
-             *        to hit back with "Too many requests".
-             *
-             *        Speaking of gradual playlist building... the same logic should be implemented into the banned.video
-             *        downloader as well. */
-            string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp_file;
-            int status = system(cmd.c_str());
-            if (status != 0) return 1;
+                /* -j only emits to stdout, sorry. */
+                /* FIXME: Limit to the first 99. Some channels have so many entries that merely querying them causes YouTube
+                 *        to hit back with "Too many requests".
+                 *
+                 *        Speaking of gradual playlist building... the same logic should be implemented into the banned.video
+                 *        downloader as well. */
+                string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp_file;
+                int status = system(cmd.c_str());
+                if (status != 0) return 1;
+
+                if (load_js_list(jslnew,js_tmp_file)) {
+                    fprintf(stderr,"Failed to load new JS\n");
+                    return 1;
+                }
+
+                for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
+                    if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
+                        jsl.playlist.push_back(*jslnewi);
+                }
+            }
+
+            {
+                // NTS: playlist indices are 1-based. Let it go ahead and overlap by 1, it's OK.
+                playlist_range = string("--playlist-start=") + to_string(jsl.next_part) + " --playlist-end=" + to_string(jsl.next_part + part_size);
+                if (jsl.next_part < initial_parts) jsl.next_part = initial_parts;
+
+                fprintf(stderr,"Downloading playlist (part at %ld)...\n",jsl.next_part);
+
+                /* -j only emits to stdout, sorry. */
+                /* FIXME: Limit to the first 99. Some channels have so many entries that merely querying them causes YouTube
+                 *        to hit back with "Too many requests".
+                 *
+                 *        Speaking of gradual playlist building... the same logic should be implemented into the banned.video
+                 *        downloader as well. */
+                string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp_file;
+                int status = system(cmd.c_str());
+                if (status != 0) return 1;
+
+                if (load_js_list(jslnew,js_tmp_file)) {
+                    fprintf(stderr,"Failed to load new JS\n");
+                    return 1;
+                }
+
+                if (!jslnew.playlist.empty()) {
+                    jsl.next_part += part_size;
+                    for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
+                        if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
+                            jsl.playlist.push_back(*jslnewi);
+                    }
+                }
+                else {
+                    jsl.next_part = 0;
+                }
+            }
         }
-    }
-
-    if (load_js_list(jslnew,js_tmp_file)) {
-        fprintf(stderr,"Failed to load new JS\n");
-        return 1;
-    }
-
-    for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
-        if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
-            jsl.playlist.push_back(*jslnewi);
     }
 
     if (write_js_list(js_mix_tmp,jsl)) {
