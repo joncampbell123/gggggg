@@ -247,6 +247,7 @@ int main(int argc,char **argv) {
         }
 
         /* look for the download url in the HTML */
+        string mp4_file_ext = ".mp4";
         string downloadurl;
         {
             xmlDocPtr docp;
@@ -290,6 +291,11 @@ int main(int argc,char **argv) {
                                 if (strstr((char*)xp,".mp4") != NULL) {
                                     downloadurl = (char*)xp;
                                 }
+                                else if (strstr((char*)xp,".mov") != NULL || strstr((char*)xp,".MOV") != NULL) {
+                                    /* some Harrison Smith videos provide a MOV download link? */
+                                    downloadurl = (char*)xp;
+                                    mp4_file_ext = ".mov";
+                                }
 
                                 xmlFree(xp);
                             }
@@ -310,7 +316,7 @@ int main(int argc,char **argv) {
             downloadurl.find_first_of('\"') != string::npos)
             continue;
 
-        string mp4_file = _id + ".mp4";
+        string mp4_file = _id + mp4_file_ext;
 
         if (stat(mp4_file.c_str(),&st)) {
             string mp4_file_part = mp4_file + ".part";
