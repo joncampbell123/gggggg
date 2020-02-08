@@ -244,11 +244,13 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Sunday.\n");
             return 1;
         }
+#if 0
         // look human by stopping downloads between 10AM and 4PM
         if (tm.tm_hour >= 10 && tm.tm_hour < (4+12)) {
             fprintf(stderr,"Time for work.\n");
             return 1;
         }
+#endif
         // look human by stopping downloads between 12AM and 6AM
         if (tm.tm_hour >= 0 && tm.tm_hour < 6) {
             fprintf(stderr,"Time for bed.\n");
