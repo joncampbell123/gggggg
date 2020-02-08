@@ -239,8 +239,8 @@ int main(int argc,char **argv) {
     }
 
     if (strstr(api_url.c_str(),"youtube") != NULL) {
-        // not on sunday or saturday
-        if (tm.tm_wday == 0 || tm.tm_wday == 6) {
+        // not on sunday
+        if (tm.tm_wday == 0) {
             fprintf(stderr,"Sunday.\n");
             return 1;
         }
