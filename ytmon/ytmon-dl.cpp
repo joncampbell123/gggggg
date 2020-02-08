@@ -115,7 +115,7 @@ bool download_video_youtube(const Json &video) {
     time_t dl_begin = time(NULL);
 
     {
-        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --all-subs --limit-rate=1500K --output '%(id)s' ") + creds + invoke_url;
+        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --all-subs --limit-rate=2000K --output '%(id)s' ") + creds + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
 
@@ -188,7 +188,7 @@ bool download_video_bitchute(const Json &video) {
 
     /* All video on BitChute is .mp4, and youtube-dl needs to be given that suffix */
     {
-        string cmd = string("youtube-dl --no-check-certificate --no-mtime --continue --all-subs --limit-rate=1000K --output '%(id)s.mp4' ") + invoke_url;
+        string cmd = string("youtube-dl --no-check-certificate --no-mtime --continue --all-subs --limit-rate=2000K --output '%(id)s.mp4' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
         if (status != 0) return false;
