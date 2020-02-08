@@ -211,11 +211,8 @@ int main(int argc,char **argv) {
     int download_count = 0;
     int download_limit = 3;
 
-    if (argc < 2) {
-        fprintf(stderr,"Need channel URL\n");
-        return 1;
-    }
-    api_url = argv[1];
+    if (argc >= 2)
+        api_url = argv[1];
 
     init_marker();
 
@@ -257,6 +254,19 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Time for bed.\n");
             return 1;
         }
+    }
+
+    // backwards compat
+    if (!api_url.empty()) {
+        assert(api_url.find_first_of(' ') == string::npos);
+        assert(api_url.find_first_of('$') == string::npos);
+        assert(api_url.find_first_of('\'') == string::npos);
+        assert(api_url.find_first_of('\"') == string::npos);
+        assert(api_url.find_first_of('\\') == string::npos);
+
+        string cmd = string("ytmon-update-pl ") + api_url;
+        int status = system(cmd.c_str());
+        if (WIFSIGNALED(status)) return 1;
     }
 
     // new rule: we no longer download the playlist ourself.
