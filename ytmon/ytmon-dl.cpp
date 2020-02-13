@@ -16,6 +16,8 @@ using namespace json11;
 
 time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
 
+int                         failignore_mark_counter = 0;
+
 std::string                 youtube_user,youtube_pass;
 
 bool should_stop = false;
@@ -125,6 +127,7 @@ bool download_video_youtube(const Json &video) {
             if (dl_duration < 10) {
                 fprintf(stderr,"Failed too quickly, marking\n");
                 mark_failignore_file(id);
+                failignore_mark_counter++;
             }
 
             return false;
@@ -210,6 +213,7 @@ int main(int argc,char **argv) {
     struct tm tm = *localtime(&now);
     int download_count = 0;
     int download_limit = 3;
+    int failignore_limit = 10;
 
     if (argc >= 2)
         api_url = argv[1];
@@ -336,6 +340,9 @@ int main(int argc,char **argv) {
                     sleep(5 + ((unsigned int)rand() % 5u));
                 }
             }
+
+            if (failignore_mark_counter >= failignore_limit)
+                break;
 
             if (should_stop)
                 break;
