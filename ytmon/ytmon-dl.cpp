@@ -14,7 +14,7 @@
 using namespace std;
 using namespace json11;
 
-time_t                      failignore_timeout = 24 * 60 * 60; // 1 day
+time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
 
 std::string                 youtube_user,youtube_pass;
 
