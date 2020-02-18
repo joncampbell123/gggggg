@@ -16,6 +16,8 @@ using namespace json11;
 
 time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
 
+int                         youtube_bitrate = 1500;
+
 int                         failignore_mark_counter = 0;
 
 std::string                 youtube_user,youtube_pass;
@@ -117,7 +119,7 @@ bool download_video_youtube(const Json &video) {
     time_t dl_begin = time(NULL);
 
     {
-        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --all-subs --limit-rate=1500K --output '%(id)s' ") + creds + invoke_url;
+        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --all-subs --limit-rate=") + to_string(youtube_bitrate) + "K --output '%(id)s' " + creds + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
 
