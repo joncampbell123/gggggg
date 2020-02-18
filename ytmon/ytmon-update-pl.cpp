@@ -156,8 +156,8 @@ int main(int argc,char **argv) {
             tm.tm_year+1900,
             tm.tm_mon+1,
             tm.tm_mday,
-            tm.tm_hour,
-            tm.tm_min - (tm.tm_min % 15), /* every 15 min */
+            tm.tm_hour - (tm.tm_hour % 3),
+            0,
             0);
     }
     string js_tmp_file = string("playlist-tmp-") + timestr + ".js";
