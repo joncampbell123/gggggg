@@ -212,7 +212,7 @@ int main(int argc,char **argv) {
     time_t now = time(NULL);
     struct tm tm = *localtime(&now);
     int download_count = 0;
-    int download_limit = 3;
+    int download_limit = 1;
     int failignore_limit = 10;
 
     if (argc >= 2)
