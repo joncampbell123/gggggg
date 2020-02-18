@@ -222,6 +222,16 @@ int main(int argc,char **argv) {
 
     init_marker();
 
+    // per-machine adjustment
+    {
+        char hostname[256] = {0};
+        gethostname(hostname,sizeof(hostname)-1);
+
+        if (!strcmp(hostname,"something")) {
+            youtube_bitrate = 1000;
+        }
+    }
+
     // youtube creds
     {
         FILE *fp = fopen("youtube-creds.lst","r");
