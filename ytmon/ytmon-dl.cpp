@@ -228,7 +228,7 @@ int main(int argc,char **argv) {
         gethostname(hostname,sizeof(hostname)-1);
 
         if (!strcmp(hostname,"something")) {
-            youtube_bitrate = 300; // Youtube picks on this one more for some reason with "too many requests"
+            youtube_bitrate = 500; // Youtube picks on this one more for some reason with "too many requests"
         }
     }
 
