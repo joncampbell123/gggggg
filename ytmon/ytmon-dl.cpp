@@ -16,6 +16,7 @@ using namespace json11;
 
 time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
 
+bool                        sunday_dl = false;
 int                         youtube_bitrate = 2000;
 
 int                         failignore_mark_counter = 0;
@@ -229,6 +230,7 @@ int main(int argc,char **argv) {
 
         if (!strcmp(hostname,"something")) {
             youtube_bitrate = 500; // Youtube picks on this one more for some reason with "too many requests"
+            sunday_dl = true;
         }
     }
 
@@ -256,7 +258,7 @@ int main(int argc,char **argv) {
 
     if (strstr(api_url.c_str(),"youtube") != NULL) {
         // not on sunday
-        if (tm.tm_wday == 0) {
+        if (!sunday_dl && tm.tm_wday == 0) {
             fprintf(stderr,"Sunday.\n");
             return 1;
         }
