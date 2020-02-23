@@ -16,7 +16,7 @@ using namespace json11;
 
 time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
 
-int                         youtube_bitrate = 1500;
+int                         youtube_bitrate = 2000;
 
 int                         failignore_mark_counter = 0;
 
@@ -228,7 +228,7 @@ int main(int argc,char **argv) {
         gethostname(hostname,sizeof(hostname)-1);
 
         if (!strcmp(hostname,"something")) {
-            youtube_bitrate = 1000;
+            youtube_bitrate = 300; // Youtube picks on this one more for some reason with "too many requests"
         }
     }
 
