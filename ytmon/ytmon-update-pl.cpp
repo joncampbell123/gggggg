@@ -138,6 +138,23 @@ bool filename_marked(const string &id) {
     return false;
 }
 
+string get_mark_failignore_filename(const string &filename) {
+    return string("marker/") + filename + ".fail-ignore";
+}
+
+bool filename_failignore_marked(const string &id) {
+    {
+        struct stat st;
+
+        string mark_filename = get_mark_failignore_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 int main(int argc,char **argv) {
     string api_url;
     time_t now = time(NULL);
@@ -269,7 +286,7 @@ int main(int argc,char **argv) {
                 assert(id.find_first_of('\'') == string::npos);
                 assert(id.find_first_of('\"') == string::npos);
 
-                if (filename_marked(id)) {
+                if (filename_marked(id) || filename_failignore_marked(id)) {
 //                  fprintf(stderr,"'%s' has already been downloaded\n",id.c_str());
                     (*jsli).clear();
                 }
