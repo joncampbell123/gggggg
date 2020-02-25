@@ -247,19 +247,21 @@ int main(int argc,char **argv) {
                  *        downloader as well. */
                 string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp2_file;
                 int status = system(cmd.c_str());
-                if (status != 0) return 1;
 
-                if (load_js_list(jslnew,js_tmp2_file) == 0) {
-                    if (!jslnew.playlist.empty()) {
-                        jsl.next_part += part_size;
-                        for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
-                            if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
-                                jsl.playlist.push_back(*jslnewi);
-                        }
+                // NTS: If playlist range is out of range on YouTube, success and no entries.
+                //      If playlist range is out of range on BitChute, failure and no output.
+                //      Therefore, ignore status and process output if it exists.
+                js_tmp2_file.clear();
+                load_js_list(jslnew,js_tmp2_file);
+                if (!jslnew.playlist.empty()) {
+                    jsl.next_part += part_size;
+                    for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
+                        if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
+                            jsl.playlist.push_back(*jslnewi);
                     }
-                    else {
-                        jsl.next_part = 0;
-                    }
+                }
+                else {
+                    jsl.next_part = 0;
                 }
             }
         }
