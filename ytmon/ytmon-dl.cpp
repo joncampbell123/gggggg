@@ -162,6 +162,19 @@ bool download_video_bitchute(const Json &video) {
         }
     }
 
+    {
+        time_t now = time(NULL);
+        struct stat st;
+
+        string mark_filename = get_mark_failignore_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            if ((st.st_mtime + failignore_timeout) >= now) {
+                fprintf(stderr,"Ignoring '%s', failignore\n",id.c_str());
+                return false; // failignore
+            }
+        }
+    }
+
     sleep(1);
 
     string tagname = id;
@@ -188,6 +201,8 @@ bool download_video_bitchute(const Json &video) {
         }
     }
 
+    time_t dl_begin = time(NULL);
+
     /* we trust the ID will never need characters that require escaping.
      * they're alphanumeric base64 so far. */
     string invoke_url = string("https://www.bitchute.com/video/") + id;
@@ -197,7 +212,18 @@ bool download_video_bitchute(const Json &video) {
         string cmd = string("youtube-dl --no-check-certificate --no-mtime --continue --all-subs --limit-rate=2000K --output '%(id)s.mp4' ") + invoke_url;
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
-        if (status != 0) return false;
+
+        if (status != 0) {
+            time_t dl_duration = time(NULL) - dl_begin;
+
+            if (dl_duration < 20) { // duration is longer to trigger on youtube-dl's "No Video Formats Found" error when it can't find anything
+                fprintf(stderr,"Failed too quickly, marking\n");
+                mark_failignore_file(id);
+                failignore_mark_counter++;
+            }
+
+            return false;
+        }
     }
 
     /* done! */
