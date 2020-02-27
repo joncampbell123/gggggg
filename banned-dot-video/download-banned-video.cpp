@@ -320,7 +320,7 @@ int main(int argc,char **argv) {
 
         if (stat(mp4_file.c_str(),&st)) {
             string mp4_file_part = mp4_file + ".part";
-            string cmd = "wget --continue --no-use-server-timestamps --limit-rate=1000K -O '" + mp4_file_part + "' '" + downloadurl + "'";
+            string cmd = "wget --continue --no-use-server-timestamps --limit-rate=500K -O '" + mp4_file_part + "' '" + downloadurl + "'";
             int x = system(cmd.c_str());
             if (x != 0) return 1;
             if (rename(mp4_file_part.c_str(),mp4_file.c_str())) continue;
