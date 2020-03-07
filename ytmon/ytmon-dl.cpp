@@ -259,6 +259,11 @@ int main(int argc,char **argv) {
             bitchute_bitrate = 500;
             youtube_bitrate = 50; // there's nothing I can do to keep YouTube on that machine from doing "too many connections"
             sunday_dl = true;
+
+            /* go faster on BitChute on Friday, Saturday, Sunday */
+            if (tm.tm_wday == 5/*fri*/ || tm.tm_wday == 6/*sat*/ || tm.tm_wday == 0/*sun*/) {
+                bitchute_bitrate = 2000;
+            }
         }
     }
 
