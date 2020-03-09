@@ -18,6 +18,8 @@
 using namespace std;
 using namespace json11;
 
+int                         download_bitrate = 2000;
+
 const string default_channel = "5b885d33e6646a0015a6fa2d"; /* The Alex Jones Show */
 
 string chosen_channel = default_channel;
@@ -75,6 +77,21 @@ int main(int argc,char **argv) {
         return 1;
 
     init_marker();
+
+    // per-machine adjustment
+    {
+        char hostname[256] = {0};
+        gethostname(hostname,sizeof(hostname)-1);
+
+        if (!strcmp(hostname,"something")) {
+            download_bitrate = 500;
+
+            /* go faster on BitChute on Friday, Saturday, Sunday */
+            if (tm.tm_wday == 6/*sat*/ || tm.tm_wday == 0/*sun*/ || tm.tm_wday == 1/*mon*/) {
+                download_bitrate = 2000;
+            }
+        }
+    }
 
     /* construct the query JSON for the POST request */
     string channel_query_string;
@@ -320,7 +337,7 @@ int main(int argc,char **argv) {
 
         if (stat(mp4_file.c_str(),&st)) {
             string mp4_file_part = mp4_file + ".part";
-            string cmd = "wget --continue --no-use-server-timestamps --limit-rate=500K -O '" + mp4_file_part + "' '" + downloadurl + "'";
+            string cmd = string("wget --continue --no-use-server-timestamps --limit-rate=") + to_string(download_bitrate) + "K -O '" + mp4_file_part + "' '" + downloadurl + "'";
             int x = system(cmd.c_str());
             if (x != 0) return 1;
             if (rename(mp4_file_part.c_str(),mp4_file.c_str())) continue;
