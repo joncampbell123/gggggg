@@ -290,11 +290,13 @@ int main(int argc,char **argv) {
     }
 
     if (strstr(api_url.c_str(),"youtube") != NULL) {
+#if 0
         // not on sunday
         if (!sunday_dl && tm.tm_wday == 0) {
             fprintf(stderr,"Sunday.\n");
             return 1;
         }
+#endif
 #if 0
         // look human by stopping downloads between 10AM and 4PM
         if (tm.tm_hour >= 10 && tm.tm_hour < (4+12)) {
