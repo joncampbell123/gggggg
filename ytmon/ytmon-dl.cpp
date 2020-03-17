@@ -25,6 +25,8 @@ int                         failignore_mark_counter = 0;
 
 std::string                 youtube_user,youtube_pass;
 
+char                        large_tmp[1024*1024];
+
 bool should_stop = false;
 
 void init_marker(void) {
@@ -152,6 +154,41 @@ bool download_video_youtube(const Json &video) {
                 return false;
             }
         }
+    }
+
+    /* read the info JSON.
+     * Do not download live feeds, because they are in progress.
+     * youtube-dl is pretty good about not listing live feeds if asked to follow a channel,
+     * but for search queries will return results that involve live feeds.
+     * Most live feeds finish eventually and turn into a video. */
+    bool live_feed = false;
+    {
+        FILE *fp;
+
+        fp = fopen(expect_info_json.c_str(),"r");
+        if (fp != NULL) {
+            size_t r = fread(large_tmp,1,sizeof(large_tmp)-1,fp);
+            assert(r < sizeof(large_tmp));
+            large_tmp[r] = 0;
+            fclose(fp);
+
+            string json_err;
+            Json info_json = Json::parse(large_tmp,json_err);
+
+            if (info_json == Json()) {
+                fprintf(stderr,"INFO JSON parse error: %s\n",json_err.c_str());
+            }
+            else {
+                auto is_live = info_json["is_live"];
+                if (is_live.is_bool()) /* else is null? */
+                    live_feed = is_live.bool_value();
+            }
+        }
+    }
+
+    if (live_feed) {
+        fprintf(stderr,"Item '%s' is a live feed, skipping. It may turn into a downloadable later.\n",id.c_str());
+        return false;
     }
 
     /* then download the video */
