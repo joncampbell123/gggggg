@@ -120,8 +120,28 @@ bool download_video_youtube(const Json &video) {
 
     time_t dl_begin = time(NULL);
 
+    /* download the *.info.json first */
     {
-        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --add-metadata --write-all-thumbnails --write-info-json --embed-subs --all-subs --limit-rate=") + to_string(youtube_bitrate) + "K --output '%(id)s' " + creds + invoke_url;
+        string cmd = string("youtube-dl --cookies cookies.txt --skip-download --write-info-json --output '%(id)s' ") + creds + invoke_url;
+        int status = system(cmd.c_str());
+        if (WIFSIGNALED(status)) should_stop = true;
+
+        if (status != 0) {
+            time_t dl_duration = time(NULL) - dl_begin;
+
+            if (dl_duration < 10) {
+                fprintf(stderr,"Failed too quickly, marking\n");
+                mark_failignore_file(id);
+                failignore_mark_counter++;
+            }
+
+            return false;
+        }
+    }
+
+    /* then download the video */
+    {
+        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --add-metadata --write-all-thumbnails --embed-subs --all-subs --limit-rate=") + to_string(youtube_bitrate) + "K --output '%(id)s' " + creds + invoke_url; /* --write-info-json not needed, first step above */
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
 
