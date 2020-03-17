@@ -15,6 +15,7 @@ using namespace std;
 using namespace json11;
 
 time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
+time_t                      info_json_expire = 6 * 60 * 60;         // 6 hours
 
 bool                        sunday_dl = false;
 int                         youtube_bitrate = 2000;
@@ -120,22 +121,36 @@ bool download_video_youtube(const Json &video) {
 
     time_t dl_begin = time(NULL);
 
-    /* download the *.info.json first */
+    string expect_info_json = id + ".info.json";
+
+    /* download the *.info.json first, don't update too often */
     {
-        string cmd = string("youtube-dl --cookies cookies.txt --skip-download --write-info-json --output '%(id)s' ") + creds + invoke_url;
-        int status = system(cmd.c_str());
-        if (WIFSIGNALED(status)) should_stop = true;
+        bool doit = true;
+        time_t now = time(NULL);
+        struct stat st;
 
-        if (status != 0) {
-            time_t dl_duration = time(NULL) - dl_begin;
-
-            if (dl_duration < 10) {
-                fprintf(stderr,"Failed too quickly, marking\n");
-                mark_failignore_file(id);
-                failignore_mark_counter++;
+        if (stat(expect_info_json.c_str(),&st) == 0 && S_ISREG(st.st_mode)) {
+            if ((st.st_mtime + info_json_expire) >= now) {
+                doit = false;
             }
+        }
 
-            return false;
+        if (doit) {
+            string cmd = string("youtube-dl --cookies cookies.txt --skip-download --write-info-json --output '%(id)s' ") + creds + invoke_url;
+            int status = system(cmd.c_str());
+            if (WIFSIGNALED(status)) should_stop = true;
+
+            if (status != 0) {
+                time_t dl_duration = time(NULL) - dl_begin;
+
+                if (dl_duration < 10) {
+                    fprintf(stderr,"Failed too quickly, marking\n");
+                    mark_failignore_file(id);
+                    failignore_mark_counter++;
+                }
+
+                return false;
+            }
         }
     }
 
