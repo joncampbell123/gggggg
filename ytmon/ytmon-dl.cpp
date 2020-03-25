@@ -328,14 +328,15 @@ int main(int argc,char **argv) {
         gethostname(hostname,sizeof(hostname)-1);
 
         if (!strcmp(hostname,"something")) {
-            bitchute_bitrate = 500;
-            youtube_bitrate = 50; // there's nothing I can do to keep YouTube on that machine from doing "too many connections"
+            bitchute_bitrate = 2000;
+            youtube_bitrate = 2000; // there's nothing I can do to keep YouTube on that machine from doing "too many connections"
             sunday_dl = true;
-
+#if 0
             /* go faster on BitChute on Friday, Saturday, Sunday */
             if (tm.tm_wday == 5/*fri*/ || tm.tm_wday == 6/*sat*/ || tm.tm_wday == 0/*sun*/) {
                 bitchute_bitrate = 2000;
             }
+#endif
         }
     }
 
