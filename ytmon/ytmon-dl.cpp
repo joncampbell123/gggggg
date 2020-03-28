@@ -191,6 +191,18 @@ bool download_video_youtube(const Json &video) {
         return false;
     }
 
+    /* download like a human */
+    {
+        time_t now = time(NULL);
+        struct tm tm = *localtime(&now);
+
+        // look human by stopping downloads between 12AM and 6AM
+        if (tm.tm_hour >= 0 && tm.tm_hour < 6) {
+            fprintf(stderr,"Time for bed.\n");
+            return false;
+        }
+    }
+
     /* then download the video */
     {
         string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --add-metadata --write-all-thumbnails --all-subs --limit-rate=") + to_string(youtube_bitrate) + "K --output '%(id)s' " + creds + invoke_url; /* --write-info-json not needed, first step above */
@@ -322,24 +334,6 @@ int main(int argc,char **argv) {
 
     init_marker();
 
-    // per-machine adjustment
-    {
-        char hostname[256] = {0};
-        gethostname(hostname,sizeof(hostname)-1);
-
-        if (!strcmp(hostname,"something")) {
-            bitchute_bitrate = 2000;
-            youtube_bitrate = 2000; // there's nothing I can do to keep YouTube on that machine from doing "too many connections"
-            sunday_dl = true;
-#if 0
-            /* go faster on BitChute on Friday, Saturday, Sunday */
-            if (tm.tm_wday == 5/*fri*/ || tm.tm_wday == 6/*sat*/ || tm.tm_wday == 0/*sun*/) {
-                bitchute_bitrate = 2000;
-            }
-#endif
-        }
-    }
-
     // youtube creds
     {
         FILE *fp = fopen("youtube-creds.lst","r");
@@ -360,28 +354,6 @@ int main(int argc,char **argv) {
 
         if (!youtube_user.empty() && !youtube_pass.empty())
             fprintf(stderr,"Using YouTube credentials for '%s'\n",youtube_user.c_str());
-    }
-
-    if (strstr(api_url.c_str(),"youtube") != NULL) {
-#if 0
-        // not on sunday
-        if (!sunday_dl && tm.tm_wday == 0) {
-            fprintf(stderr,"Sunday.\n");
-            return 1;
-        }
-#endif
-#if 0
-        // look human by stopping downloads between 10AM and 4PM
-        if (tm.tm_hour >= 10 && tm.tm_hour < (4+12)) {
-            fprintf(stderr,"Time for work.\n");
-            return 1;
-        }
-#endif
-        // look human by stopping downloads between 12AM and 6AM
-        if (tm.tm_hour >= 0 && tm.tm_hour < 6) {
-            fprintf(stderr,"Time for bed.\n");
-            return 1;
-        }
     }
 
     // backwards compat
