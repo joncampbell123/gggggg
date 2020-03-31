@@ -251,8 +251,9 @@ int main(int argc,char **argv) {
                 // NTS: If playlist range is out of range on YouTube, success and no entries.
                 //      If playlist range is out of range on BitChute, failure and no output.
                 //      Therefore, ignore status and process output if it exists.
-                js_tmp2_file.clear();
-                load_js_list(jslnew,js_tmp2_file);
+                if (load_js_list(jslnew,js_tmp2_file) < 0)
+                    fprintf(stderr,"Failed to load %s\n",js_tmp2_file.c_str());
+
                 if (!jslnew.playlist.empty()) {
                     jsl.next_part += part_size;
                     for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
@@ -261,8 +262,11 @@ int main(int argc,char **argv) {
                     }
                 }
                 else {
+                    fprintf(stderr,"part at %ld empty, resetting\n",jsl.next_part);
                     jsl.next_part = 0;
                 }
+
+                js_tmp2_file.clear();
             }
         }
     }
