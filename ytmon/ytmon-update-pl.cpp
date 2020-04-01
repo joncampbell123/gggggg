@@ -167,15 +167,29 @@ int main(int argc,char **argv) {
     }
     api_url = argv[1];
 
+    // stagger downloads by picking a minute within the half hour interval to query the channel list.
+    // this way the downloader is not spending 5 minutes querying channel lists every half hour.
+    unsigned int submin = 0;
+    {
+        const char *s = api_url.c_str();
+
+        while (*s != 0) submin += ((unsigned char)(*s++))*237u;
+        submin += (tm.tm_year+1900)*44u;
+        submin += (tm.tm_mon+1)*4932u;
+        submin += (tm.tm_mday)*3231u;
+        submin += (tm.tm_hour - (tm.tm_hour % 3))*92818u;
+        submin %= (60u * 60u * 3u); /* pick a time within the 3 hour interval */
+    }
+
     string js_file = "playlist-combined.json"; // use .json not .js so the archive-off script does not touch it
     {
         sprintf(timestr,"%04u%02u%02u-%02u%02u%02u",
             tm.tm_year+1900,
             tm.tm_mon+1,
             tm.tm_mday,
-            tm.tm_hour - (tm.tm_hour % 3),
-            0,
-            0);
+            tm.tm_hour + (submin / (60u * 60u))/*valid range 0..2*/ - (tm.tm_hour % 3),
+            (submin / 60u) % 60u,
+            submin % 60u);
     }
     string js_tmp_file = string("playlist-tmp-") + timestr + ".js";
     string js_tmp2_file = string("playlist-tmp2-") + timestr + ".js";
