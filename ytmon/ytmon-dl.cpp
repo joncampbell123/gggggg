@@ -301,7 +301,7 @@ bool download_video_bitchute(const Json &video) {
         if (status != 0) {
             time_t dl_duration = time(NULL) - dl_begin;
 
-            if (dl_duration < 20) { // duration is longer to trigger on youtube-dl's "No Video Formats Found" error when it can't find anything
+            if (dl_duration < 900) { // duration is longer to trigger on youtube-dl's "No Video Formats Found" error when it can't find anything
                 fprintf(stderr,"Failed too quickly, marking\n");
                 mark_failignore_file(id);
                 failignore_mark_counter++;
