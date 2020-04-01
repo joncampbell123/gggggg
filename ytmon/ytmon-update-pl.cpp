@@ -173,7 +173,7 @@ int main(int argc,char **argv) {
     {
         const char *s = api_url.c_str();
 
-        while (*s != 0) submin += ((unsigned char)(*s++))*237u;
+        while (*s != 0) submin += ((unsigned char)(*s++))*13934u;
         submin += (tm.tm_year+1900)*44u;
         submin += (tm.tm_mon+1)*4932u;
         submin += (tm.tm_mday)*3231u;
