@@ -234,14 +234,17 @@ int main(int argc,char **argv) {
                  *
                  *        Speaking of gradual playlist building... the same logic should be implemented into the banned.video
                  *        downloader as well. */
+                /* Request the first initial part, always, to keep up with the channel.
+                 * The contents of this part will be inserted at the top of the list.
+                 * To do this, the playlist is iterated in reverse and each new entry is inserted at the beginning. */
                 string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp_file;
                 int status = system(cmd.c_str());
                 if (status != 0) return 1;
 
                 if (load_js_list(jslnew,js_tmp_file) == 0) {
-                    for (auto jslnewi=jslnew.playlist.begin();jslnewi!=jslnew.playlist.end();jslnewi++) {
+                    for (auto jslnewi=jslnew.playlist.rbegin();jslnewi!=jslnew.playlist.rend();jslnewi++) {
                         if (find(jsl.playlist.begin(),jsl.playlist.end(),*jslnewi) == jsl.playlist.end())
-                            jsl.playlist.push_back(*jslnewi);
+                            jsl.playlist.insert(jsl.playlist.begin(),*jslnewi);
                     }
                 }
             }
