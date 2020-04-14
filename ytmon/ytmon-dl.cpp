@@ -112,6 +112,18 @@ bool download_video_youtube(const Json &video) {
         }
     }
 
+    /* download like a human */
+    {
+        time_t now = time(NULL);
+        struct tm tm = *localtime(&now);
+
+        // look human by stopping downloads between 12AM and 6AM
+        if (tm.tm_hour >= 0 && tm.tm_hour < 6) {
+            fprintf(stderr,"Time for bed.\n");
+            return false;
+        }
+    }
+
     /* we trust the ID will never need characters that require escaping.
      * they're alphanumeric base64 so far. */
     string invoke_url = string("https://www.youtube.com/watch?v=") + id;
@@ -189,18 +201,6 @@ bool download_video_youtube(const Json &video) {
     if (live_feed) {
         fprintf(stderr,"Item '%s' is a live feed, skipping. It may turn into a downloadable later.\n",id.c_str());
         return false;
-    }
-
-    /* download like a human */
-    {
-        time_t now = time(NULL);
-        struct tm tm = *localtime(&now);
-
-        // look human by stopping downloads between 12AM and 6AM
-        if (tm.tm_hour >= 0 && tm.tm_hour < 6) {
-            fprintf(stderr,"Time for bed.\n");
-            return false;
-        }
     }
 
     /* then download the video */
