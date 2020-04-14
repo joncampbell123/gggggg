@@ -112,18 +112,6 @@ bool download_video_youtube(const Json &video) {
         }
     }
 
-    /* download like a human */
-    {
-        time_t now = time(NULL);
-        struct tm tm = *localtime(&now);
-
-        // look human by stopping downloads between 12AM and 6AM
-        if (tm.tm_hour >= 0 && tm.tm_hour < 6) {
-            fprintf(stderr,"Time for bed.\n");
-            return false;
-        }
-    }
-
     /* we trust the ID will never need characters that require escaping.
      * they're alphanumeric base64 so far. */
     string invoke_url = string("https://www.youtube.com/watch?v=") + id;
@@ -416,6 +404,16 @@ int main(int argc,char **argv) {
              *
              * {"url": "AbH3pJnFgY8", "_type": "url", "ie_key": "Youtube", "id": "AbH3pJnFgY8", "title": "No More Twitter? \ud83d\ude02"} */
             if (json["ie_key"].string_value() == "Youtube") { /* FIXME: what if youtube-dl changes that? */
+                /* download like a human */
+                {
+                    time_t now = time(NULL);
+                    struct tm tm = *localtime(&now);
+
+                    // look human by stopping downloads between 12AM and 6AM
+                    if (tm.tm_hour >= 0 && tm.tm_hour < 6)
+                        continue;
+                }
+
                 if (download_video_youtube(json)) {
                     if (++download_count >= download_limit)
                         break;
