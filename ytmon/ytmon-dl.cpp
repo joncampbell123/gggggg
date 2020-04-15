@@ -14,6 +14,7 @@
 using namespace std;
 using namespace json11;
 
+time_t                      download_timeout_default = 5 * 60; // 5 min
 time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
 time_t                      info_json_expire = 6 * 60 * 60;         // 6 hours
 
@@ -311,10 +312,11 @@ void chomp(char *s) {
 
 int main(int argc,char **argv) {
     string api_url;
+    time_t download_timeout;
     time_t now = time(NULL);
     struct tm tm = *localtime(&now);
     int download_count = 0;
-    int download_limit = 5;
+    int download_limit = 20;
     int failignore_limit = 10;
 
     if (argc >= 2)
@@ -366,6 +368,10 @@ int main(int argc,char **argv) {
     string js_file = "playlist-combined.json"; // use .json not .js so the archive-off script does not touch it
 
     /* the JS file is actually MANY JS objects encoded on a line by line basis */
+
+    /* to keep collecting on general going, have a download timeout as well. */
+    now = time(NULL);
+    download_timeout = now + download_timeout_default;
 
     {
         char buf[4096]; /* should be large enough for now */
@@ -437,6 +443,10 @@ int main(int argc,char **argv) {
                 break;
 
             if (should_stop)
+                break;
+
+            now = time(NULL);
+            if (now >= download_timeout)
                 break;
         }
 
