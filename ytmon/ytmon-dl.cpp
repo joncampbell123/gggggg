@@ -335,7 +335,17 @@ int parse_argv(int argc,char **argv) {
             if (!strcmp(a,"duration-limit")) {
                 a = argv[i++];
                 if (a == NULL) return 1;
-                duration_limit = atof(a);
+                duration_limit = strtof(a,&a);
+                if (*a == 'h')
+                    duration_limit *= 60 * 60;
+                else if (*a == 'm')
+                    duration_limit *= 60;
+                else if (*a == 's' || *a == 0)
+                    { /*nothing*/ }
+                else {
+                    fprintf(stderr,"What? %c\n",a);
+                    return 1;
+                }
             }
             else {
                 return 1;
