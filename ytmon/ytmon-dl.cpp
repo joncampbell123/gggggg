@@ -14,6 +14,8 @@
 using namespace std;
 using namespace json11;
 
+double                      duration_limit = 0;
+
 time_t                      download_timeout_default = 5 * 60; // 5 min
 time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
 time_t                      info_json_expire = 6 * 60 * 60;         // 6 hours
@@ -24,6 +26,7 @@ int                         bitchute_bitrate = 2000;
 
 int                         failignore_mark_counter = 0;
 
+std::string                 api_url;
 std::string                 youtube_user,youtube_pass;
 
 char                        large_tmp[1024*1024];
@@ -310,8 +313,41 @@ void chomp(char *s) {
     while (e >= s && (*e == '\n' || *e == '\r')) *e-- = 0;
 }
 
+int parse_argv(int argc,char **argv) {
+    int i = 1,nsw = 0;
+    char *a;
+
+    while (i < argc) {
+        a = argv[i++];
+
+        if (*a == '-') {
+            do { a++; } while (*a == '-');
+
+            if (!strcmp(a,"duration-limit")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                duration_limit = atof(a);
+            }
+            else {
+                return 1;
+            }
+        }
+        else {
+            switch (nsw) {
+                case 0:
+                    nsw++;
+                    api_url = a;
+                    break;
+                default:
+                    return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
 int main(int argc,char **argv) {
-    string api_url;
     time_t download_timeout;
     time_t now = time(NULL);
     struct tm tm = *localtime(&now);
@@ -319,8 +355,8 @@ int main(int argc,char **argv) {
     int download_limit = 20;
     int failignore_limit = 10;
 
-    if (argc >= 2)
-        api_url = argv[1];
+    if (parse_argv(argc,argv))
+        return 1;
 
     init_marker();
 
