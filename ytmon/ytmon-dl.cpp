@@ -166,6 +166,7 @@ bool download_video_youtube(const Json &video) {
      * but for search queries will return results that involve live feeds.
      * Most live feeds finish eventually and turn into a video. */
     bool live_feed = false;
+    double duration = -1;
     {
         FILE *fp;
 
@@ -186,12 +187,20 @@ bool download_video_youtube(const Json &video) {
                 auto is_live = info_json["is_live"];
                 if (is_live.is_bool()) /* else is null? */
                     live_feed = is_live.bool_value();
+
+                auto js_duration = info_json["duration"];
+                if (js_duration.is_number())
+                    duration = js_duration.number_value();
             }
         }
     }
 
     if (live_feed) {
         fprintf(stderr,"Item '%s' is a live feed, skipping. It may turn into a downloadable later.\n",id.c_str());
+        return false;
+    }
+    if (duration_limit >= 0 && duration >= 0 && duration > duration_limit) {
+//      fprintf(stderr,"Item '%s' duration %.3f exceeds duration limit %.3f\n",id.c_str(),duration,duration_limit);
         return false;
     }
 
