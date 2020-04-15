@@ -14,7 +14,7 @@
 using namespace std;
 using namespace json11;
 
-double                      duration_limit = 0;
+double                      duration_limit = -1;
 
 time_t                      download_timeout_default = 5 * 60; // 5 min
 time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
