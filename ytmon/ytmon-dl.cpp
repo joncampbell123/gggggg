@@ -470,8 +470,8 @@ int main(int argc,char **argv) {
                     time_t now = time(NULL);
                     struct tm tm = *localtime(&now);
 
-                    // look human by stopping downloads between 12AM and 6AM
-                    if (tm.tm_hour >= 0 && tm.tm_hour < 6)
+                    // look human by stopping downloads between 3AM and 6AM
+                    if (tm.tm_hour >= 3 && tm.tm_hour < 6)
                         continue;
                 }
 
