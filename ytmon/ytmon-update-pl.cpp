@@ -167,6 +167,8 @@ int main(int argc,char **argv) {
     }
     api_url = argv[1];
 
+    const unsigned int hours = 6;
+
     // stagger downloads by picking a minute within the half hour interval to query the channel list.
     // this way the downloader is not spending 5 minutes querying channel lists every half hour.
     unsigned int submin = 0;
@@ -177,8 +179,8 @@ int main(int argc,char **argv) {
         submin += (tm.tm_year+1900)*44u;
         submin += (tm.tm_mon+1)*4932u;
         submin += (tm.tm_mday)*3231u;
-        submin += (tm.tm_hour - (tm.tm_hour % 3))*92818u;
-        submin %= (60u * 60u * 3u); /* pick a time within the 3 hour interval */
+        submin += (tm.tm_hour - (tm.tm_hour % hours))*92818u;
+        submin %= (60u * 60u * hours); /* pick a time within the hour interval */
     }
 
     string js_file = "playlist-combined.json"; // use .json not .js so the archive-off script does not touch it
@@ -187,7 +189,7 @@ int main(int argc,char **argv) {
             tm.tm_year+1900,
             tm.tm_mon+1,
             tm.tm_mday,
-            tm.tm_hour + (submin / (60u * 60u))/*valid range 0..2*/ - (tm.tm_hour % 3),
+            tm.tm_hour + (submin / (60u * 60u))/*valid range 0..(hours-1)*/ - (tm.tm_hour % hours),
             (submin / 60u) % 60u,
             submin % 60u);
     }
