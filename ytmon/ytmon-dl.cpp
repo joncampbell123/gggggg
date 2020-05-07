@@ -317,6 +317,94 @@ bool download_video_bitchute(const Json &video) {
     return true;
 }
 
+bool download_video_soundcloud(const Json &video) {
+    string title = video["title"].string_value();
+    string url = video["url"].string_value();
+    string id = video["id"].string_value();
+
+    if (id.empty() || url.empty()) return false;
+    assert(id.find_first_of(' ') == string::npos);
+    assert(id.find_first_of('$') == string::npos);
+    assert(id.find_first_of('\'') == string::npos);
+    assert(id.find_first_of('\"') == string::npos);
+
+    {
+        struct stat st;
+
+        string mark_filename = get_mark_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            return false; // already exists
+        }
+    }
+
+    {
+        time_t now = time(NULL);
+        struct stat st;
+
+        string mark_filename = get_mark_failignore_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            if ((st.st_mtime + failignore_timeout) >= now) {
+                fprintf(stderr,"Ignoring '%s', failignore\n",id.c_str());
+                return false; // failignore
+            }
+        }
+    }
+
+    sleep(1);
+
+    string tagname = id;
+    if (!title.empty()) {
+        tagname += "-";
+        tagname += title;
+    }
+    if (tagname != id) {
+        if (tagname.length() > 128)
+            tagname = tagname.substr(0,128);
+
+        for (auto &c : tagname) {
+            if (c < 32 || c > 126 || c == ':' || c == '\\' || c == '/')
+                c = ' ';
+        }
+
+        tagname += ".txt";
+
+        {
+            FILE *fp = fopen(tagname.c_str(),"w");
+            if (fp) {
+                fclose(fp);
+            }
+        }
+    }
+
+    time_t dl_begin = time(NULL);
+
+    /* we trust the ID will never need characters that require escaping.
+     * they're alphanumeric base64 so far. */
+    string invoke_url = url;
+
+    {
+        string cmd = string("youtube-dl --no-check-certificate --no-mtime --continue --write-all-thumbnails --write-info-json --all-subs --limit-rate=") + to_string(bitchute_bitrate) + "K --output '%(id)s.mp3' " + invoke_url;
+        int status = system(cmd.c_str());
+        if (WIFSIGNALED(status)) should_stop = true;
+
+        if (status != 0) {
+            time_t dl_duration = time(NULL) - dl_begin;
+
+            if (dl_duration < 10) {
+                fprintf(stderr,"Failed too quickly, marking\n");
+                mark_failignore_file(id);
+                failignore_mark_counter++;
+            }
+
+            return false;
+        }
+    }
+
+    /* done! */
+    mark_file(id);
+    return true;
+}
+
 void chomp(char *s) {
     char *e = s + strlen(s) - 1;
     while (e >= s && (*e == '\n' || *e == '\r')) *e-- = 0;
@@ -487,6 +575,17 @@ int main(int argc,char **argv) {
              * {"url": "https://www.bitchute.com/video/F0yUrwVz9fYV", "_type": "url", "ie_key": "BitChute", "id": "F0yUrwVz9fYV"} */
             else if (json["ie_key"].string_value() == "BitChute") { /* FIXME: what if youtube-dl changes that? */
                 if (download_video_bitchute(json)) {
+                    if (++download_count >= download_limit)
+                        break;
+
+                    sleep(5 + ((unsigned int)rand() % 5u));
+                }
+            }
+            /* Soundcloud example:
+             *
+             * {"url": "https://soundcloud.com/openai_audio/classic-pop-in-the-style-of-elvis-presley", "_type": "url", "ie_key": "Soundcloud", "id": "814263598", "title": "Classic Pop, in the style of Elvis Presley"} */
+            else if (json["ie_key"].string_value() == "Soundcloud") { /* FIXME: what if youtube-dl changes that? */
+                if (download_video_soundcloud(json)) {
                     if (++download_count >= download_limit)
                         break;
 
