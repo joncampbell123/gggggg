@@ -293,6 +293,39 @@ bool download_video_bitchute(const Json &video) {
      * they're alphanumeric base64 so far. */
     string invoke_url = string("https://www.bitchute.com/video/") + id;
 
+    string expect_info_json = id + ".info.json";
+
+    /* download the *.info.json first, don't update too often */
+    {
+        bool doit = true;
+        time_t now = time(NULL);
+        struct stat st;
+
+        if (stat(expect_info_json.c_str(),&st) == 0 && S_ISREG(st.st_mode)) {
+            if ((st.st_mtime + info_json_expire) >= now) {
+                doit = false;
+            }
+        }
+
+        if (doit) {
+            string cmd = string("youtube-dl --cookies cookies.txt --skip-download --write-info-json --output '%(id)s' ") + invoke_url;
+            int status = system(cmd.c_str());
+            if (WIFSIGNALED(status)) should_stop = true;
+
+            if (status != 0) {
+                time_t dl_duration = time(NULL) - dl_begin;
+
+                if (dl_duration < 10) {
+                    fprintf(stderr,"Failed too quickly, marking\n");
+                    mark_failignore_file(id);
+                    failignore_mark_counter++;
+                }
+
+                return false;
+            }
+        }
+    }
+
     /* All video on BitChute is .mp4, and youtube-dl needs to be given that suffix */
     {
         string cmd = string("youtube-dl --no-check-certificate --no-mtime --continue --write-all-thumbnails --write-info-json --all-subs --limit-rate=") + to_string(bitchute_bitrate) + "K --output '%(id)s.mp4' " + invoke_url;
@@ -381,6 +414,39 @@ bool download_video_soundcloud(const Json &video) {
     /* we trust the ID will never need characters that require escaping.
      * they're alphanumeric base64 so far. */
     string invoke_url = url;
+
+    string expect_info_json = id + ".info.json";
+
+    /* download the *.info.json first, don't update too often */
+    {
+        bool doit = true;
+        time_t now = time(NULL);
+        struct stat st;
+
+        if (stat(expect_info_json.c_str(),&st) == 0 && S_ISREG(st.st_mode)) {
+            if ((st.st_mtime + info_json_expire) >= now) {
+                doit = false;
+            }
+        }
+
+        if (doit) {
+            string cmd = string("youtube-dl --cookies cookies.txt --skip-download --write-info-json --output '%(id)s' ") + invoke_url;
+            int status = system(cmd.c_str());
+            if (WIFSIGNALED(status)) should_stop = true;
+
+            if (status != 0) {
+                time_t dl_duration = time(NULL) - dl_begin;
+
+                if (dl_duration < 10) {
+                    fprintf(stderr,"Failed too quickly, marking\n");
+                    mark_failignore_file(id);
+                    failignore_mark_counter++;
+                }
+
+                return false;
+            }
+        }
+    }
 
     {
         string cmd = string("youtube-dl --no-check-certificate --no-mtime --continue --write-all-thumbnails --write-info-json --all-subs --limit-rate=") + to_string(bitchute_bitrate) + "K --output '%(id)s.mp3' " + invoke_url;
