@@ -125,7 +125,7 @@ int main(int argc,char **argv) {
 
     if (stat(js_file.c_str(),&st) || !S_ISREG(st.st_mode) || st.st_size == 0) {
         /* NTS: We trust the JSON will not have '@' or shell escapable chars */
-        string cmd = "curl -X POST --data '" + channel_query_string + "' --header 'Content-Type:application/json' -o '" + js_file + "' 'https://vod-api.infowars.com/graphql'";
+        string cmd = "curl -X POST --data '" + channel_query_string + "' --header 'Content-Type:application/json' -o '" + js_file + "' 'https://api.banned.video/graphql'";
         int x = system(cmd.c_str());
         if (x != 0) return 1;
     }
