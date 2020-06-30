@@ -20,6 +20,11 @@ time_t                      download_timeout_default = 5 * 60; // 5 min
 time_t                      failignore_timeout = 7 * 24 * 60 * 60; // 7 days
 time_t                      info_json_expire = 6 * 60 * 60;         // 6 hours
 
+// 2020-06-29: Too much to collect, too little time. Limit to 720p to improve collection rate.
+//             Back when YouTube wasn't banning everything in sight, patience and the highest quality
+//             version were ideal, but no longer. Collect everything, before it is banned!
+std::string                 youtube_format_spec = "-f 'bestvideo[height<=720]+bestaudio/best[height<=720]' ";
+
 bool                        sunday_dl = false;
 int                         youtube_bitrate = 2000;
 int                         bitchute_bitrate = 2000;
@@ -206,7 +211,7 @@ bool download_video_youtube(const Json &video) {
 
     /* then download the video */
     {
-        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --write-all-thumbnails --all-subs --limit-rate=") + to_string(youtube_bitrate) + "K --output '%(id)s' " + creds + invoke_url; /* --write-info-json not needed, first step above */
+        string cmd = string("youtube-dl --cookies cookies.txt --no-mtime --continue --write-all-thumbnails --all-subs --limit-rate=") + to_string(youtube_bitrate) + "K --output '%(id)s' " + youtube_format_spec + creds + invoke_url; /* --write-info-json not needed, first step above */
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
 
