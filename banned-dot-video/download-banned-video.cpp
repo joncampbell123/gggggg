@@ -101,7 +101,7 @@ int main(int argc,char **argv) {
         {
             Json::object obj;
             obj["id"] = chosen_channel;
-            obj["limit"] = 999;
+            obj["limit"] = 499;
             obj["offset"] = 0;
             channel_query["variables"] = obj;
         }
