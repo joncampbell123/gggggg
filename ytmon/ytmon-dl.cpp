@@ -313,7 +313,7 @@ bool download_video_bitchute(const Json &video) {
         }
 
         if (doit) {
-            string cmd = string("youtube-dl --cookies cookies.txt --skip-download --write-info-json --output '%(id)s' ") + invoke_url;
+            string cmd = string("youtube-dl --no-check-certificate --cookies cookies.txt --skip-download --write-info-json --output '%(id)s' ") + invoke_url;
             int status = system(cmd.c_str());
             if (WIFSIGNALED(status)) should_stop = true;
 
