@@ -83,7 +83,7 @@ int main(int argc,char **argv) {
         char hostname[256] = {0};
         gethostname(hostname,sizeof(hostname)-1);
 
-        if (!strcmp(hostname,"something")) {
+        {
             download_bitrate = 500;
 
             /* go faster on BitChute on Friday, Saturday, Sunday */
