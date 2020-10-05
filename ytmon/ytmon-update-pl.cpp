@@ -167,7 +167,7 @@ int main(int argc,char **argv) {
     }
     api_url = argv[1];
 
-    const unsigned int hours = 24;
+    const unsigned int hours = 6;
 
     // stagger downloads by picking a minute within the half hour interval to query the channel list.
     // this way the downloader is not spending 5 minutes querying channel lists every half hour.
