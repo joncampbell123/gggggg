@@ -26,7 +26,7 @@ time_t                      info_json_expire = 6 * 60 * 60;         // 6 hours
 std::string                 youtube_format_spec = "-f 'bestvideo[height<=720]+bestaudio/best[height<=720]' ";
 
 bool                        sunday_dl = false;
-int                         youtube_bitrate = 2200;
+int                         youtube_bitrate = 3000;
 int                         bitchute_bitrate = 2000;
 
 int                         failignore_mark_counter = 0;
