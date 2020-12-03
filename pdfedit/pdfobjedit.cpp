@@ -231,6 +231,7 @@ public:
 };
 
 class PDFblob : public vector<uint8_t> {
+public:
     bool                        modified = false;
 };
 
@@ -243,6 +244,10 @@ public:
     }
     bool has_mxref(size_t n) {
         return mod_xref.find(n) != mod_xref.end();
+    }
+    void flush_mxref(size_t n) {
+        auto i = mod_xref.find(n);
+        if (i != mod_xref.end()) mod_xref.erase(i);
     }
     bool load_mxref(istream &is,const PDFxrefentry &xref,size_t n) {
         /* if the mod_xref is already there, the caller wants us to reload.
@@ -380,12 +385,77 @@ void less_pdf(const std::string path) {
     }
 }
 
+bool export_edited_pdf(const string &modname,PDFmod &pdfm,PDF &pdf,istream &is) {
+    ofstream ofs;
+
+    ofs.open(modname,ios_base::out|ios_base::binary);
+    if (!ofs.is_open()) return false;
+
+    vector<off_t> obj_offsets; /* for the xref */
+    vector<uint32_t> obj_gen;
+    vector<char> obj_use;
+
+    for (size_t objn=0;objn < pdf.xref.xreflist.size();objn++) {
+        off_t offset = (off_t)ofs.tellp();
+        if (offset < 0) return false;
+        obj_offsets.push_back(offset);
+
+        auto &xref = pdf.xref.xref((size_t)objn);
+        obj_use.push_back(xref.use);
+        obj_gen.push_back(xref.generation);
+
+        if (!pdfm.has_mxref(objn)) {
+            if (!pdfm.load_mxref(is,xref,(size_t)objn)) {
+                printf("ERR: Failed to load xref\n");
+                return false;
+            }
+        }
+
+        {
+            assert(pdfm.has_mxref(objn));
+            auto &mxref = pdfm.mod_xref[objn];
+            if (mxref.size() != 0) {
+                if (ofs.write((char*)(&mxref[0]),mxref.size()).fail())
+                    return false;
+            }
+
+            if (!mxref.modified)
+                pdfm.flush_mxref((size_t)objn);
+        }
+    }
+
+    assert(obj_offsets.size() == pdf.xref.xreflist.size());
+    assert(obj_gen.size() == pdf.xref.xreflist.size());
+    assert(obj_use.size() == pdf.xref.xreflist.size());
+
+    /* xref */
+    off_t xref_ofs = ofs.tellp();
+    ofs << std::dec;
+    ofs << "xref" << endl;
+    ofs << "0 " << pdf.xref.xreflist.size() << endl;
+    for (size_t objn=0;objn < pdf.xref.xreflist.size();objn++) {
+        char tmp[24];
+
+        tmp[20] = 0;
+        memset(tmp,' ',20);
+        sprintf(tmp+ 0,"%010d ",obj_offsets[objn]);     // 0+10+1
+        sprintf(tmp+11,"%05d ",obj_gen[objn]);          // 11+5+1
+        sprintf(tmp+17,"%c ",obj_use[objn]);            // 17+1
+        tmp[18] = ' ';
+        tmp[19] = '\n';
+
+        if (ofs.write(tmp,20).fail())
+            return false;
+    }
+
+    return true;
+}
+
 void runEditor(const char *src) {
-    string tempname = string(src) + ".modified.pdf";
+    string modname = string(src) + ".modified.pdf";
     string tempedit = string(src) + ".editobj";
     char line[1024];
     ifstream ifs;
-    ofstream ofs;
     PDFmod pdfm;
     string ipm;
     PDF pdf;
@@ -416,13 +486,21 @@ void runEditor(const char *src) {
         }
         else if (ipm == "h") {
             printf("q       quit            h       help            vo      view orig\n");
-            printf("ve      view edited     eo <n>  edit object\n");
+            printf("ve      view edited     eo <n>  edit object     ex      export edit\n");
         }
         else if (ipm == "vo") {
             less_pdf(src);
         }
         else if (ipm == "ve") {
-            less_pdf(tempname);
+            less_pdf(modname);
+        }
+        else if (ipm == "ex") {
+            if (!export_edited_pdf(modname,pdfm,pdf,ifs)) {
+                printf("ERROR: Failed to export edited PDF\n");
+            }
+            else {
+                printf("INFO: Export complete\n");
+            }
         }
         else if (ipm == "eo") {
             garg(ipm,/*&*/s);
