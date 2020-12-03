@@ -239,6 +239,30 @@ public:
     bool modified(void) const {
         return !mod_xref.empty();
     }
+    bool has_mxref(size_t n) {
+        return mod_xref.find(n) != mod_xref.end();
+    }
+    bool load_mxref(istream &is,const PDFxrefentry &xref,size_t n) {
+        /* if the mod_xref is already there, the caller wants us to reload.
+         * If the caller wanted to only load if not there, it would have
+         * called has_mxref() first */
+        if (xref.offset < 0) return false;
+        if (xref.length < 0) return false;
+        if (xref.length > (1*1024*1024*1024)) return false;
+
+        /* clear existing mod */
+        auto &mod = mod_xref[n];
+        mod.clear();
+
+        if (is.seekg(xref.offset).tellg() != xref.offset) return false;
+        mod.resize((size_t)xref.length); /* will throw C++ badalloc if fails */
+
+        assert((&mod[0] + 1) == &mod[1]); /* make sure std::vector works like we expect */
+
+        if (is.read((char*)(&mod[0]),(streamsize)xref.length).gcount() != (streamsize)xref.length) return false;
+
+        return true;
+    }
 };
 
 void garg(string &r,char* &s) {
@@ -321,13 +345,36 @@ void runEditor(const char *src) {
         }
         else if (ipm == "h") {
             printf("q       quit            h       help            vo      view orig\n");
-            printf("ve      view edit\n");
+            printf("ve      view edit       eo <n>  edit object\n");
         }
         else if (ipm == "vo") {
             less_pdf(src);
         }
         else if (ipm == "ve") {
             less_pdf(tempname);
+        }
+        else if (ipm == "eo") {
+            garg(ipm,/*&*/s);
+            if (ipm.empty()) {
+                printf("ERR: need object\n");
+                continue;
+            }
+
+            long n = strtol(ipm.c_str(),NULL,0);
+            if (n >= 0 && n < (long)pdf.xref.xreflist.size()) {
+                if (!pdfm.has_mxref((size_t)n)) {
+                    auto &xref = pdf.xref.xref((size_t)n);
+                    if (!pdfm.load_mxref(ifs,xref,(size_t)n)) {
+                        printf("ERR: Failed to load xref\n");
+                        continue;
+                    }
+
+                    printf("INFO: object %ld now loaded as modified\n",n);
+                }
+            }
+            else {
+                printf("ERR: Out of range\n");
+            }
         }
         else {
             printf("ERR: Unknown command '%s'\n",ipm.c_str());
