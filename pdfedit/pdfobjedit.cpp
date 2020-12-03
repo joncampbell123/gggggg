@@ -202,6 +202,22 @@ public:
 
         return true;
     }
+    bool load(istream &ifs) {
+        if (!find_startxref(ifs)) {
+            fprintf(stderr,"Cannot locate xref\n");
+            return false;
+        }
+        fprintf(stderr,"PDF: startxref points to file offset %lld\n",(signed long long)xref.startxref);
+
+        if (!load_xref(ifs)) {
+            fprintf(stderr,"Cannot load xref\n");
+            return false;
+        }
+
+        xref.xreflistmksize();
+
+        return true;
+    }
 };
 
 void runEditor(const char *src) {
@@ -214,18 +230,10 @@ void runEditor(const char *src) {
         return;
     }
 
-    if (!pdf.find_startxref(ifs)) {
-        fprintf(stderr,"Cannot locate xref\n");
+    if (!pdf.load(ifs)) {
+        fprintf(stderr,"Failed to load %s\n",src);
         return;
     }
-    fprintf(stderr,"PDF: startxref points to file offset %lld\n",(signed long long)pdf.xref.startxref);
-
-    if (!pdf.load_xref(ifs)) {
-        fprintf(stderr,"Cannot load xref\n");
-        return;
-    }
-
-    pdf.xref.xreflistmksize();
 }
 
 int main(int argc,char **argv) {
