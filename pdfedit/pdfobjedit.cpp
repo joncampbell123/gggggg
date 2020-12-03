@@ -550,6 +550,7 @@ void runEditor(const char *src) {
                     printf("ERR: object %ld failed to send to temp\n",n);
                     continue;
                 }
+                pdfm.mod_xref[(size_t)n].modified = true;
 
                 run_text_editor(tempedit);
 
