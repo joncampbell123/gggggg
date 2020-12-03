@@ -78,8 +78,10 @@ public:
     void xreflistmksize(void) {
         vector< pair<off_t,size_t> > offsets;
 
-        for (auto i=xreflist.begin();i!=xreflist.end();i++)
-            offsets.push_back( pair<off_t,size_t>((*i).offset,(size_t)(i-xreflist.begin())) );
+        for (auto i=xreflist.begin();i!=xreflist.end();i++) {
+            if ((*i).use == 'n') /* do not factor in free entries, they point nowhere */
+                offsets.push_back( pair<off_t,size_t>((*i).offset,(size_t)(i-xreflist.begin())) );
+        }
 
         sort(offsets.begin(),offsets.end());
 
@@ -112,6 +114,12 @@ public:
 #endif
                 } while (i != offsets.end());
             }
+        }
+
+        /* anything else has a length of zero */
+        for (auto i=xreflist.begin();i!=xreflist.end();i++) {
+            if ((*i).length < 0)
+                (*i).length = 0;
         }
     }
 };
