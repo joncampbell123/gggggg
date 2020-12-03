@@ -79,13 +79,7 @@ struct PDFxrefrange {
     unsigned long               start = 0;
     unsigned long               count = 0;
 
-    bool read(istream &is) {
-        string line;
-
-        line.clear();
-        getline(is,line);
-        chomp(line);
-
+    bool parse(const string &line) {
         start = count = 0;
 
         const char *s = line.c_str();
@@ -119,8 +113,12 @@ public:
         chomp(line);
         if (line != "xref") return false;
 
-        if (!xrr.read(is)) return false;
+        line.clear();
+        getline(is,line);
+        chomp(line);
+        if (!xrr.parse(line)) return false;
 
+        fprintf(stderr,"Loading objects %lu-%lu\n",xrr.start,xrr.start+xrr.count-1);
         if (xref.xreflist.size() < (xrr.count+xrr.start))
             xref.xreflist.resize(xrr.count+xrr.start);
 
