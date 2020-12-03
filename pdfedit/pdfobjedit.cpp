@@ -455,6 +455,24 @@ bool export_edited_pdf(const string &modname,PDFmod &pdfm,PDF &pdf,istream &is) 
             return false;
     }
 
+    /* copy trailer from PDF */
+    if (pdf.xref.trailer_ofs >= 0 && pdf.xref.startxref >= 0 && pdf.xref.xref_ofs >= 0 && pdf.xref.trailer_ofs < pdf.xref.startxref) {
+        size_t rd = (size_t)(pdf.xref.startxref - pdf.xref.trailer_ofs);
+        char tmp[16384];
+
+        if (rd >= 0 && rd <= sizeof(tmp)) {
+            if (is.seekg(pdf.xref.trailer_ofs).tellg() != pdf.xref.trailer_ofs)
+                return false;
+            if (is.read(tmp,rd).gcount() != rd)
+                return false;
+            if (ofs.write(tmp,rd).fail())
+                return false;
+
+            ofs << std::dec << xref_ofs << endl;
+            ofs << "%%EOF" << endl;
+        }
+    }
+
     return true;
 }
 
