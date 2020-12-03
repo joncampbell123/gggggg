@@ -265,6 +265,48 @@ public:
 
         return true;
     }
+    bool mxref_to_temp(const string &tmp,size_t n) {
+        auto i = mod_xref.find(n);
+        if (i == mod_xref.end()) return false;
+
+        int fd = open(tmp.c_str(),O_CREAT|O_TRUNC|O_BINARY|O_WRONLY,0600);
+        if (fd < 0) return false;
+        if (i->second.size() != 0) {
+            if (write(fd,&i->second[0],i->second.size()) != i->second.size()) {
+                close(fd);
+                return false;
+            }
+        }
+        close(fd);
+        return true;
+    }
+    bool temp_to_mxref(const string &tmp,size_t n) {
+        auto i = mod_xref.find(n);
+        if (i == mod_xref.end()) return false;
+
+        int fd = open(tmp.c_str(),O_BINARY|O_RDONLY);
+        if (fd < 0) return false;
+        off_t sz = lseek(fd,0,SEEK_END);
+        if (sz >= 0 && sz < (1*1024*1024*1024)) {
+            i->second.resize((size_t)sz);
+            if (sz != 0) {
+                if (lseek(fd,0,SEEK_SET) != 0) {
+                    close(fd);
+                    return false;
+                }
+                if (read(fd,&i->second[0],sz) != sz) {
+                    close(fd);
+                    return false;
+                }
+            }
+        }
+        else {
+            i->second.clear();
+        }
+
+        close(fd);
+        return true;
+    }
 };
 
 void garg(string &r,char* &s) {
@@ -283,6 +325,32 @@ void garg(string &r,char* &s) {
     else {
         while (*s != 0 && !(*s == ' ' || *s == '\t'))
             r += *s++;
+    }
+}
+
+void run_text_editor(const std::string path) {
+    char *argv[64];
+    int argc=0;
+
+    argv[argc++] = (char*)"/usr/bin/vim";
+    argv[argc++] = (char*)"--";
+    argv[argc++] = (char*)path.c_str();
+    argv[argc  ] = NULL;
+
+    pid_t pid;
+
+    pid = fork();
+    if (pid < 0)
+        return; // failed
+
+    if (pid == 0) {
+        /* child */
+        execv(argv[0],argv);
+        _exit(1);
+    }
+    else {
+        /* parent */
+        while (waitpid(pid,NULL,0) != pid);
     }
 }
 
@@ -314,6 +382,7 @@ void less_pdf(const std::string path) {
 
 void runEditor(const char *src) {
     string tempname = string(src) + ".modified.pdf";
+    string tempedit = string(src) + ".editobj";
     char line[1024];
     ifstream ifs;
     ofstream ofs;
@@ -373,6 +442,21 @@ void runEditor(const char *src) {
 
                     printf("INFO: object %ld loaded\n",n);
                 }
+
+                if (!pdfm.mxref_to_temp(tempedit,(size_t)n)) {
+                    printf("ERR: object %ld failed to send to temp\n",n);
+                    continue;
+                }
+
+                run_text_editor(tempedit);
+
+                if (!pdfm.temp_to_mxref(tempedit,(size_t)n)) {
+                    printf("ERR: object %ld failed to send to temp\n",n);
+                    continue;
+                }
+
+                if (unlink(tempedit.c_str()) != 0)
+                    printf("WARN: unable to remove temp file %s\n",tempedit.c_str());
             }
             else {
                 printf("ERR: Out of range\n");
