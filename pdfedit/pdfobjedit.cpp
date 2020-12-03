@@ -69,6 +69,7 @@ public:
     vector<PDFxrefentry>        xreflist; /* object 0 = elem 0 */
     off_t                       trailer_ofs = -1;
     off_t                       startxref = -1;
+    off_t                       xref_ofs = -1;
 public:
     const PDFxrefentry &xref(const size_t i) const {
         if (i >= xreflist.size()) throw runtime_error("xref out of range");
@@ -93,7 +94,7 @@ public:
                     if (i != offsets.end())
                         coff = (*i).first;
                     else
-                        coff = startxref;
+                        coff = xref_ofs;
 
                     assert(coff >= poff);
                     assert((*ci).second < xreflist.size());
@@ -155,8 +156,8 @@ public:
         PDFxrefrange xrr;
         string line;
 
-        if (xref.startxref < 0) return false;
-        if (is.seekg(xref.startxref).tellg() != xref.startxref) return false;
+        if (xref.xref_ofs < 0) return false;
+        if (is.seekg(xref.xref_ofs).tellg() != xref.xref_ofs) return false;
 
         line.clear();
         getline(is,line);
@@ -179,6 +180,9 @@ public:
             assert((count+xrr.start) < xref.xreflist.size());
             xref.xreflist[count+xrr.start] = ent;
         }
+
+        /* trailer follows xref */
+        xref.trailer_ofs = is.tellg();
 
         return true;
     }
@@ -208,7 +212,10 @@ public:
         assert(*scan == '\n');
         scan++;
         if (!isxdigit(*scan)) return false;
-        xref.startxref = strtoul(scan,NULL,10);
+        xref.xref_ofs = strtoul(scan,NULL,10);
+
+        /* FIXME: This points at the number, not the startxref */
+        xref.startxref = chk + (off_t)((size_t)(scan - tmp));
 
         return true;
     }
@@ -217,7 +224,7 @@ public:
             fprintf(stderr,"Cannot locate xref\n");
             return false;
         }
-        fprintf(stderr,"PDF: startxref points to file offset %lld\n",(signed long long)xref.startxref);
+        fprintf(stderr,"PDF: startxref points to file offset %lld\n",(signed long long)xref.xref_ofs);
 
         if (!load_xref(ifs)) {
             fprintf(stderr,"Cannot load xref\n");
