@@ -230,7 +230,9 @@ public:
     }
 };
 
-typedef vector<uint8_t> PDFblob;
+class PDFblob : public vector<uint8_t> {
+    bool                        modified = false;
+};
 
 class PDFmod {
 public:
@@ -369,7 +371,7 @@ void runEditor(const char *src) {
                         continue;
                     }
 
-                    printf("INFO: object %ld now loaded as modified\n",n);
+                    printf("INFO: object %ld loaded\n",n);
                 }
             }
             else {
