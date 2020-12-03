@@ -2,6 +2,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <termios.h>
 
@@ -259,6 +260,32 @@ void garg(string &r,char* &s) {
     }
 }
 
+void less_pdf(const std::string path) {
+    char *argv[64];
+    int argc=0;
+
+    argv[argc++] = (char*)"/usr/bin/less";
+    argv[argc++] = (char*)"--";
+    argv[argc++] = (char*)path.c_str();
+    argv[argc  ] = NULL;
+
+    pid_t pid;
+
+    pid = fork();
+    if (pid < 0)
+        return; // failed
+
+    if (pid == 0) {
+        /* child */
+        execv(argv[0],argv);
+        _exit(1);
+    }
+    else {
+        /* parent */
+        while (waitpid(pid,NULL,0) != pid);
+    }
+}
+
 void runEditor(const char *src) {
     string tempname = string(src) + ".modified.pdf";
     char line[1024];
@@ -291,6 +318,16 @@ void runEditor(const char *src) {
         }
         else if (ipm == "q") {
             break;
+        }
+        else if (ipm == "h") {
+            printf("q       quit            h       help            vo      view orig\n");
+            printf("ve      view edit\n");
+        }
+        else if (ipm == "vo") {
+            less_pdf(src);
+        }
+        else if (ipm == "ve") {
+            less_pdf(tempname);
         }
         else {
             printf("ERR: Unknown command '%s'\n",ipm.c_str());
