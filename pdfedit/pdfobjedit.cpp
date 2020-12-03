@@ -42,10 +42,59 @@ public:
     off_t                       startxref = -1;
 };
 
+void chomp(string &s) {
+    size_t l = s.length();
+    while (l > 0 && (s[l-1] == '\n' || s[l-1] == '\r')) s.resize(--l);
+}
+
+struct PDFxrefrange {
+    unsigned long               start = 0;
+    unsigned long               count = 0;
+
+    bool read(istream &is) {
+        string line;
+
+        line.clear();
+        getline(is,line);
+        chomp(line);
+
+        start = count = 0;
+
+        const char *s = line.c_str();
+        /* <start> <count> */
+        while (*s == ' ' || *s == '\t') s++;
+        if (!isdigit(*s)) return false;
+        start = strtoul(s,(char**)(&s),10);
+        while (*s == ' ' || *s == '\t') s++;
+        if (!isdigit(*s)) return false;
+        count = strtoul(s,(char**)(&s),10);
+        while (*s == ' ' || *s == '\t') s++;
+        if (*s != 0) return false;
+
+        return true;
+    }
+};
+
 class PDF {
 public:
     PDFxref                     xref;
 public:
+    bool load_xref(istream &is) {
+        PDFxrefrange xrr;
+        string line;
+
+        if (xref.startxref < 0) return false;
+        if (is.seekg(xref.startxref).tellg() != xref.startxref) return false;
+
+        line.clear();
+        getline(is,line);
+        chomp(line);
+        if (line != "xref") return false;
+
+        if (!xrr.read(is)) return false;
+
+        return true;
+    }
     bool find_startxref(istream &is) {
         off_t sz = (off_t)is.seekg(0,ios_base::end).tellg();
         if (sz < 0) return false;
@@ -93,6 +142,11 @@ void runEditor(const char *src) {
         return;
     }
     fprintf(stderr,"PDF: startxref points to file offset %lld\n",(signed long long)pdf.xref.startxref);
+
+    if (!pdf.load_xref(ifs)) {
+        fprintf(stderr,"Cannot load xref\n");
+        return;
+    }
 }
 
 int main(int argc,char **argv) {
