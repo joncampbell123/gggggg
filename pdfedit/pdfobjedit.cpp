@@ -119,6 +119,11 @@ void chomp(string &s) {
     while (l > 0 && (s[l-1] == '\n' || s[l-1] == '\r')) s.resize(--l);
 }
 
+void chomp(char *s) {
+    char *e = s + strlen(s) - 1;
+    while (e >= s && (*e == '\n' || *e == '\r')) *(e--) = 0;
+}
+
 struct PDFxrefrange {
     unsigned long               start = 0;
     unsigned long               count = 0;
@@ -224,8 +229,43 @@ public:
     }
 };
 
+typedef vector<uint8_t> PDFblob;
+
+class PDFmod {
+public:
+    map<size_t,PDFblob>         mod_xref;
+public:
+    bool modified(void) const {
+        return !mod_xref.empty();
+    }
+};
+
+void garg(string &r,char* &s) {
+    r.clear();
+
+    while (*s == ' ' || *s == '\t') s++;
+
+    if (*s == '\'' || *s == '\"') {
+        char quote = *s++;
+
+        while (*s != 0 && *s != quote)
+            r += *s++;
+
+        if (*s == quote) s++;
+    }
+    else {
+        while (*s != 0 && !(*s == ' ' || *s == '\t'))
+            r += *s++;
+    }
+}
+
 void runEditor(const char *src) {
+    string tempname = string(src) + ".modified.pdf";
+    char line[1024];
     ifstream ifs;
+    ofstream ofs;
+    PDFmod pdfm;
+    string ipm;
     PDF pdf;
 
     ifs.open(src,ios_base::in|ios_base::binary);
@@ -238,6 +278,26 @@ void runEditor(const char *src) {
         fprintf(stderr,"Failed to load %s\n",src);
         return;
     }
+
+    while (1) {
+        printf("pdf> "); fflush(stdout);
+        if (fgets(line,sizeof(line),stdin) == NULL) break;
+        chomp(line);
+
+        char *s = line;
+
+        garg(ipm,/*&*/s);
+        if (ipm.empty()) {
+        }
+        else if (ipm == "q") {
+            break;
+        }
+        else {
+            printf("ERR: Unknown command '%s'\n",ipm.c_str());
+        }
+    }
+
+    printf("\n");
 }
 
 int main(int argc,char **argv) {
