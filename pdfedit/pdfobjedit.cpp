@@ -33,6 +33,34 @@ public:
     off_t                       length = -1;
     uint32_t                    generation = 0;
     char                        use = 0;
+public:
+    bool readxrefentry(istream &is) {
+        char tmp[20];
+
+        offset = -1;
+        length = -1;
+        generation = 0;
+        use = 0;
+
+        if (is.read(tmp,20).gcount() != 20) return false;
+
+        /* the last 2 bytes should be " \r" " \n" or "\r\n" */
+        if (memcmp(tmp+18," \r",2) && memcmp(tmp+18," \n",2) && memcmp(tmp+18,"\r\n",2))
+            return false;
+
+        if (!isdigit(tmp[0])) return false;
+        offset = (off_t)strtoul(tmp,NULL,10);
+        if (tmp[10] != ' ') return false;
+
+        if (!isdigit(tmp[11])) return false;
+        generation = (uint32_t)strtoul(tmp+11,NULL,10);
+        if (tmp[11+5] != ' ') return false;
+
+        use = tmp[17];
+        if (use == ' ') return false;
+
+        return true;
+    };
 };
 
 class PDFxref {
@@ -92,6 +120,17 @@ public:
         if (line != "xref") return false;
 
         if (!xrr.read(is)) return false;
+
+        if (xref.xreflist.size() < (xrr.count+xrr.start))
+            xref.xreflist.resize(xrr.count+xrr.start);
+
+        for (unsigned long count=0;count < xrr.count;count++) {
+            PDFxrefentry ent;
+
+            if (!ent.readxrefentry(is)) return false;
+            assert((count+xrr.start) < xref.xreflist.size());
+            xref.xreflist[count+xrr.start] = ent;
+        }
 
         return true;
     }
