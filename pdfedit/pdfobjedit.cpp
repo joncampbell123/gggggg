@@ -68,6 +68,46 @@ public:
     vector<PDFxrefentry>        xreflist; /* object 0 = elem 0 */
     off_t                       trailer_ofs = -1;
     off_t                       startxref = -1;
+public:
+    void xreflistmksize(void) {
+        vector< pair<off_t,size_t> > offsets;
+
+        for (auto i=xreflist.begin();i!=xreflist.end();i++)
+            offsets.push_back( pair<off_t,size_t>((*i).offset,(size_t)(i-xreflist.begin())) );
+
+        sort(offsets.begin(),offsets.end());
+
+        {
+            off_t poff,coff;
+            auto i = offsets.begin();
+            if (i != offsets.end()) {
+                poff = (*i).first;
+                do {
+                    auto ci = i; i++;
+
+                    if (i != offsets.end())
+                        coff = (*i).first;
+                    else
+                        coff = startxref;
+
+                    assert(coff >= poff);
+                    assert((*ci).second < xreflist.size());
+
+                    auto &xref = xreflist[(*ci).second];
+                    assert((*ci).first == xref.offset);
+                    xref.length = coff-poff;
+                    poff = coff;
+
+#if 0
+                    printf("%lu: ofs=%llu len=%llu\n",
+                        (unsigned long)(*ci).second,
+                        (unsigned long long)xref.offset,
+                        (unsigned long long)xref.length);
+#endif
+                } while (i != offsets.end());
+            }
+        }
+    }
 };
 
 void chomp(string &s) {
@@ -184,6 +224,8 @@ void runEditor(const char *src) {
         fprintf(stderr,"Cannot load xref\n");
         return;
     }
+
+    pdf.xref.xreflistmksize();
 }
 
 int main(int argc,char **argv) {
