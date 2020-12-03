@@ -416,7 +416,7 @@ void runEditor(const char *src) {
         }
         else if (ipm == "h") {
             printf("q       quit            h       help            vo      view orig\n");
-            printf("ve      view edit       eo <n>  edit object\n");
+            printf("ve      view edited     eo <n>  edit object\n");
         }
         else if (ipm == "vo") {
             less_pdf(src);
