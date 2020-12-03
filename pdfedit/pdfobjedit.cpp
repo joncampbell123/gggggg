@@ -69,6 +69,10 @@ public:
     off_t                       trailer_ofs = -1;
     off_t                       startxref = -1;
 public:
+    const PDFxrefentry &xref(const size_t i) const {
+        if (i >= xreflist.size()) throw runtime_error("xref out of range");
+        return xreflist[i];
+    }
     void xreflistmksize(void) {
         vector< pair<off_t,size_t> > offsets;
 
