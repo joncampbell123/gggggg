@@ -548,13 +548,35 @@ void runEditor(const char *src) {
         else if (ipm == "mtos") {
             while (*s != 0) {
                 garg(ipm,/*&*/s);
-                if (ipm.empty()) continue;
-                if (!isdigit(*(ipm.c_str()))) continue;
-                signed long n = strtol(ipm.c_str(),0,0);
-                if (n >= 0l && n < (long)pdf.xref.xreflist.size()) {
-                    pdfm.flush_mxref((size_t)n);
-                    auto &ent = pdfm.mod_xref[(size_t)n];
-                    ent.make_empty_stream_obj((size_t)n);
+
+                const char *s = ipm.c_str();
+                if (*s == 0) continue;
+
+                if (isdigit(*s)) {
+                    signed long ns = strtol(s,(char**)(&s),0);
+                    signed long ne = ns;
+                    signed long ni = 1;
+
+                    if (*s == '-') { /* it's a range */
+                        s++;
+                        if (isdigit(*s)) {
+                            ne = strtol(s,(char**)(&s),0);
+                            if (*s == '+') { /* and what interval */
+                                s++;
+                                ni = strtol(s,(char**)(&s),0);
+                                if (ni < 1) ni = 1;
+                            }
+                        }
+                    }
+
+                    for (signed long n=ns;n <= ne;n += ni) {
+                        if (n >= 0l && n < (long)pdf.xref.xreflist.size()) {
+                            printf("INFO: Replacing object %ld\n",n);
+                            pdfm.flush_mxref((size_t)n);
+                            auto &ent = pdfm.mod_xref[(size_t)n];
+                            ent.make_empty_stream_obj((size_t)n);
+                        }
+                    }
                 }
             }
         }
