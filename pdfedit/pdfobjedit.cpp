@@ -257,6 +257,20 @@ public:
 class PDFblob : public vector<uint8_t> {
 public:
     bool                        modified = false;
+public:
+    void make_empty_stream_obj(size_t n) {
+        const string x = to_string(n) + " 0 obj\n" +
+            "<<\n" +
+            "  /Length 0\n" +
+            ">>\n" +
+            "stream\n" +
+            "endstream\n" +
+            "endobj\n\n";
+
+        resize(x.length());
+        memcpy(&((*this)[0]),&(x[0]),x.length());
+        modified = true;
+    }
 };
 
 class PDFmod {
@@ -540,18 +554,7 @@ void runEditor(const char *src) {
                 if (n >= 0l && n < (long)pdf.xref.xreflist.size()) {
                     pdfm.flush_mxref((size_t)n);
                     auto &ent = pdfm.mod_xref[(size_t)n];
-
-                    string x = to_string(n) + " 0 obj\n" +
-                                "<<\n" +
-                                "  /Length 0\n" +
-                                ">>\n" +
-                                "stream\n" +
-                                "endstream\n" +
-                                "endobj\n\n";
-
-                    ent.resize(x.length());
-                    memcpy(&(ent[0]),&(x[0]),x.length());
-                    ent.modified = true;
+                    ent.make_empty_stream_obj((size_t)n);
                 }
             }
         }
