@@ -529,6 +529,31 @@ void runEditor(const char *src) {
         else if (ipm == "h") {
             printf("q       quit            h       help            vo      view orig\n");
             printf("ve      view edited     eo <n>  edit object     ex      export edit\n");
+            printf("mtos <n...>   replace object(s) with empty object and stream\n");
+        }
+        else if (ipm == "mtos") {
+            while (*s != 0) {
+                garg(ipm,/*&*/s);
+                if (ipm.empty()) continue;
+                if (!isdigit(*(ipm.c_str()))) continue;
+                signed long n = strtol(ipm.c_str(),0,0);
+                if (n >= 0l && n < (long)pdf.xref.xreflist.size()) {
+                    pdfm.flush_mxref((size_t)n);
+                    auto &ent = pdfm.mod_xref[(size_t)n];
+
+                    string x = to_string(n) + " 0 obj\n" +
+                                "<<\n" +
+                                "  /Length 0\n" +
+                                ">>\n" +
+                                "stream\n" +
+                                "endstream\n" +
+                                "endobj\n\n";
+
+                    ent.resize(x.length());
+                    memcpy(&(ent[0]),&(x[0]),x.length());
+                    ent.modified = true;
+                }
+            }
         }
         else if (ipm == "vo") {
             less_pdf(src);
