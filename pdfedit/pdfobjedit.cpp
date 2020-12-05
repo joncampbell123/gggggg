@@ -369,13 +369,24 @@ public:
             while (i != blob.end() && (*i) == '\n') i++;
             if ((i+2) > blob.end()) return false;
             if (!(i[0] == '<' && i[1] == '<')) return false;
-            i += 2;
+
+            int headdepth = 1;
             auto headsi = i;
-            while ((i+2) <= blob.end() && !(i[0] == '>' && i[1] == '>')) i++;
-            if ((i+2) > blob.end()) return false;
-            auto headei = i;
-            if (!(i[0] == '>' && i[1] == '>')) return false;
             i += 2;
+            while ((i+2) <= blob.end() && headdepth > 0) {
+                if (i[0] == '>' && i[1] == '>') {
+                    headdepth--;
+                    i += 2;
+                }
+                else if (i[0] == '<' && i[1] == '<') {
+                    headdepth++;
+                    i += 2;
+                }
+                else {
+                    i++;
+                }
+            }
+            auto headei = i;
             while (i != blob.end() && (*i) != '\n') i++;
             while (i != blob.end() && (*i) == '\n') i++;
 
