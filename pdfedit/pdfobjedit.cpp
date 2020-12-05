@@ -295,6 +295,9 @@ public:
         if (xref.length < 0) return false;
         if (xref.length > (1*1024*1024*1024)) return false;
 
+        /* do not load free objects */
+        if (xref.use != 'n') return false;
+
         /* clear existing mod */
         auto &mod = mod_xref[n];
         mod.clear();
