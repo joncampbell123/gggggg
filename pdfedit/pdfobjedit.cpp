@@ -350,6 +350,167 @@ public:
         close(fd);
         return true;
     }
+    bool find_obj_stream(const vector<uint8_t> &blob,size_t &start,size_t &end,size_t &lengthfield) {
+        start = 0;
+        lengthfield = 0;
+        end = blob.size();
+
+        /* 25 0 obj
+         * <<
+         *    /Length 95
+         * >>
+         * stream
+         * <95 bytes of data>
+         * endstream
+         * endobj */
+        {
+            auto i = blob.begin();
+            while (i != blob.end() && (*i) != '\n') i++;
+            while (i != blob.end() && (*i) == '\n') i++;
+            if ((i+2) > blob.end()) return false;
+            if (!(i[0] == '<' && i[1] == '<')) return false;
+            i += 2;
+            auto headsi = i;
+            while ((i+2) <= blob.end() && !(i[0] == '>' && i[1] == '>')) i++;
+            if ((i+2) > blob.end()) return false;
+            auto headei = i;
+            if (!(i[0] == '>' && i[1] == '>')) return false;
+            i += 2;
+            while (i != blob.end() && (*i) != '\n') i++;
+            while (i != blob.end() && (*i) == '\n') i++;
+
+            /* stream\n = 7 chars */
+            if ((i+7) > blob.end()) return false;
+            if (memcmp(&(*i),"stream\n",7) != 0) return false;
+            i += 7;
+
+            start = (size_t)(i - blob.begin());
+
+            /* look for /Length */
+            i = headsi;
+            assert(headsi <= blob.end());
+            while ((i+8) < headei) {
+                if (memcmp(&(*i),"/Length ",8) == 0) {
+                    i += 8;
+                    while (i < headei && !(*i != ' ')) i++;
+                    if (isdigit((char)(*i))) {
+                        string x;
+                        lengthfield = (size_t)(i - blob.begin());
+                        while (i < headei && isdigit((char)(*i))) {
+                            x += (char)(*i);
+                            i++;
+                        }
+
+                        end = start + (size_t)strtoul(x.c_str(),NULL,10);
+                        break;
+                    }
+                }
+
+                i++;
+            }
+        }
+
+        return true;
+    }
+    bool mxref_to_temp_stream(const string &tmp,size_t n) {
+        auto i = mod_xref.find(n);
+        if (i == mod_xref.end()) return false;
+
+        size_t start=0,end=0,lengthfield=0;
+        find_obj_stream(i->second,start,end,lengthfield);
+        assert(start <= end);
+        (void)lengthfield;
+
+        int fd = open(tmp.c_str(),O_CREAT|O_TRUNC|O_BINARY|O_WRONLY,0600);
+        if (fd < 0) return false;
+        if (start < end) {
+            assert(end <= i->second.size());
+            assert(start <= i->second.size());
+            if (write(fd,&i->second[start],end - start) != (end - start)) {
+                close(fd);
+                return false;
+            }
+        }
+        close(fd);
+        return true;
+    }
+    bool temp_to_mxref_stream(const string &tmp,size_t n) {
+        auto i = mod_xref.find(n);
+        if (i == mod_xref.end()) return false;
+
+        size_t start=0,end=0,lengthfield=0;
+        find_obj_stream(i->second,start,end,lengthfield);
+        assert(start <= end);
+        assert(lengthfield <= end);
+        assert(lengthfield <= start);
+        assert(start <= i->second.size());
+        assert(end <= i->second.size());
+        (void)lengthfield;
+
+        int fd = open(tmp.c_str(),O_BINARY|O_RDONLY);
+        if (fd < 0) return false;
+        off_t sz = lseek(fd,0,SEEK_END);
+        if (sz >= 0 && sz < (1*1024*1024*1024)) {
+            vector<uint8_t> replacement;
+
+            {
+                auto ii=i->second.begin();
+
+                if (lengthfield != 0) {
+                    assert(lengthfield < start);
+                    while (ii < (i->second.begin()+lengthfield)) {
+                        replacement.push_back(*ii);
+                        ii++;
+                    }
+
+                    /* we're at that point where the first digit starts.
+                     * we need to replace them with the actual size. */
+                    string t = to_string((size_t)sz);
+                    for (auto ti=t.begin();ti!=t.end();ti++)
+                        replacement.push_back((uint8_t)(*ti));
+
+                    /* then skip the digits in the original */
+                    while (ii < (i->second.begin()+start) && isdigit((char)(*ii)))
+                        ii++;
+                }
+
+                while (ii < (i->second.begin()+start)) {
+                    replacement.push_back(*ii);
+                    ii++;
+                }
+            }
+
+            if (sz != 0) {
+                const size_t ldpt = replacement.size();
+                replacement.resize(replacement.size() + (size_t)sz);
+
+                if (lseek(fd,0,SEEK_SET) != 0) {
+                    close(fd);
+                    return false;
+                }
+                if (read(fd,&replacement[ldpt],sz) != sz) {
+                    close(fd);
+                    return false;
+                }
+            }
+
+            {
+                auto ii=i->second.begin()+end;
+                while (ii < i->second.end()) {
+                    replacement.push_back(*ii);
+                    ii++;
+                }
+            }
+
+            i->second.assign(replacement.begin(), replacement.end());
+        }
+        else {
+            i->second.clear();
+        }
+
+        close(fd);
+        return true;
+    }
 };
 
 void garg(string &r,char* &s) {
@@ -544,6 +705,7 @@ void runEditor(const char *src) {
             printf("q       quit            h       help            vo      view orig\n");
             printf("ve      view edited     eo <n>  edit object     ex      export edit\n");
             printf("mtos <n...>   replace object(s) with empty object and stream\n");
+            printf("eos     edit object stream\n");
         }
         else if (ipm == "mtos") {
             while (*s != 0) {
@@ -592,6 +754,45 @@ void runEditor(const char *src) {
             }
             else {
                 printf("INFO: Export complete\n");
+            }
+        }
+        else if (ipm == "eos") {
+            garg(ipm,/*&*/s);
+            if (ipm.empty()) {
+                printf("ERR: need object\n");
+                continue;
+            }
+
+            long n = strtol(ipm.c_str(),NULL,0);
+            if (n >= 0 && n < (long)pdf.xref.xreflist.size()) {
+                if (!pdfm.has_mxref((size_t)n)) {
+                    auto &xref = pdf.xref.xref((size_t)n);
+                    if (!pdfm.load_mxref(ifs,xref,(size_t)n)) {
+                        printf("ERR: Failed to load xref\n");
+                        continue;
+                    }
+
+                    printf("INFO: object %ld loaded\n",n);
+                }
+
+                if (!pdfm.mxref_to_temp_stream(tempedit,(size_t)n)) {
+                    printf("ERR: object %ld failed to send to temp or does not have stream (use eo)\n",n);
+                    continue;
+                }
+                pdfm.mod_xref[(size_t)n].modified = true;
+
+                run_text_editor(tempedit);
+
+                if (!pdfm.temp_to_mxref_stream(tempedit,(size_t)n)) {
+                    printf("ERR: object %ld failed to send to temp\n",n);
+                    continue;
+                }
+
+                if (unlink(tempedit.c_str()) != 0)
+                    printf("WARN: unable to remove temp file %s\n",tempedit.c_str());
+            }
+            else {
+                printf("ERR: Out of range\n");
             }
         }
         else if (ipm == "eo") {
