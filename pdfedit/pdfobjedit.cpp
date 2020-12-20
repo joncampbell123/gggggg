@@ -718,6 +718,61 @@ void runEditor(const char *src) {
             printf("mtos <n...>   replace object(s) with empty object and stream\n");
             printf("uo      undo object edit (restore original)\n");
             printf("eos     edit object stream\n");
+            printf("lsrch   list objects containing text\n");
+        }
+        else if (ipm == "lsrch") {
+            garg(ipm,/*&*/s);
+
+            if (!ipm.empty()) {
+                vector<size_t> res;
+
+                for (size_t objn=0;objn < pdf.xref.xreflist.size();objn++) {
+                    if (!pdfm.has_mxref(objn)) {
+                        auto &xref = pdf.xref.xref(objn);
+                        if (!pdfm.load_mxref(ifs,xref,objn)) {
+                            printf("ERR: Failed to load xref\n");
+                            break;
+                        }
+                    }
+
+                    if (pdfm.has_mxref(objn)) {
+                        bool found = false;
+                        auto &ent = pdfm.mod_xref[objn];
+                        {
+                            auto ni = ipm.begin();/*needle*/
+                            auto ei = ent.begin();/*haystack*/
+                            while (ei != ent.end()) {
+                                assert(ni != ipm.end());
+                                assert(ei != ent.end());
+
+                                if (*ni == *ei) {
+                                    ni++;
+                                    if (ni == ipm.end()) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                else {
+                                    ni = ipm.begin();
+                                }
+
+                                ei++;
+                            }
+                        }
+
+                        if (found) res.push_back(objn);
+                    }
+                }
+
+                if (!res.empty()) {
+                    printf("INFO: Found in objects ");
+                    for (auto i=res.begin();i!=res.end();i++) printf("%zu ",*i);
+                    printf("\n");
+                }
+                else {
+                    printf("INFO: No results\n");
+                }
+            }
         }
         else if (ipm == "uo") {
             while (*s != 0) {
