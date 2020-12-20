@@ -716,7 +716,41 @@ void runEditor(const char *src) {
             printf("q       quit            h       help            vo      view orig\n");
             printf("ve      view edited     eo <n>  edit object     ex      export edit\n");
             printf("mtos <n...>   replace object(s) with empty object and stream\n");
+            printf("uo      undo object edit (restore original)\n");
             printf("eos     edit object stream\n");
+        }
+        else if (ipm == "uo") {
+            while (*s != 0) {
+                garg(ipm,/*&*/s);
+
+                const char *s = ipm.c_str();
+                if (*s == 0) continue;
+
+                if (isdigit(*s)) {
+                    signed long ns = strtol(s,(char**)(&s),0);
+                    signed long ne = ns;
+                    signed long ni = 1;
+
+                    if (*s == '-') { /* it's a range */
+                        s++;
+                        if (isdigit(*s)) {
+                            ne = strtol(s,(char**)(&s),0);
+                            if (*s == '+') { /* and what interval */
+                                s++;
+                                ni = strtol(s,(char**)(&s),0);
+                                if (ni < 1) ni = 1;
+                            }
+                        }
+                    }
+
+                    for (signed long n=ns;n <= ne;n += ni) {
+                        if (n >= 0l && n < (long)pdf.xref.xreflist.size()) {
+                            printf("INFO: Restoring object %ld\n",n);
+                            pdfm.flush_mxref((size_t)n);
+                        }
+                    }
+                }
+            }
         }
         else if (ipm == "mtos") {
             while (*s != 0) {
