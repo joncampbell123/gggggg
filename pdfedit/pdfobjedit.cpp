@@ -679,10 +679,11 @@ bool export_edited_pdf(const string &modname,PDFmod &pdfm,PDF &pdf,istream &is) 
     return true;
 }
 
+static char line[32768];
+
 void runEditor(const char *src) {
     string modname = string(src) + ".modified.pdf";
     string tempedit = string(src) + ".editobj";
-    char line[1024];
     ifstream ifs;
     PDFmod pdfm;
     string ipm;
