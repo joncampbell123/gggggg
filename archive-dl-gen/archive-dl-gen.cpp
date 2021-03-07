@@ -39,6 +39,8 @@ void gather(xmlNodePtr n) {
                     }
                 }
 
+                if (href.empty())
+                    continue;
                 if (href.find_first_of('/') != string::npos)
                     continue;
                 if (href.find_first_of('#') != string::npos)
