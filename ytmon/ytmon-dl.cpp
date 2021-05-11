@@ -218,7 +218,7 @@ bool download_video_youtube(const Json &video) {
         if (status != 0) {
             time_t dl_duration = time(NULL) - dl_begin;
 
-            if (dl_duration < 10) {
+            if (dl_duration < 30) {
                 fprintf(stderr,"Failed too quickly, marking\n");
                 mark_failignore_file(id);
                 failignore_mark_counter++;
