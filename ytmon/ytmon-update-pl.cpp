@@ -212,7 +212,9 @@ int main(int argc,char **argv) {
         struct stat st;
 
         memset(&st,0,sizeof(st));
-        if (stat(js_tmp_file.c_str(),&st) != 0 || st.st_size < 32) {
+        /* NTS: This used to redownload again if the size was zero, but that just causes the script to repeatedly annoy the site,
+         *      and for Bitchute, gets you IP banned by Cloudflare as if you're "attacking" the site. */
+        if (stat(js_tmp_file.c_str(),&st) != 0) {
             assert(js_tmp_file.find_first_of(' ') == string::npos);
             assert(js_tmp_file.find_first_of('$') == string::npos);
             assert(js_tmp_file.find_first_of('\'') == string::npos);
