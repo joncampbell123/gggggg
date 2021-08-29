@@ -363,10 +363,16 @@ void needs_cut_file(const std::string &name) {
 }
 
 void play_file(const std::string &name) {
+    const char *alt_ffmpeg = "/opt/ffmpeg-ac4/bin/ffplay";
+    struct stat st;
     char *argv[64];
     int argc=0;
 
-    argv[argc++] = (char*)"/usr/bin/ffplay";
+    if (stat(alt_ffmpeg,&st) == 0 && S_ISREG(st.st_mode))
+        argv[argc++] = (char*)alt_ffmpeg;
+    else
+        argv[argc++] = (char*)("/usr/bin/ffplay");
+
     argv[argc++] = (char*)"--";
     argv[argc++] = (char*)name.c_str();
     argv[argc  ] = NULL;
