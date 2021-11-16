@@ -241,7 +241,8 @@ int main(int argc,char **argv) {
                 /* Request the first initial part, always, to keep up with the channel.
                  * The contents of this part will be inserted at the top of the list.
                  * To do this, the playlist is iterated in reverse and each new entry is inserted at the beginning. */
-                string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp_file;
+                /* NTS: youtube-dl has had poor download speeds lately and hasn't been updated since June. Switch to yt-dlp */
+                string cmd = string("yt-dlp --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp_file;
                 int status = system(cmd.c_str());
                 if (status != 0) return 1;
 
@@ -266,7 +267,8 @@ int main(int argc,char **argv) {
                  *
                  *        Speaking of gradual playlist building... the same logic should be implemented into the banned.video
                  *        downloader as well. */
-                string cmd = string("youtube-dl --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp2_file;
+                /* NTS: youtube-dl has had poor download speeds lately and hasn't been updated since June. Switch to yt-dlp */
+                string cmd = string("yt-dlp --no-mtime -j --flat-playlist ") + playlist_range + " \"" + api_url + "\" >" + js_tmp2_file;
                 int status = system(cmd.c_str());
 
                 // NTS: If playlist range is out of range on YouTube, success and no entries.
