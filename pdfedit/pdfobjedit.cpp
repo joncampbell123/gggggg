@@ -211,6 +211,7 @@ public:
         off_t chk = max((off_t)0,sz - (off_t)sizeof(tmp));
         if (is.seekg(chk).tellg() != chk) return false;
         streamsize rds = is.read(tmp,sizeof(tmp)-1).gcount();
+        is.clear(); /* might read too far back or too much */
         if (rds <= 0) return false;
         assert(rds < sizeof(tmp));
         tmp[rds] = 0;
