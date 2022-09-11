@@ -28,6 +28,7 @@ std::string                 youtube_format_spec = "-f 'bestvideo[height<=720]+be
 bool                        sunday_dl = false;
 int                         youtube_bitrate = 3000;
 int                         bitchute_bitrate = 2000;
+int                         vimeo_bitrate = 3000;
 
 int                         failignore_mark_counter = 0;
 
@@ -168,9 +169,7 @@ bool download_video_vimeo(const Json &video) {
 
     /* read the info JSON.
      * Do not download live feeds, because they are in progress.
-     * youtube-dl is pretty good about not listing live feeds if asked to follow a channel,
-     * but for search queries will return results that involve live feeds.
-     * Most live feeds finish eventually and turn into a video. */
+     * TODO: Does Vimeo do live feeds? */
     bool live_feed = false;
     double duration = -1;
     {
@@ -213,7 +212,7 @@ bool download_video_vimeo(const Json &video) {
     /* then download the video */
     {
         /* NTS: youtube-dl has had poor download speeds lately and hasn't been updated since June. Switch to yt-dlp */
-        string cmd = string("yt-dlp --abort-on-unavailable-fragment --cookies cookies.txt --no-mtime --continue --write-all-thumbnails --all-subs --limit-rate=") + to_string(youtube_bitrate) + "K --output '%(id)s' " + youtube_format_spec + creds + invoke_url; /* --write-info-json not needed, first step above */
+        string cmd = string("yt-dlp --abort-on-unavailable-fragment --cookies cookies.txt --no-mtime --continue --write-all-thumbnails --all-subs --limit-rate=") + to_string(vimeo_bitrate) + "K --output '%(id)s' " + youtube_format_spec + creds + invoke_url; /* --write-info-json not needed, first step above */
         int status = system(cmd.c_str());
         if (WIFSIGNALED(status)) should_stop = true;
 
