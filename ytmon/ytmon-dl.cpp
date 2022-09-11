@@ -62,6 +62,180 @@ void mark_file(const string &filename) {
     if (fd >= 0) close(fd);
 }
 
+bool download_video_vimeo(const Json &video) {
+    string title = video["title"].string_value();
+    string url = video["url"].string_value();
+    string id = video["id"].string_value();
+
+    if (id.empty() || url.empty()) return false;
+    assert(id.find_first_of(' ') == string::npos);
+    assert(id.find_first_of('$') == string::npos);
+    assert(id.find_first_of('\'') == string::npos);
+    assert(id.find_first_of('\"') == string::npos);
+
+    {
+        struct stat st;
+
+        string mark_filename = get_mark_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            return false; // already exists
+        }
+    }
+
+    {
+        time_t now = time(NULL);
+        struct stat st;
+
+        string mark_filename = get_mark_failignore_filename(id);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            if ((st.st_mtime + failignore_timeout) >= now) {
+                fprintf(stderr,"Ignoring '%s', failignore\n",id.c_str());
+                return false; // failignore
+            }
+        }
+    }
+
+    sleep(1);
+
+    string tagname = id;
+    if (!title.empty()) {
+        tagname += "-";
+        tagname += title;
+    }
+    if (tagname != id) {
+        if (tagname.length() > 128)
+            tagname = tagname.substr(0,128);
+
+        for (auto &c : tagname) {
+            if (c < 32 || c > 126 || c == ':' || c == '\\' || c == '/')
+                c = ' ';
+        }
+
+        tagname += ".txt";
+
+        {
+            FILE *fp = fopen(tagname.c_str(),"w");
+            if (fp) {
+                fclose(fp);
+            }
+        }
+    }
+
+    /* we trust the ID will never need characters that require escaping.
+     * they're alphanumeric base64 so far. */
+    string invoke_url = string("https://www.vimeo.com/") + id;
+
+    string creds;
+
+//    if (!youtube_user.empty() && !youtube_pass.empty())
+//        creds += string("--username '") + youtube_user + "' --password '" + youtube_pass + "' ";
+
+    time_t dl_begin = time(NULL);
+
+    string expect_info_json = id + ".info.json";
+
+    /* download the *.info.json first, don't update too often */
+    {
+        bool doit = true;
+        time_t now = time(NULL);
+        struct stat st;
+
+        if (stat(expect_info_json.c_str(),&st) == 0 && S_ISREG(st.st_mode)) {
+            if ((st.st_mtime + info_json_expire) >= now) {
+                doit = false;
+            }
+        }
+
+        if (doit) {
+            /* NTS: youtube-dl has had poor download speeds lately and hasn't been updated since June. Switch to yt-dlp */
+            string cmd = string("yt-dlp --cookies cookies.txt --skip-download --write-info-json --output '%(id)s' ") + creds + invoke_url;
+            int status = system(cmd.c_str());
+            if (WIFSIGNALED(status)) should_stop = true;
+
+            if (status != 0) {
+                time_t dl_duration = time(NULL) - dl_begin;
+
+                if (dl_duration < 10) {
+                    fprintf(stderr,"Failed too quickly, marking\n");
+                    mark_failignore_file(id);
+                    failignore_mark_counter++;
+                }
+
+                return false;
+            }
+        }
+    }
+
+    /* read the info JSON.
+     * Do not download live feeds, because they are in progress.
+     * youtube-dl is pretty good about not listing live feeds if asked to follow a channel,
+     * but for search queries will return results that involve live feeds.
+     * Most live feeds finish eventually and turn into a video. */
+    bool live_feed = false;
+    double duration = -1;
+    {
+        FILE *fp;
+
+        fp = fopen(expect_info_json.c_str(),"r");
+        if (fp != NULL) {
+            size_t r = fread(large_tmp,1,sizeof(large_tmp)-1,fp);
+            assert(r < sizeof(large_tmp));
+            large_tmp[r] = 0;
+            fclose(fp);
+
+            string json_err;
+            Json info_json = Json::parse(large_tmp,json_err);
+
+            if (info_json == Json()) {
+                fprintf(stderr,"INFO JSON parse error: %s\n",json_err.c_str());
+            }
+            else {
+                auto is_live = info_json["is_live"];
+                if (is_live.is_bool()) /* else is null? */
+                    live_feed = is_live.bool_value();
+
+                auto js_duration = info_json["duration"];
+                if (js_duration.is_number())
+                    duration = js_duration.number_value();
+            }
+        }
+    }
+
+    if (live_feed) {
+        fprintf(stderr,"Item '%s' is a live feed, skipping. It may turn into a downloadable later.\n",id.c_str());
+        return false;
+    }
+    if (duration_limit >= 0 && duration >= 0 && duration > duration_limit) {
+//      fprintf(stderr,"Item '%s' duration %.3f exceeds duration limit %.3f\n",id.c_str(),duration,duration_limit);
+        return false;
+    }
+
+    /* then download the video */
+    {
+        /* NTS: youtube-dl has had poor download speeds lately and hasn't been updated since June. Switch to yt-dlp */
+        string cmd = string("yt-dlp --abort-on-unavailable-fragment --cookies cookies.txt --no-mtime --continue --write-all-thumbnails --all-subs --limit-rate=") + to_string(youtube_bitrate) + "K --output '%(id)s' " + youtube_format_spec + creds + invoke_url; /* --write-info-json not needed, first step above */
+        int status = system(cmd.c_str());
+        if (WIFSIGNALED(status)) should_stop = true;
+
+        if (status != 0) {
+            time_t dl_duration = time(NULL) - dl_begin;
+
+            if (dl_duration < 30) {
+                fprintf(stderr,"Failed too quickly, marking\n");
+                mark_failignore_file(id);
+                failignore_mark_counter++;
+            }
+
+            return false;
+        }
+    }
+
+    /* done! */
+    mark_file(id);
+    return true;
+}
+
+
 bool download_video_youtube(const Json &video) {
     string title = video["title"].string_value();
     string url = video["url"].string_value();
@@ -669,6 +843,27 @@ int main(int argc,char **argv) {
                     sleep(5 + ((unsigned int)rand() % 5u));
                 }
             }
+	    /* Vimeo example:
+	     *
+	     * {"ie_key": "Vimeo", "id": "748131856", "title": "NRSF Drive2Life Contest Pt2: Presentation", "_type": "url", "url": "https://vimeo.com/748131856", "__x_forwarded_for_ip": null, "webpage_url": "https://vimeo.com/748131856", "original_url": "https://vimeo.com/748131856", "webpage_url_basename": "748131856", "webpage_url_domain": "vimeo.com", "extractor": "vimeo", "extractor_key": "Vimeo", "playlist_count": null, "playlist": "Alan Weiss Productions", "playlist_id": "awptv", "playlist_title": "Alan Weiss Productions", "playlist_uploader": null, "playlist_uploader_id": null, "n_entries": 59, "playlist_index": 1, "__last_playlist_index": 59, "playlist_autonumber": 1, "epoch": 1662915461, "filename": "NRSF Drive2Life Contest Pt2\uff1a Presentation [748131856].NA", "urls": "https://vimeo.com/748131856"} */
+	    else if (json["ie_key"].string_value() == "Vimeo") {
+                /* download like a human */
+                {
+                    time_t now = time(NULL);
+                    struct tm tm = *localtime(&now);
+
+                    // look human by stopping downloads between 3AM and 6AM
+                    if (tm.tm_hour >= 3 && tm.tm_hour < 6)
+                        continue;
+                }
+
+                if (download_video_vimeo(json)) {
+                    if (++download_count >= download_limit)
+                        break;
+
+                    sleep(5 + ((unsigned int)rand() % 5u));
+                }
+	    }
 
             if (failignore_mark_counter >= failignore_limit)
                 break;
