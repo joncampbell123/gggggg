@@ -342,8 +342,14 @@ bool allow_op(const dirlist_entry_t &ent) {
 void rename_marker(const std::string &name,const std::string &marker) {
     DIR *dir = opendir(cwd.c_str());
     if (dir != NULL) {
+        /* our TV sorting system now sorts by closed captions, too */
         mkdirat(dirfd(dir), marker.c_str(), 0755);
-        renameat(dirfd(dir), name.c_str(), dirfd(dir), (std::string(marker) + "/" + name).c_str());
+        renameat(dirfd(dir), (name       ).c_str(), dirfd(dir), (std::string(marker) + "/" + name         ).c_str());
+        renameat(dirfd(dir), (name+".scc").c_str(), dirfd(dir), (std::string(marker) + "/" + name + ".scc").c_str());
+        renameat(dirfd(dir), (name+".mcc").c_str(), dirfd(dir), (std::string(marker) + "/" + name + ".mcc").c_str());
+        renameat(dirfd(dir), (name+".vtt").c_str(), dirfd(dir), (std::string(marker) + "/" + name + ".vtt").c_str());
+        renameat(dirfd(dir), (name+".txt").c_str(), dirfd(dir), (std::string(marker) + "/" + name + ".txt").c_str());
+        renameat(dirfd(dir), (name+".csm").c_str(), dirfd(dir), (std::string(marker) + "/" + name + ".csm").c_str());
         scan_dir();
     }
 
