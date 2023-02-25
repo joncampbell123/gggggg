@@ -701,7 +701,13 @@ try_again:
                                 goto try_again;
                             }
 
-                            renameat(dirfd(dir), ent.first.c_str(), dirfd(dir), nname.c_str());
+                            renameat(dirfd(dir), (ent.first       ).c_str(), dirfd(dir), (nname       ).c_str());
+                            renameat(dirfd(dir), (ent.first+".scc").c_str(), dirfd(dir), (nname+".scc").c_str());
+                            renameat(dirfd(dir), (ent.first+".mcc").c_str(), dirfd(dir), (nname+".mcc").c_str());
+                            renameat(dirfd(dir), (ent.first+".vtt").c_str(), dirfd(dir), (nname+".vtt").c_str());
+                            renameat(dirfd(dir), (ent.first+".txt").c_str(), dirfd(dir), (nname+".txt").c_str());
+                            renameat(dirfd(dir), (ent.first+".csm").c_str(), dirfd(dir), (nname+".csm").c_str());
+
                             scan_dir();
                             find_file_dir(nname);
 
