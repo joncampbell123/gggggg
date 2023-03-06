@@ -767,7 +767,7 @@ int main(int argc,char **argv) {
     download_timeout = now + download_timeout_default;
 
     {
-        char buf[4096]; /* should be large enough for now */
+        static char buf[65536]; /* should be large enough for now */
         FILE *fp = fopen(js_file.c_str(),"r");
         if (fp == NULL) {
             fprintf(stderr,"Unable to open %s. Please run playlist downloader tool to generate/update it.\n",js_file.c_str());
