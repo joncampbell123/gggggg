@@ -356,16 +356,34 @@ void rename_marker(const std::string &name,const std::string &marker) {
     closedir(dir);
 }
 
+// keep file for sorting
 void accept_file(const std::string &name) {
     rename_marker(name,"__ACCEPTED__");
 }
 
+// reject file for sorting
 void reject_file(const std::string &name) {
     rename_marker(name,"__REJECTED__");
 }
 
+// file needs to be cut
 void needs_cut_file(const std::string &name) {
     rename_marker(name,"__NEEDS_CUT__");
+}
+
+// set aside file for YouTube Poop. the file will not remain in
+// the archives, but will be used to bring silly amusement to
+// others on YouTube.
+void ytp_file(const std::string &name) {
+    rename_marker(name,"__YOUTUBE_POOP_THIS__");
+}
+
+// mark file as something to remove from archives, which means to
+// either delete it or move it off to an external drive to give to
+// a friend who might want it. the file should not remain in the
+// archives.
+void discard_file(const std::string &name) {
+    rename_marker(name,"__DISCARD_THIS__");
 }
 
 void play_file(const std::string &name) {
@@ -598,6 +616,44 @@ int main() {
                     in = read_in();
                     if (in == "y" || in == "Y") {
                         needs_cut_file(dirlist[dirlist_sel].first);
+                    }
+
+                    redraw = 1;
+                }
+            }
+        }
+        else if (in == "Y") {
+            if (dirlist.size() != 0) {
+                if (allow_op(dirlist[dirlist_sel])) {
+                    printf("\x1B[0m");
+                    printf("\x1B[2J");
+                    printf("\x1B[H");
+                    printf("File '%s' to be used in YTP?\n",dirlist[dirlist_sel].first.c_str());
+                    printf("That means the file will not remain in the archives but will be used to amuse YouTubers.\n");
+                    fflush(stdout);
+
+                    in = read_in();
+                    if (in == "y" || in == "Y") {
+                        ytp_file(dirlist[dirlist_sel].first);
+                    }
+
+                    redraw = 1;
+                }
+            }
+        }
+        else if (in == "D") {
+            if (dirlist.size() != 0) {
+                if (allow_op(dirlist[dirlist_sel])) {
+                    printf("\x1B[0m");
+                    printf("\x1B[2J");
+                    printf("\x1B[H");
+                    printf("File '%s' is to be discarded entirely?\n",dirlist[dirlist_sel].first.c_str());
+                    printf("That means the file will not remain in the archives at all.\n");
+                    fflush(stdout);
+
+                    in = read_in();
+                    if (in == "y" || in == "Y") {
+                        discard_file(dirlist[dirlist_sel].first);
                     }
 
                     redraw = 1;
