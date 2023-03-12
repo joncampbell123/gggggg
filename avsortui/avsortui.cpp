@@ -378,6 +378,16 @@ void ytp_file(const std::string &name) {
     rename_marker(name,"__YOUTUBE_POOP_THIS__");
 }
 
+// sports content. not that I care for it.
+void sports_file(const std::string &name) {
+    rename_marker(name,"__SPORTSBALL__");
+}
+
+// news content
+void news_file(const std::string &name) {
+    rename_marker(name,"__NEWS__");
+}
+
 // mark file as something to remove from archives, which means to
 // either delete it or move it off to an external drive to give to
 // a friend who might want it. the file should not remain in the
@@ -693,6 +703,44 @@ int main() {
                     in = read_in();
                     if (in == "y" || in == "Y") {
                         play_file(dirlist[dirlist_sel].first);
+                    }
+
+                    redraw = 1;
+                }
+            }
+        }
+        else if (in == "S") {
+            if (dirlist.size() != 0) {
+                if (allow_op(dirlist[dirlist_sel])) {
+                    printf("\x1B[0m");
+                    printf("\x1B[2J");
+                    printf("\x1B[H");
+                    printf("File '%s' is to be considered sports content?\n",dirlist[dirlist_sel].first.c_str());
+                    fflush(stdout);
+
+                    in = read_in();
+                    if (in == "y" || in == "Y") {
+                        sports_file(dirlist[dirlist_sel].first);
+                        scan_dir();
+                    }
+
+                    redraw = 1;
+                }
+            }
+        }
+        else if (in == "N") {
+            if (dirlist.size() != 0) {
+                if (allow_op(dirlist[dirlist_sel])) {
+                    printf("\x1B[0m");
+                    printf("\x1B[2J");
+                    printf("\x1B[H");
+                    printf("File '%s' is to be considered news content?\n",dirlist[dirlist_sel].first.c_str());
+                    fflush(stdout);
+
+                    in = read_in();
+                    if (in == "y" || in == "Y") {
+                        news_file(dirlist[dirlist_sel].first);
+                        scan_dir();
                     }
 
                     redraw = 1;
