@@ -396,6 +396,34 @@ void discard_file(const std::string &name) {
     rename_marker(name,"__DISCARD_THIS__");
 }
 
+void play_file_vlc(const std::string &name) {
+    struct stat st;
+    char *argv[64];
+    int argc=0;
+
+    argv[argc++] = (char*)("/usr/bin/vlc");
+    argv[argc++] = (char*)"--";
+    argv[argc++] = (char*)name.c_str();
+    argv[argc  ] = NULL;
+
+    pid_t pid;
+
+    pid = fork();
+    if (pid < 0)
+        return; // failed
+
+    if (pid == 0) {
+        /* child */
+        chdir(cwd.c_str());
+        execv(argv[0],argv);
+        _exit(1);
+    }
+    else {
+        /* parent */
+        while (waitpid(pid,NULL,0) != pid);
+    }
+}
+
 void play_file(const std::string &name) {
     const char *alt_ffmpeg = "/opt/ffmpeg-ac4/bin/ffplay";
     struct stat st;
@@ -698,11 +726,15 @@ int main() {
                     printf("\x1B[H");
                     printf("Play '%s'?\n",dirlist[dirlist_sel].first.c_str());
                     printf("I will run FFPLAY. Type q to quit or CTRL+C at console to return.\n");
+                    printf("Type V to use VLC player.\n");
                     fflush(stdout);
 
                     in = read_in();
                     if (in == "y" || in == "Y") {
                         play_file(dirlist[dirlist_sel].first);
+                    }
+                    else if (in == "v" || in == "V") {
+                        play_file_vlc(dirlist[dirlist_sel].first);
                     }
 
                     redraw = 1;
