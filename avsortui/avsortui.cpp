@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+#include <map>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -29,6 +30,14 @@ enum {
 
 typedef char utf8_t;
 typedef uint16_t utf16_t;
+
+struct pos_memory {
+    std::string         sel_file;
+    int                 sel_pos = 0;
+    int                 sel_scroll = 0;
+};
+
+std::map<std::string,pos_memory> pos_mem;
 
 int utf8_encode(char **ptr,char *fence,uint32_t code) {
 	int uchar_size=1;
@@ -540,6 +549,41 @@ bool prompt_edit_name(std::string &nuname,const std::string &oldname) {
     return true;
 }
 
+void save_pos_mem(const std::string &cwd) {
+    pos_memory &m = pos_mem[cwd];
+    m.sel_pos = dirlist_sel;
+    m.sel_scroll = dirlist_scroll;
+    m.sel_file.clear();
+
+    if (dirlist_sel < dirlist.size()) {
+        dirlist_entry_t &ent = dirlist[dirlist_sel];
+        m.sel_file = ent.first;
+    }
+}
+
+void recall_pos_mem(const std::string &cwd) {
+    auto i = pos_mem.find(cwd);
+    if (i != pos_mem.end()) {
+        const pos_memory &m = i->second;
+	dirlist_sel = m.sel_pos;
+        dirlist_scroll = m.sel_scroll;
+	if (!m.sel_file.empty()) {
+            if (dirlist_sel < dirlist.size()) {
+                dirlist_entry_t &ent = dirlist[dirlist_sel];
+                if (m.sel_file != ent.first) {
+                    for (size_t i=0;i < dirlist.size();i++) {
+                        if (m.sel_file == dirlist[i].first) {
+                            dirlist_scroll = dirlist_sel;
+                            dirlist_sel = i;
+                            break;
+                        }
+                    }
+                }
+            }
+	}
+    }
+}
+
 int main() {
     std::string in;
 
@@ -812,11 +856,15 @@ int main() {
         else if (in == "\x08" || in == "\x7F") { /* backspace */
             size_t pos = cwd.find_last_of('/');
             if (pos != std::string::npos && pos > 0) {
+                save_pos_mem(cwd);
+
                 cwd = cwd.substr(0,pos);
 
                 scan_dir();
                 dirlist_sel = 0;
                 dirlist_scroll = 0;
+
+                recall_pos_mem(cwd);
 
                 redraw = 1;
             }
@@ -860,12 +908,16 @@ try_again:
                 dirlist_entry_t &ent = dirlist[dirlist_sel];
 
                 if (S_ISDIR(ent.second.st_mode)) {
+                    save_pos_mem(cwd);
+
                     cwd += "/";
                     cwd += ent.first;
 
                     scan_dir();
                     dirlist_sel = 0;
                     dirlist_scroll = 0;
+
+                    recall_pos_mem(cwd);
 
                     redraw = 1;
                 }
