@@ -433,6 +433,34 @@ void play_file_vlc(const std::string &name) {
     }
 }
 
+void play_file_show7(const std::string &name) {
+    struct stat st;
+    char *argv[64];
+    int argc=0;
+
+    argv[argc++] = (char*)("/usr/bin/c4mi_show7");
+    argv[argc++] = (char*)"--file";
+    argv[argc++] = (char*)name.c_str();
+    argv[argc  ] = NULL;
+
+    pid_t pid;
+
+    pid = fork();
+    if (pid < 0)
+        return; // failed
+
+    if (pid == 0) {
+        /* child */
+        chdir(cwd.c_str());
+        execv(argv[0],argv);
+        _exit(1);
+    }
+    else {
+        /* parent */
+        while (waitpid(pid,NULL,0) != pid);
+    }
+}
+
 void play_file(const std::string &name) {
     const char *alt_ffmpeg = "/opt/ffmpeg-ac4/bin/ffplay";
     struct stat st;
@@ -779,6 +807,9 @@ int main() {
                     }
                     else if (in == "v" || in == "V") {
                         play_file_vlc(dirlist[dirlist_sel].first);
+                    }
+                    else if (in == "c" || in == "C") {
+                        play_file_show7(dirlist[dirlist_sel].first);
                     }
 
                     redraw = 1;
