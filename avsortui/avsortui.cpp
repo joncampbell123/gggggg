@@ -439,6 +439,8 @@ void play_file_show7(const std::string &name) {
     int argc=0;
 
     argv[argc++] = (char*)("/usr/bin/c4mi_show7");
+    argv[argc++] = (char*)"--play";
+    argv[argc++] = (char*)"--loop";
     argv[argc++] = (char*)"--file";
     argv[argc++] = (char*)name.c_str();
     argv[argc  ] = NULL;
