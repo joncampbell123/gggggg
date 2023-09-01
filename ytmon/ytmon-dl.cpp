@@ -760,7 +760,9 @@ bool download_video_rumble(const Json &video) {
                 fprintf(stderr,"INFO JSON parse error: %s\n",json_err.c_str());
             }
             else {
-                auto is_live = false;//TODO
+                auto is_live = info_json["is_live"];
+                if (is_live.is_bool()) /* else is null? */
+                    live_feed = is_live.bool_value();
             }
         }
     }
