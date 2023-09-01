@@ -28,6 +28,7 @@ std::string                 youtube_format_spec = "-f 'bestvideo[height<=720]+be
 bool                        sunday_dl = false;
 int                         youtube_bitrate = 3000;
 int                         bitchute_bitrate = 2000;
+int                         rumble_bitrate = 2000;
 int                         vimeo_bitrate = 3000;
 
 int                         failignore_mark_counter = 0;
@@ -655,6 +656,149 @@ bool download_video_soundcloud(const Json &video) {
     return true;
 }
 
+bool download_video_rumble(const Json &video) {
+    string url = video["webpage_url"].string_value();
+
+    if (url.empty()) return false;
+    assert(url.find_first_of(' ') == string::npos);
+    assert(url.find_first_of('$') == string::npos);
+    assert(url.find_first_of('\'') == string::npos);
+    assert(url.find_first_of('\"') == string::npos);
+
+    const char *url_name = strrchr(url.c_str(),'/');
+    if (url_name == NULL) return false;
+    url_name++;
+    if (*url_name == 0) return false;
+
+    string tagname = url_name;
+
+    {
+        struct stat st;
+
+        string mark_filename = get_mark_filename(tagname);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            return false; // already exists
+        }
+    }
+
+    {
+        time_t now = time(NULL);
+        struct stat st;
+
+        string mark_filename = get_mark_failignore_filename(tagname);
+        if (stat(mark_filename.c_str(),&st) == 0) {
+            if ((st.st_mtime + failignore_timeout) >= now) {
+                fprintf(stderr,"Ignoring '%s', failignore\n",tagname.c_str());
+                return false; // failignore
+            }
+        }
+    }
+
+    sleep(1);
+
+    /* we trust the ID will never need characters that require escaping.
+     * they're alphanumeric base64 so far. */
+    string invoke_url = url;
+
+    time_t dl_begin = time(NULL);
+
+    string expect_info_json = tagname + ".info.json";
+
+    /* download the *.info.json first, don't update too often */
+    {
+        bool doit = true;
+        time_t now = time(NULL);
+        struct stat st;
+
+        if (stat(expect_info_json.c_str(),&st) == 0 && S_ISREG(st.st_mode)) {
+            if ((st.st_mtime + info_json_expire) >= now) {
+                doit = false;
+            }
+        }
+
+        if (doit) {
+            /* NTS: youtube-dl has had poor download speeds lately and hasn't been updated since June. Switch to yt-dlp */
+            string cmd = string("yt-dlp --cookies cookies.txt --skip-download --write-info-json --output '%(id)s' ") + invoke_url;
+            int status = system(cmd.c_str());
+            if (WIFSIGNALED(status)) should_stop = true;
+
+            if (status != 0) {
+                time_t dl_duration = time(NULL) - dl_begin;
+
+                if (dl_duration < 10) {
+                    fprintf(stderr,"Failed too quickly, marking\n");
+                    mark_failignore_file(tagname);
+                    failignore_mark_counter++;
+                }
+
+                return false;
+            }
+        }
+    }
+
+    /* read the info JSON.
+     * Do not download live feeds, because they are in progress.
+     * youtube-dl is pretty good about not listing live feeds if asked to follow a channel,
+     * but for search queries will return results that involve live feeds.
+     * Most live feeds finish eventually and turn into a video. */
+    bool live_feed = false;
+    double duration = -1;
+    {
+        FILE *fp;
+
+        fp = fopen(expect_info_json.c_str(),"r");
+        if (fp != NULL) {
+            size_t r = fread(large_tmp,1,sizeof(large_tmp)-1,fp);
+            assert(r < sizeof(large_tmp));
+            large_tmp[r] = 0;
+            fclose(fp);
+
+            string json_err;
+            Json info_json = Json::parse(large_tmp,json_err);
+
+            if (info_json == Json()) {
+                fprintf(stderr,"INFO JSON parse error: %s\n",json_err.c_str());
+            }
+            else {
+                auto is_live = false;//TODO
+            }
+        }
+    }
+
+    if (live_feed) {
+        fprintf(stderr,"Item '%s' is a live feed, skipping. It may turn into a downloadable later.\n",tagname.c_str());
+        return false;
+    }
+    if (duration_limit >= 0 && duration >= 0 && duration > duration_limit) {
+//      fprintf(stderr,"Item '%s' duration %.3f exceeds duration limit %.3f\n",id.c_str(),duration,duration_limit);
+        return false;
+    }
+
+    /* then download the video */
+    {
+        /* NTS: youtube-dl has had poor download speeds lately and hasn't been updated since June. Switch to yt-dlp */
+        string cmd = string("yt-dlp --abort-on-unavailable-fragment --cookies cookies.txt --no-mtime --continue --write-all-thumbnails --all-subs --limit-rate=") + to_string(rumble_bitrate) + "K --output '%(id)s' " + youtube_format_spec + invoke_url; /* --write-info-json not needed, first step above */
+        int status = system(cmd.c_str());
+        if (WIFSIGNALED(status)) should_stop = true;
+
+        if (status != 0) {
+            time_t dl_duration = time(NULL) - dl_begin;
+
+            if (dl_duration < 30) {
+                fprintf(stderr,"Failed too quickly, marking\n");
+                mark_failignore_file(tagname);
+                failignore_mark_counter++;
+            }
+
+            return false;
+        }
+    }
+
+    /* done! */
+    mark_file(tagname);
+    return true;
+}
+
 void chomp(char *s) {
     char *e = s + strlen(s) - 1;
     while (e >= s && (*e == '\n' || *e == '\r')) *e-- = 0;
@@ -857,6 +1001,27 @@ int main(int argc,char **argv) {
                 }
 
                 if (download_video_vimeo(json)) {
+                    if (++download_count >= download_limit)
+                        break;
+
+                    sleep(5 + ((unsigned int)rand() % 5u));
+                }
+	    }
+	    /* Rumble example:
+	     *
+	     * {"_type": "url", "url": "https://rumble.com/v3dvjvw-get-prepared-the-police-state-is-here-ep.-2080-09012023.html", "__x_forwarded_for_ip": null, "webpage_url": "https://rumble.com/v3dvjvw-get-prepared-the-police-state-is-here-ep.-2080-09012023.html", "original_url": "https://rumble.com/v3dvjvw-get-prepared-the-police-state-is-here-ep.-2080-09012023.html", "webpage_url_basename": "v3dvjvw-get-prepared-the-police-state-is-here-ep.-2080-09012023.html", "webpage_url_domain": "rumble.com", "playlist_count": null, "playlist": "Bongino", "playlist_id": "Bongino", "playlist_title": null, "playlist_uploader": null, "playlist_uploader_id": null, "n_entries": 59, "playlist_index": 1, "__last_playlist_index": 59, "extractor": "RumbleChannel", "extractor_key": "RumbleChannel", "playlist_autonumber": 1, "epoch": 1693592304, "_version": {"version": "2023.07.06", "current_git_head": null, "release_git_head": "b532a3481046e1eabb6232ee8196fb696c356ff6", "repository": "yt-dlp/yt-dlp"} */
+	    else if (json["extractor"] == "RumbleChannel") {
+                /* download like a human */
+                {
+                    time_t now = time(NULL);
+                    struct tm tm = *localtime(&now);
+
+                    // look human by stopping downloads between 3AM and 6AM
+                    if (tm.tm_hour >= 3 && tm.tm_hour < 6)
+                        continue;
+                }
+
+                if (download_video_rumble(json)) {
                     if (++download_count >= download_limit)
                         break;
 
