@@ -946,7 +946,7 @@ int main(int argc,char **argv) {
             /* YouTube example:
              *
              * {"url": "AbH3pJnFgY8", "_type": "url", "ie_key": "Youtube", "id": "AbH3pJnFgY8", "title": "No More Twitter? \ud83d\ude02"} */
-            if (json["ie_key"].string_value() == "Youtube") { /* FIXME: what if youtube-dl changes that? */
+            if (json["ie_key"].string_value() == "Youtube" || json["extractor"].string_value() == "Youtube") { /* FIXME: what if youtube-dl changes that? */
                 /* download like a human */
                 {
                     time_t now = time(NULL);
@@ -967,7 +967,7 @@ int main(int argc,char **argv) {
             /* Bitchute example:
              *
              * {"url": "https://www.bitchute.com/video/F0yUrwVz9fYV", "_type": "url", "ie_key": "BitChute", "id": "F0yUrwVz9fYV"} */
-            else if (json["ie_key"].string_value() == "BitChute") { /* FIXME: what if youtube-dl changes that? */
+            else if (json["ie_key"].string_value() == "BitChute" || json["extractor"].string_value() == "BitChute") { /* FIXME: what if youtube-dl changes that? */
                 if (download_video_bitchute(json)) {
                     if (++download_count >= download_limit)
                         break;
@@ -978,7 +978,7 @@ int main(int argc,char **argv) {
             /* Soundcloud example:
              *
              * {"url": "https://soundcloud.com/openai_audio/classic-pop-in-the-style-of-elvis-presley", "_type": "url", "ie_key": "Soundcloud", "id": "814263598", "title": "Classic Pop, in the style of Elvis Presley"} */
-            else if (json["ie_key"].string_value() == "Soundcloud") { /* FIXME: what if youtube-dl changes that? */
+            else if (json["ie_key"].string_value() == "Soundcloud" || json["extractor"].string_value() == "Soundcloud") { /* FIXME: what if youtube-dl changes that? */
                 if (download_video_soundcloud(json)) {
                     if (++download_count >= download_limit)
                         break;
@@ -989,7 +989,7 @@ int main(int argc,char **argv) {
 	    /* Vimeo example:
 	     *
 	     * {"ie_key": "Vimeo", "id": "748131856", "title": "NRSF Drive2Life Contest Pt2: Presentation", "_type": "url", "url": "https://vimeo.com/748131856", "__x_forwarded_for_ip": null, "webpage_url": "https://vimeo.com/748131856", "original_url": "https://vimeo.com/748131856", "webpage_url_basename": "748131856", "webpage_url_domain": "vimeo.com", "extractor": "vimeo", "extractor_key": "Vimeo", "playlist_count": null, "playlist": "Alan Weiss Productions", "playlist_id": "awptv", "playlist_title": "Alan Weiss Productions", "playlist_uploader": null, "playlist_uploader_id": null, "n_entries": 59, "playlist_index": 1, "__last_playlist_index": 59, "playlist_autonumber": 1, "epoch": 1662915461, "filename": "NRSF Drive2Life Contest Pt2\uff1a Presentation [748131856].NA", "urls": "https://vimeo.com/748131856"} */
-	    else if (json["ie_key"].string_value() == "Vimeo") {
+	    else if (json["ie_key"].string_value() == "Vimeo" || json["extractor"].string_value() == "vimeo") {
                 /* download like a human */
                 {
                     time_t now = time(NULL);
@@ -1010,7 +1010,7 @@ int main(int argc,char **argv) {
 	    /* Rumble example:
 	     *
 	     * {"_type": "url", "url": "https://rumble.com/v3dvjvw-get-prepared-the-police-state-is-here-ep.-2080-09012023.html", "__x_forwarded_for_ip": null, "webpage_url": "https://rumble.com/v3dvjvw-get-prepared-the-police-state-is-here-ep.-2080-09012023.html", "original_url": "https://rumble.com/v3dvjvw-get-prepared-the-police-state-is-here-ep.-2080-09012023.html", "webpage_url_basename": "v3dvjvw-get-prepared-the-police-state-is-here-ep.-2080-09012023.html", "webpage_url_domain": "rumble.com", "playlist_count": null, "playlist": "Bongino", "playlist_id": "Bongino", "playlist_title": null, "playlist_uploader": null, "playlist_uploader_id": null, "n_entries": 59, "playlist_index": 1, "__last_playlist_index": 59, "extractor": "RumbleChannel", "extractor_key": "RumbleChannel", "playlist_autonumber": 1, "epoch": 1693592304, "_version": {"version": "2023.07.06", "current_git_head": null, "release_git_head": "b532a3481046e1eabb6232ee8196fb696c356ff6", "repository": "yt-dlp/yt-dlp"} */
-	    else if (json["extractor"] == "RumbleChannel") {
+	    else if (json["extractor"].string_value() == "RumbleChannel") {
                 /* download like a human */
                 {
                     time_t now = time(NULL);
