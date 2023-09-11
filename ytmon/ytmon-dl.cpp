@@ -957,7 +957,7 @@ int main(int argc,char **argv) {
                     // 2023/09/11: Shit, download speeds have been TERRIBLE lately. Limit downloads to 8PM to midnight.
                     //             Your terrible 100kb/sec download rates are holding all the other non-YouTube channels up
                     //             and preventing proper archiving!
-                    if (tm.tm_hour >= (8+12))
+                    if (tm.tm_hour < (8+12))
                         continue;
                 }
 
