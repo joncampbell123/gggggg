@@ -954,8 +954,10 @@ int main(int argc,char **argv) {
                     time_t now = time(NULL);
                     struct tm tm = *localtime(&now);
 
-                    // look human by stopping downloads between 3AM and 6AM
-                    if (tm.tm_hour >= 3 && tm.tm_hour < 6)
+                    // 2023/09/11: Shit, download speeds have been TERRIBLE lately. Limit downloads to 8PM to midnight.
+                    //             Your terrible 100kb/sec download rates are holding all the other non-YouTube channels up
+                    //             and preventing proper archiving!
+                    if (tm.tm_hour >= (8+12))
                         continue;
                 }
 
