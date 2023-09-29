@@ -39,7 +39,7 @@ struct jslist {
     }
 };
 
-char line_tmp[4096];
+char line_tmp[65536];
 
 void chomp(char *s) {
 	char *e = s + strlen(s) - 1;
