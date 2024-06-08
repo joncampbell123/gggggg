@@ -972,13 +972,16 @@ int main(int argc,char **argv) {
              *
              * {"url": "https://www.bitchute.com/video/F0yUrwVz9fYV", "_type": "url", "ie_key": "BitChute", "id": "F0yUrwVz9fYV"} */
             else if (json["ie_key"].string_value() == "BitChute" || json["extractor"].string_value() == "BitChute") { /* FIXME: what if youtube-dl changes that? */
+		/* BitChute is ignoring me now, so don't try */
+		continue;
+
                 /* download like a human or else BitChute will IP ban you */
                 {
                     time_t now = time(NULL);
                     struct tm tm = *localtime(&now);
 
-                    // look human by limiting downloads between 10AM and 12AM
-                    if (!(tm.tm_hour >= 10 && tm.tm_hour < 12))
+                    // look human by limiting downloads between 10AM and 11AM
+                    if (!(tm.tm_hour >= 10 && tm.tm_hour < 11))
                         continue;
                 }
 
