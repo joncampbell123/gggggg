@@ -165,6 +165,10 @@ int main(int argc,char **argv) {
         fprintf(stderr,"Need channel URL\n");
         return 1;
     }
+
+    /* don't talk to BitChute anymore */
+    if (strstr(argv[1],"bitchute.com")) return 0;
+
     api_url = argv[1];
 
     const unsigned int hours = 24;
