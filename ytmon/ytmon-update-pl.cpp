@@ -169,6 +169,9 @@ int main(int argc,char **argv) {
     /* don't talk to BitChute anymore */
     if (strstr(argv[1],"bitchute.com")) return 0;
 
+    /* don't talk to YouTube anymore */
+    if (strstr(argv[1],"youtube.com")) return 0;
+
     api_url = argv[1];
 
     const unsigned int hours = 24;

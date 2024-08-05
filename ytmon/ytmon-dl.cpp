@@ -949,6 +949,9 @@ int main(int argc,char **argv) {
              *
              * {"url": "AbH3pJnFgY8", "_type": "url", "ie_key": "Youtube", "id": "AbH3pJnFgY8", "title": "No More Twitter? \ud83d\ude02"} */
             if (json["ie_key"].string_value() == "Youtube" || json["extractor"].string_value() == "Youtube") { /* FIXME: what if youtube-dl changes that? */
+                /* youtube is ignoring me now, so don't try */
+                continue;
+
                 /* download like a human */
                 {
                     time_t now = time(NULL);
